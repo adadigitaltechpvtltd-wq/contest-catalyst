@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -126,6 +127,11 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-8 pt-24">
+        {/* Email Verification Status */}
+        <div className="mb-6">
+          <EmailVerificationBanner />
+        </div>
+
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
