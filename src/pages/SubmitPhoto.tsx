@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { getUserFriendlyError } from '@/lib/errorMapping';
 import { 
   Upload, 
   Camera, 
@@ -184,11 +185,11 @@ const SubmitPhoto = () => {
       });
 
       navigate('/submissions');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Submission error:', error);
       toast({
         title: 'Submission failed',
-        description: error.message || 'An error occurred while submitting your photo.',
+        description: getUserFriendlyError(error),
         variant: 'destructive',
       });
     }

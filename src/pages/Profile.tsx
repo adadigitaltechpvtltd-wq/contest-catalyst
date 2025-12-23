@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { getUserFriendlyError } from '@/lib/errorMapping';
 import { 
   User, 
   Mail, 
@@ -70,7 +71,7 @@ const Profile = () => {
     if (error) {
       toast({
         title: 'Failed to save profile',
-        description: error.message,
+        description: getUserFriendlyError(error),
         variant: 'destructive',
       });
     } else {
@@ -102,7 +103,7 @@ const Profile = () => {
     if (error) {
       toast({
         title: 'Failed to save payment info',
-        description: error.message,
+        description: getUserFriendlyError(error),
         variant: 'destructive',
       });
     } else {

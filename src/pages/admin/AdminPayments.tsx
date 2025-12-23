@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { getUserFriendlyError } from '@/lib/errorMapping';
 import { 
   CreditCard, 
   Loader2, 
@@ -140,7 +141,7 @@ const AdminPayments = () => {
     if (error) {
       toast({
         title: 'Failed to process payment',
-        description: error.message,
+        description: getUserFriendlyError(error),
         variant: 'destructive',
       });
     } else {
