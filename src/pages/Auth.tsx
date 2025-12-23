@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,12 +10,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Camera, Loader2, Mail, CheckCircle, ArrowLeft } from 'lucide-react';
-import { format } from 'date-fns';
+import { CalendarIcon, Camera, Loader2, Mail, CheckCircle, ArrowLeft, AlertCircle } from 'lucide-react';
+import { format, subYears } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
 import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator';
+
+// Validation helper component
+const FieldError = ({ error }: { error?: string }) => {
+  if (!error) return null;
+  return (
+    <p className="text-xs text-destructive flex items-center gap-1 mt-1">
+      <AlertCircle className="h-3 w-3" />
+      {error}
+    </p>
+  );
+};
 
 const Auth = () => {
   const { user, isLoading, signIn, signUp } = useAuth();
@@ -43,6 +54,68 @@ const Auth = () => {
   const [phone, setPhone] = useState('');
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // Field touched state for showing validation
+  const [touched, setTouched] = useState({
+    fullName: false,
+    signupEmail: false,
+    phone: false,
+    signupPassword: false,
+    signupConfirmPassword: false,
+  });
+
+  // Date restrictions for 18+ (max date is 18 years ago from today)
+  const maxDate = useMemo(() => subYears(new Date(), 18), []);
+  const minDate = useMemo(() => new Date('1900-01-01'), []);
+
+  // Real-time validation errors
+  const fieldErrors = useMemo(() => {
+    const errors: Record<string, string> = {};
+
+    // Full name validation
+    if (touched.fullName) {
+      const trimmedName = fullName.trim();
+      if (!trimmedName) {
+        errors.fullName = 'Full name is required';
+      } else if (trimmedName.length < 2) {
+        errors.fullName = 'Name must be at least 2 characters';
+      }
+    }
+
+    // Email validation
+    if (touched.signupEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!signupEmail.trim()) {
+        errors.signupEmail = 'Email is required';
+      } else if (!emailRegex.test(signupEmail.trim())) {
+        errors.signupEmail = 'Please enter a valid email address';
+      }
+    }
+
+    // Phone validation
+    if (touched.phone) {
+      const phoneRegex = /^\+[1-9]\d{6,14}$/;
+      const cleanedPhone = phone.replace(/[\s\-\(\)]/g, '');
+      if (!cleanedPhone) {
+        errors.phone = 'Phone number is required';
+      } else if (!phoneRegex.test(cleanedPhone)) {
+        errors.phone = 'Enter valid international format (e.g., +91 9876543210)';
+      }
+    }
+
+    // Confirm password validation
+    if (touched.signupConfirmPassword && signupConfirmPassword) {
+      if (signupPassword !== signupConfirmPassword) {
+        errors.signupConfirmPassword = 'Passwords do not match';
+      }
+    }
+
+    return errors;
+  }, [fullName, signupEmail, phone, signupPassword, signupConfirmPassword, touched]);
+
+  const handleBlur = (field: keyof typeof touched) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
 
   if (isLoading) {
     return (
@@ -536,8 +609,11 @@ const Auth = () => {
                         placeholder="John Doe"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
+                        onBlur={() => handleBlur('fullName')}
+                        className={cn(fieldErrors.fullName && 'border-destructive')}
                         required
                       />
+                      <FieldError error={fieldErrors.fullName} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">Email</Label>
@@ -547,8 +623,11 @@ const Auth = () => {
                         placeholder="you@example.com"
                         value={signupEmail}
                         onChange={(e) => setSignupEmail(e.target.value)}
+                        onBlur={() => handleBlur('signupEmail')}
+                        className={cn(fieldErrors.signupEmail && 'border-destructive')}
                         required
                       />
+                      <FieldError error={fieldErrors.signupEmail} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
@@ -558,11 +637,17 @@ const Auth = () => {
                         placeholder="+91 9876543210"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
+                        onBlur={() => handleBlur('phone')}
+                        className={cn(fieldErrors.phone && 'border-destructive')}
                         required
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Required for prize payment purposes
-                      </p>
+                      {fieldErrors.phone ? (
+                        <FieldError error={fieldErrors.phone} />
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          Required for prize payments. Include country code (e.g., +91)
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label>Date of Birth</Label>
@@ -584,16 +669,19 @@ const Auth = () => {
                             mode="single"
                             selected={dateOfBirth}
                             onSelect={setDateOfBirth}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date('1900-01-01')
-                            }
+                            disabled={(date) => date > maxDate || date < minDate}
+                            defaultMonth={maxDate}
                             initialFocus
                             captionLayout="dropdown-buttons"
                             fromYear={1900}
-                            toYear={new Date().getFullYear()}
+                            toYear={maxDate.getFullYear()}
+                            className="pointer-events-auto"
                           />
                         </PopoverContent>
                       </Popover>
+                      <p className="text-xs text-muted-foreground">
+                        You must be at least 18 years old to participate
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-password">Password</Label>
@@ -603,6 +691,7 @@ const Auth = () => {
                         placeholder="••••••••"
                         value={signupPassword}
                         onChange={(e) => setSignupPassword(e.target.value)}
+                        onBlur={() => handleBlur('signupPassword')}
                         required
                         minLength={8}
                       />
@@ -616,9 +705,12 @@ const Auth = () => {
                         placeholder="••••••••"
                         value={signupConfirmPassword}
                         onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                        onBlur={() => handleBlur('signupConfirmPassword')}
+                        className={cn(fieldErrors.signupConfirmPassword && 'border-destructive')}
                         required
                         minLength={8}
                       />
+                      <FieldError error={fieldErrors.signupConfirmPassword} />
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
