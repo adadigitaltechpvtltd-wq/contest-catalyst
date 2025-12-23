@@ -9,6 +9,7 @@ import AdminLayout from "@/components/AdminLayout";
 import Index from "./pages/Index";
 import ContestDetail from "./pages/ContestDetail";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Contests from "./pages/Contests";
 import SubmitPhoto from "./pages/SubmitPhoto";
@@ -45,6 +46,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/contests" element={<Contests />} />
             <Route path="/contest/:id" element={<ContestDetail />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />

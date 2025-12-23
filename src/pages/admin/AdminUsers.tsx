@@ -20,10 +20,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Ban, UserCheck, Edit, Shield, Eye } from "lucide-react";
+import { Search, Ban, UserCheck, Shield, Eye, ShieldCheck, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
+
+type AppRole = "admin" | "moderator" | "user";
 
 interface UserProfile {
   id: string;
@@ -45,6 +54,8 @@ const AdminUsers = () => {
   const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [banReason, setBanReason] = useState("");
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<AppRole>("user");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -111,17 +122,53 @@ const AdminUsers = () => {
     },
   });
 
-  const getUserRole = (userId: string) => {
+  const roleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
+      // First, delete existing roles for this user
+      const { error: deleteError } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId);
+
+      if (deleteError) throw deleteError;
+
+      // Then insert the new role
+      const { error: insertError } = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role });
+
+      if (insertError) throw insertError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
+      toast({
+        title: "Role Updated",
+        description: `User role has been changed to ${selectedRole}.`,
+      });
+      setRoleDialogOpen(false);
+      setSelectedUser(null);
+    },
+    onError: (error) => {
+      console.error("Role update error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update user role. Make sure you have admin permissions.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const getUserRole = (userId: string): AppRole => {
     const role = userRoles?.find((r) => r.user_id === userId);
-    return role?.role || "user";
+    return (role?.role as AppRole) || "user";
   };
 
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "admin":
-        return <Badge className="bg-primary/20 text-primary">Admin</Badge>;
+        return <Badge className="bg-primary/20 text-primary"><ShieldAlert className="w-3 h-3 mr-1" />Admin</Badge>;
       case "moderator":
-        return <Badge className="bg-accent/20 text-accent">Moderator</Badge>;
+        return <Badge className="bg-accent/20 text-accent"><ShieldCheck className="w-3 h-3 mr-1" />Moderator</Badge>;
       default:
         return <Badge variant="secondary">User</Badge>;
     }
@@ -137,12 +184,18 @@ const AdminUsers = () => {
     setViewDialogOpen(true);
   };
 
+  const handleRoleClick = (user: UserProfile) => {
+    setSelectedUser(user);
+    setSelectedRole(getUserRole(user.id));
+    setRoleDialogOpen(true);
+  };
+
   return (
     <>
     <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">User Management</h1>
-          <p className="text-muted-foreground mt-1">View, edit, and manage platform users</p>
+          <p className="text-muted-foreground mt-1">View, edit, and manage platform users and roles</p>
         </div>
 
         {/* Search */}
@@ -234,14 +287,25 @@ const AdminUsers = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleViewClick(user)}
+                          title="View Details"
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
+                          onClick={() => handleRoleClick(user)}
+                          title="Manage Role"
+                          className="text-primary"
+                        >
+                          <Shield className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleBanClick(user)}
                           className={user.is_banned ? "text-green-600" : "text-destructive"}
+                          title={user.is_banned ? "Unban User" : "Ban User"}
                         >
                           {user.is_banned ? (
                             <UserCheck className="w-4 h-4" />
@@ -304,6 +368,104 @@ const AdminUsers = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Role Management Dialog */}
+      <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              Manage User Role
+            </DialogTitle>
+            <DialogDescription>
+              Change the role for {selectedUser?.full_name || selectedUser?.email || "this user"}.
+              This will affect their permissions on the platform.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Role</label>
+              <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as AppRole)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="font-normal">User</Badge>
+                      <span className="text-muted-foreground text-xs">Default access</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="moderator">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-accent/20 text-accent font-normal">
+                        <ShieldCheck className="w-3 h-3 mr-1" />
+                        Moderator
+                      </Badge>
+                      <span className="text-muted-foreground text-xs">Can review submissions</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="admin">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-primary/20 text-primary font-normal">
+                        <ShieldAlert className="w-3 h-3 mr-1" />
+                        Admin
+                      </Badge>
+                      <span className="text-muted-foreground text-xs">Full access</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-2">
+              <p className="font-medium">Role Permissions:</p>
+              {selectedRole === "user" && (
+                <ul className="list-disc pl-4 text-muted-foreground space-y-1">
+                  <li>Participate in contests</li>
+                  <li>Submit photos</li>
+                  <li>View leaderboard</li>
+                </ul>
+              )}
+              {selectedRole === "moderator" && (
+                <ul className="list-disc pl-4 text-muted-foreground space-y-1">
+                  <li>All user permissions</li>
+                  <li>Review and moderate submissions</li>
+                  <li>Handle reports</li>
+                </ul>
+              )}
+              {selectedRole === "admin" && (
+                <ul className="list-disc pl-4 text-muted-foreground space-y-1">
+                  <li>All moderator permissions</li>
+                  <li>Manage users and roles</li>
+                  <li>Create and manage contests</li>
+                  <li>Process payments</li>
+                  <li>Access analytics</li>
+                </ul>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRoleDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                selectedUser && roleMutation.mutate({
+                  userId: selectedUser.id,
+                  role: selectedRole,
+                })
+              }
+              disabled={roleMutation.isPending}
+              className="gradient-primary"
+            >
+              {roleMutation.isPending ? "Updating..." : "Update Role"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* View User Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
         <DialogContent className="max-w-lg">
@@ -340,7 +502,7 @@ const AdminUsers = () => {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Role:</span>
-                  <p className="font-medium">{getUserRole(selectedUser.id)}</p>
+                  <div className="mt-1">{getRoleBadge(getUserRole(selectedUser.id))}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Age Verified:</span>
