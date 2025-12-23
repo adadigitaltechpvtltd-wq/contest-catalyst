@@ -88,8 +88,49 @@ const Auth = () => {
     return hasMinLength && hasUppercase && hasLowercase && hasNumber;
   };
 
+  const calculateAge = (birthDate: Date): number => {
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate full name
+    const trimmedName = fullName.trim();
+    if (!trimmedName) {
+      toast({
+        title: 'Full name required',
+        description: 'Please enter your full name.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (trimmedName.length < 2) {
+      toast({
+        title: 'Invalid name',
+        description: 'Name must be at least 2 characters long.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(signupEmail.trim())) {
+      toast({
+        title: 'Invalid email',
+        description: 'Please enter a valid email address.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     if (signupPassword !== signupConfirmPassword) {
       toast({
@@ -113,6 +154,27 @@ const Auth = () => {
       toast({
         title: 'Date of birth required',
         description: 'Please select your date of birth.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate date is not in the future
+    if (dateOfBirth > new Date()) {
+      toast({
+        title: 'Invalid date of birth',
+        description: 'Date of birth cannot be in the future.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Calculate and validate age >= 18
+    const age = calculateAge(dateOfBirth);
+    if (age < 18) {
+      toast({
+        title: 'Age restriction',
+        description: 'You must be at least 18 years old to create an account.',
         variant: 'destructive',
       });
       return;
