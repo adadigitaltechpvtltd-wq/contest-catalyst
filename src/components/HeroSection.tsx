@@ -1,107 +1,154 @@
-import { Clock, ChevronRight, Settings } from "lucide-react";
+import { Play, Settings, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
+const countdown = [
+  { value: "2", label: "Days" },
+  { value: "14", label: "Hours" },
+  { value: "32", label: "Mins" },
+  { value: "5", label: "Secs" },
+];
+
 const HeroSection = () => {
   return (
-    <section className="relative overflow-hidden py-16 lg:py-24">
+    <section className="relative overflow-hidden py-20 lg:py-28">
+      {/* Background atmosphere */}
+      <div className="absolute inset-0 hero-atmosphere" aria-hidden />
+
       {/* Decorative cubes */}
-      <div className="absolute top-20 right-[15%] w-20 h-20 md:w-28 md:h-28 rounded-3xl bg-gradient-to-br from-primary to-red-600 animate-float shadow-glow rotate-12" />
-      <div className="absolute top-44 right-[8%] w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-secondary animate-float-reverse -rotate-12" />
-      <div className="absolute top-36 right-[4%] w-6 h-6 md:w-8 md:h-8 rounded-lg bg-primary/60 animate-float" style={{ animationDelay: '0.5s' }} />
-      
-      {/* Decorative gear on right */}
-      <div className="absolute right-4 top-1/2 opacity-5 hidden lg:block">
-        <Settings className="w-32 h-32 text-muted-foreground" />
+      <div
+        className="absolute top-24 right-[12%] w-24 h-24 md:w-32 md:h-32 rounded-[28px] bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--warm-pink))] animate-float shadow-glow rotate-12"
+        aria-hidden
+      />
+      <div
+        className="absolute top-44 right-[7%] w-14 h-14 md:w-18 md:h-18 rounded-2xl bg-secondary/80 animate-float-reverse -rotate-12"
+        aria-hidden
+      />
+      <div
+        className="absolute bottom-16 left-[10%] w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(var(--cool-blue)/0.9)] to-[hsl(var(--cool-purple)/0.85)] animate-float shadow-glow -rotate-12"
+        style={{ animationDelay: "0.7s" }}
+        aria-hidden
+      />
+
+      {/* Decorative gear */}
+      <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-[0.06] hidden lg:block" aria-hidden>
+        <Settings className="w-28 h-28 text-foreground" />
       </div>
-      
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl">
+
+      <div className="container mx-auto px-4 relative">
+        <div className="mx-auto max-w-5xl text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8 animate-slide-up">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            New Contest Live
+          <div className="flex justify-center mb-7">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/15 border border-primary/25 text-primary text-sm font-semibold">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              New Contest Live
+            </div>
           </div>
 
           {/* Headline */}
-          <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            Win Big. <span className="text-gradient">Create Bold.</span>
-            <br />Get Rewarded.
+          <h1 className="font-display text-[44px] leading-[1.02] md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground">
+            <span className="text-foreground">Win Big.</span>{" "}
+            <span className="text-gradient">Create Bold.</span>
+            <br />
+            <span className="text-gradient-cool">Get Rewarded.</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-lg text-muted-foreground mb-10 max-w-xl animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            Join weekly micro-contests, showcase your creativity, and win amazing prizes from top brands. No design skills required.
+          <p className="mt-6 mx-auto max-w-3xl text-lg md:text-xl text-muted-foreground">
+            Join weekly micro-contests, showcase your creativity, and win amazing
+            prizes from top brands. No design skills required.
           </p>
 
           {/* Featured Contest Card */}
-          <div className="glass-card rounded-2xl p-4 max-w-lg animate-slide-up" style={{ animationDelay: '0.3s' }}>
-            <div className="flex items-start gap-4">
-              <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border border-border">
-                <img 
-                  src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200&auto=format&fit=crop" 
-                  alt="Morning Routine"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-muted-foreground">This Week's Contest</span>
-                  <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium">Live</span>
-                </div>
-                <h3 className="font-display font-bold text-foreground mb-2">"My Morning Routine"</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  Share a photo of your morning ritual. Coffee? Yoga? Chaos? Show us your real mornings!
-                </p>
-              </div>
-            </div>
-
-            {/* Countdown */}
-            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border">
-              <div className="flex items-center gap-2 flex-1">
-                {[
-                  { value: "2", label: "Days" },
-                  { value: "14", label: "Hrs" },
-                  { value: "32", label: "Min" },
-                  { value: "5", label: "Sec" },
-                ].map((item, i) => (
-                  <div key={item.label} className="text-center">
-                    <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center font-display font-bold text-foreground">
-                      {item.value}
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">{item.label}</span>
+          <div className="mt-12 mx-auto max-w-4xl glass-card rounded-3xl">
+            <div className="p-6 md:p-8">
+              {/* Top row */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/90 to-emerald-600/70 flex items-center justify-center text-xl border border-border/20">
+                    🌱
                   </div>
-                ))}
+                  <div className="text-left">
+                    <div className="text-sm text-muted-foreground">This Week's Contest</div>
+                    <div className="font-display text-2xl font-bold text-foreground">"My Morning Routine"</div>
+                  </div>
+                </div>
+                <span className="px-4 py-2 rounded-full bg-primary/90 text-primary-foreground text-sm font-semibold">
+                  Live
+                </span>
               </div>
-              <div className="text-right text-sm text-muted-foreground">
-                <div className="font-medium text-foreground">🏆 $500 Prize</div>
+
+              <p className="mt-4 text-left text-muted-foreground">
+                Share a photo of your morning ritual. Coffee? Yoga? Chaos? Show us your real mornings!
+              </p>
+
+              {/* Countdown row */}
+              <div className="mt-6 rounded-2xl bg-muted/30 border border-border/50 px-6 py-5">
+                <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] items-center gap-4">
+                  {countdown.map((c, idx) => (
+                    <div key={c.label} className="contents">
+                      <div className="text-center">
+                        <div className="text-3xl font-display font-bold text-foreground">{c.value}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{c.label}</div>
+                      </div>
+                      {idx < countdown.length - 1 && (
+                        <div className="text-muted-foreground/70 text-3xl font-display">:</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <Link to="/contest/morning-routine">
-                <Button className="ml-2">
-                  Enter Now
-                </Button>
-              </Link>
+
+              {/* Bottom row */}
+              <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-6 text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    <span>1,247 entries</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-4 h-4" />
+                    <span>$500 Prize</span>
+                  </div>
+                </div>
+
+                <Link to="/contest/morning-routine">
+                  <Button size="lg" className="rounded-2xl px-10">
+                    Enter Now
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
 
           {/* Watch How It Works */}
-          <button className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mt-8 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-sm">Watch How It Works</span>
-          </button>
+          <div className="mt-10 flex justify-center">
+            <a href="/#how-it-works">
+              <Button
+                variant="outline"
+                size="lg"
+                className="rounded-2xl border-border/60 bg-card/20 hover:bg-card/35 text-foreground"
+              >
+                <Play className="w-4 h-4" />
+                Watch How It Works
+              </Button>
+            </a>
+          </div>
 
           {/* Stats */}
-          <div className="flex items-center gap-8 md:gap-12 mt-12 animate-slide-up" style={{ animationDelay: '0.5s' }}>
-            {[
-              { value: "50K+", label: "Active Creators" },
-              { value: "$2M+", label: "Prizes Awarded" },
-              { value: "500+", label: "Brand Partners" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl md:text-3xl font-display font-bold text-foreground">{stat.value}</div>
-                <div className="text-xs text-muted-foreground">{stat.label}</div>
-              </div>
-            ))}
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-10">
+            <div className="text-center">
+              <div className="text-2xl md:text-3xl font-display font-bold text-primary">50K+</div>
+              <div className="text-xs text-muted-foreground">Active Creators</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl md:text-3xl font-display font-bold text-[hsl(var(--cool-blue))]">$2M+</div>
+              <div className="text-xs text-muted-foreground">Prizes Awarded</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl md:text-3xl font-display font-bold text-foreground">500+</div>
+              <div className="text-xs text-muted-foreground">Brand Partners</div>
+            </div>
           </div>
         </div>
       </div>
