@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+/* Fonts loaded via index.html */
 
 @layer base {
   :root {
@@ -44,7 +44,7 @@
     --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
 
-    --font-display: 'Space Grotesk', sans-serif;
+    --font-display: 'Outfit', sans-serif;
     --font-body: 'Inter', sans-serif;
 
     --sidebar-background: 0 0% 5%;
