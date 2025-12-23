@@ -1,4 +1,4 @@
-import { Trophy, Medal, RefreshCw } from "lucide-react";
+import { RefreshCw, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const leaders = [
@@ -11,7 +11,7 @@ const leaders = [
 
 const Leaderboard = () => {
   return (
-    <section className="py-20">
+    <section id="leaderboard" className="py-20 relative overflow-hidden">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
@@ -25,64 +25,64 @@ const Leaderboard = () => {
 
         {/* Leaderboard Card */}
         <div className="max-w-2xl mx-auto">
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="bg-white rounded-2xl overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h3 className="font-display font-bold text-foreground">Weekly Leaderboard</h3>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="font-display font-bold text-gray-900">Weekly Leaderboard</h3>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
                 <RefreshCw className="w-4 h-4" />
                 <span>Updated Live</span>
               </div>
             </div>
 
             {/* Leaders */}
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-gray-100">
               {leaders.map((leader) => (
                 <div 
                   key={leader.rank}
-                  className={`flex items-center gap-4 px-6 py-4 hover:bg-muted/30 transition-colors ${
-                    leader.rank <= 3 ? "bg-gradient-to-r from-primary/5 to-transparent" : ""
+                  className={`flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors ${
+                    leader.rank <= 3 ? "bg-gradient-to-r from-red-50 to-transparent" : ""
                   }`}
                 >
                   {/* Rank */}
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                     leader.rank === 1 
-                      ? "bg-yellow-500/20 text-yellow-500" 
+                      ? "bg-yellow-100 text-yellow-600" 
                       : leader.rank === 2
-                      ? "bg-gray-400/20 text-gray-400"
+                      ? "bg-gray-200 text-gray-600"
                       : leader.rank === 3
-                      ? "bg-orange-600/20 text-orange-500"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-orange-100 text-orange-600"
+                      : "bg-gray-100 text-gray-500"
                   }`}>
                     {leader.rank}
                   </div>
 
                   {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-border">
+                  <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-200">
                     <img src={leader.avatar} alt={leader.name} className="w-full h-full object-cover" />
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground">{leader.name}</span>
+                      <span className="font-medium text-gray-900">{leader.name}</span>
                       {leader.badge && <span>{leader.badge}</span>}
                     </div>
-                    <span className="text-xs text-muted-foreground">{leader.wins} wins this month</span>
+                    <span className="text-xs text-gray-500">{leader.wins} wins this month</span>
                   </div>
 
                   {/* Points */}
                   <div className="text-right">
                     <div className="font-display font-bold text-primary">{leader.points.toLocaleString()}</div>
-                    <span className="text-xs text-muted-foreground">points</span>
+                    <span className="text-xs text-gray-500">points</span>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-border">
-              <Button variant="outline" className="w-full">
+            <div className="px-6 py-4 border-t border-gray-200">
+              <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-gray-100">
                 View Full Leaderboard
               </Button>
             </div>
@@ -92,9 +92,7 @@ const Leaderboard = () => {
 
       {/* Decorative gears */}
       <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-5 hidden lg:block">
-        <svg className="w-24 h-24" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66Z"/>
-        </svg>
+        <Settings className="w-24 h-24 text-muted-foreground" />
       </div>
     </section>
   );

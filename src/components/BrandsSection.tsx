@@ -19,19 +19,22 @@ const benefits = [
   },
 ];
 
-const brandLogos = [
-  "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=80&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=80&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=80&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=80&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=80&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1572021335469-31706a17ber?w=80&auto=format&fit=crop",
+const brandIcons = [
+  { icon: "🎵", bg: "bg-purple-500/20" },
+  { icon: "📷", bg: "bg-pink-500/20" },
+  { icon: "🎮", bg: "bg-blue-500/20" },
+  { icon: "👟", bg: "bg-green-500/20" },
+  { icon: "☕", bg: "bg-orange-500/20" },
+  { icon: "🎨", bg: "bg-cyan-500/20" },
 ];
 
 const BrandsSection = () => {
   return (
-    <section className="py-20 bg-gradient-to-b from-background to-card/50">
-      <div className="container mx-auto px-4">
+    <section id="brands" className="py-20 relative overflow-hidden">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background" />
+      
+      <div className="container mx-auto px-4 relative">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
           <div>
@@ -64,21 +67,21 @@ const BrandsSection = () => {
 
           {/* Right Card */}
           <div className="relative">
-            <div className="bg-card border border-border rounded-2xl p-6 overflow-hidden">
-              {/* Gradient accent */}
-              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-primary/20 to-transparent rounded-bl-full" />
+            <div className="bg-card border border-border rounded-2xl p-6 overflow-hidden relative">
+              {/* Gradient accent in corner */}
+              <div className="absolute -top-20 -right-20 w-60 h-60 bg-gradient-to-bl from-primary/30 via-orange-500/20 to-transparent rounded-full blur-3xl" />
               
               <div className="relative">
-                <p className="text-sm text-muted-foreground mb-4">Trusted by 500+ brands worldwide</p>
+                <p className="text-sm text-muted-foreground mb-6">Trusted by 500+ brands worldwide</p>
                 
-                {/* Brand logos grid */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  {brandLogos.map((logo, i) => (
+                {/* Brand icons grid */}
+                <div className="grid grid-cols-3 gap-4 mb-8">
+                  {brandIcons.map((brand, i) => (
                     <div 
                       key={i}
-                      className="w-16 h-16 rounded-xl bg-muted/50 flex items-center justify-center overflow-hidden"
+                      className={`w-16 h-16 rounded-xl ${brand.bg} flex items-center justify-center text-2xl`}
                     >
-                      <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
+                      {brand.icon}
                     </div>
                   ))}
                 </div>
