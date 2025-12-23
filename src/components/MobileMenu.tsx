@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { X, Trophy } from "lucide-react";
+import { X, Trophy, User, LogOut, Image, Wallet, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -9,6 +11,9 @@ interface MobileMenuProps {
 }
 
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
   // Prevent body scroll when menu is open
   useEffect(() => {
     if (isOpen) {
@@ -21,11 +26,29 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
     };
   }, [isOpen]);
 
+  const handleSignOut = async () => {
+    await signOut();
+    onClose();
+    navigate('/');
+  };
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   const navLinks = [
-    { label: "Contests", href: "/#contests" },
-    { label: "How It Works", href: "/#how-it-works" },
-    { label: "Leaderboard", href: "/#leaderboard" },
-    { label: "For Brands", href: "/#brands" },
+    { label: "Contests", href: "/contests", isLink: true },
+    { label: "How It Works", href: "/#how-it-works", isLink: false },
+    { label: "Leaderboard", href: "/leaderboard", isLink: true },
+    { label: "For Brands", href: "/#brands", isLink: false },
+  ];
+
+  const userLinks = [
+    { label: "Dashboard", href: "/dashboard", icon: User },
+    { label: "My Submissions", href: "/my-submissions", icon: Image },
+    { label: "Wallet", href: "/wallet", icon: Wallet },
+    { label: "Profile Settings", href: "/profile", icon: Settings },
   ];
 
   return (
@@ -60,28 +83,87 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           </button>
         </div>
 
+        {/* User Info (if logged in) */}
+        {user && (
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || 'User'} />
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {getInitials(profile?.full_name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-foreground truncate">{profile?.full_name || 'User'}</p>
+                <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Navigation Links */}
         <nav className="p-4 space-y-1">
           {navLinks.map((link, i) => (
-            <a
-              key={i}
-              href={link.href}
-              onClick={onClose}
-              className="block px-4 py-3 rounded-lg text-foreground hover:bg-muted transition-colors font-medium"
-            >
-              {link.label}
-            </a>
+            link.isLink ? (
+              <Link
+                key={i}
+                to={link.href}
+                onClick={onClose}
+                className="block px-4 py-3 rounded-lg text-foreground hover:bg-muted transition-colors font-medium"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <a
+                key={i}
+                href={link.href}
+                onClick={onClose}
+                className="block px-4 py-3 rounded-lg text-foreground hover:bg-muted transition-colors font-medium"
+              >
+                {link.label}
+              </a>
+            )
           ))}
         </nav>
 
+        {/* User Links (if logged in) */}
+        {user && (
+          <div className="px-4 pb-4 space-y-1 border-t border-border pt-4">
+            {userLinks.map((link, i) => (
+              <Link
+                key={i}
+                to={link.href}
+                onClick={onClose}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                <link.icon className="h-4 w-4" />
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        )}
+
         {/* Auth Buttons */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border space-y-3">
-          <Button variant="outline" className="w-full">
-            Log In
-          </Button>
-          <Button className="w-full">
-            Join Free
-          </Button>
+          {user ? (
+            <Button variant="outline" className="w-full text-destructive hover:text-destructive" onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Log Out
+            </Button>
+          ) : (
+            <>
+              <Link to="/auth" onClick={onClose}>
+                <Button variant="outline" className="w-full">
+                  Log In
+                </Button>
+              </Link>
+              <Link to="/auth" onClick={onClose}>
+                <Button className="w-full">
+                  Join Free
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </>
