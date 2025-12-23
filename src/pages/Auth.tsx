@@ -116,7 +116,7 @@ const Auth = () => {
     if (!ageConfirmed) {
       toast({
         title: 'Age confirmation required',
-        description: 'Please confirm that you are at least 13 years old.',
+        description: 'Please confirm that you are at least 18 years old.',
         variant: 'destructive',
       });
       return;
@@ -364,7 +364,7 @@ const Auth = () => {
                         onCheckedChange={(checked) => setAgeConfirmed(checked as boolean)}
                       />
                       <Label htmlFor="age-confirm" className="text-sm">
-                        I confirm that I am at least 13 years old
+                        I confirm that I am at least 18 years old
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">

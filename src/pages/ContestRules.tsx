@@ -29,7 +29,7 @@ const ContestRules = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">1. Eligibility</h2>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>Open to all registered users aged 13 and above</li>
+                  <li>Open to all registered users aged 18 and above</li>
                   <li>One submission per user per contest</li>
                   <li>Users must have a verified email address</li>
                   <li>Employees and immediate family of Contestify are not eligible</li>
