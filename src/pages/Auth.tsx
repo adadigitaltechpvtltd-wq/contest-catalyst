@@ -566,7 +566,7 @@ const Auth = () => {
                       <Input
                         id="login-email"
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder="Enter email address"
                         value={loginEmail}
                         onChange={(e) => setLoginEmail(e.target.value)}
                         required
@@ -585,7 +585,7 @@ const Auth = () => {
                       </div>
                       <PasswordInput
                         id="login-password"
-                        placeholder="••••••••"
+                        placeholder="Enter password"
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
                         required
@@ -611,7 +611,7 @@ const Auth = () => {
                       <Input
                         id="full-name"
                         type="text"
-                        placeholder="John Doe"
+                        placeholder="Enter name"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         onBlur={() => handleBlur('fullName')}
@@ -625,7 +625,7 @@ const Auth = () => {
                       <Input
                         id="signup-email"
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder="Enter email address"
                         value={signupEmail}
                         onChange={(e) => setSignupEmail(e.target.value)}
                         onBlur={() => handleBlur('signupEmail')}
@@ -644,7 +644,7 @@ const Auth = () => {
                         <Input
                           id="phone"
                           type="tel"
-                          placeholder="9876543210"
+                          placeholder="Enter phone number"
                           value={phoneNumber}
                           onChange={(e) => setPhoneNumber(e.target.value)}
                           onBlur={() => handleBlur('phone')}
@@ -698,7 +698,7 @@ const Auth = () => {
                       <Label htmlFor="signup-password">Password</Label>
                       <PasswordInput
                         id="signup-password"
-                        placeholder="••••••••"
+                        placeholder="Enter password"
                         value={signupPassword}
                         onChange={(e) => setSignupPassword(e.target.value)}
                         onBlur={() => handleBlur('signupPassword')}
@@ -711,7 +711,7 @@ const Auth = () => {
                       <Label htmlFor="signup-confirm-password">Confirm Password</Label>
                       <PasswordInput
                         id="signup-confirm-password"
-                        placeholder="••••••••"
+                        placeholder="Re-enter password"
                         value={signupConfirmPassword}
                         onChange={(e) => setSignupConfirmPassword(e.target.value)}
                         onBlur={() => handleBlur('signupConfirmPassword')}
