@@ -32,7 +32,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   isModerator: boolean;
-  signUp: (email: string, password: string, fullName: string, dateOfBirth: Date) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, dateOfBirth: Date, phone: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -156,7 +156,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     password: string,
     fullName: string,
-    dateOfBirth: Date
+    dateOfBirth: Date,
+    phone: string
   ): Promise<{ error: Error | null }> => {
     const isAdult = new Date().getFullYear() - dateOfBirth.getFullYear() >= 18;
 
@@ -168,11 +169,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           full_name: fullName,
           date_of_birth: dateOfBirth.toISOString().split('T')[0],
           is_adult: isAdult,
+          phone: phone,
         },
       },
     });
 
-    if (error) return { error };
+    if (error) {
+      // Check for duplicate email error
+      if (error.message.includes('duplicate key') || 
+          error.message.includes('already registered') ||
+          error.message.includes('User already registered') ||
+          error.message.includes('users_email_key')) {
+        return { error: new Error('This email is already registered. Please use a different email or try logging in.') };
+      }
+      return { error };
+    }
 
     // Update profile with additional data
     const { data: { user: newUser } } = await supabase.auth.getUser();
@@ -181,6 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         full_name: fullName,
         date_of_birth: dateOfBirth.toISOString().split('T')[0],
         is_adult: isAdult,
+        phone: phone,
       }).eq('id', newUser.id);
     }
 

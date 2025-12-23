@@ -40,6 +40,7 @@ const Auth = () => {
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState<Date>();
+  const [phone, setPhone] = useState('');
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
@@ -135,14 +136,28 @@ const Auth = () => {
       return;
     }
 
+    if (!phone.trim()) {
+      toast({
+        title: 'Phone number required',
+        description: 'Please enter your phone number for payment purposes.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    const { error } = await signUp(signupEmail, signupPassword, fullName, dateOfBirth);
+    const { error } = await signUp(signupEmail, signupPassword, fullName, dateOfBirth, phone);
 
     if (error) {
+      // Show user-friendly message for duplicate email
+      const errorMessage = error.message.includes('Database error') 
+        ? 'This email is already registered. Please use a different email or try logging in.'
+        : error.message;
+      
       toast({
         title: 'Signup failed',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     } else {
@@ -164,6 +179,7 @@ const Auth = () => {
     setSignupConfirmPassword('');
     setFullName('');
     setDateOfBirth(undefined);
+    setPhone('');
     setAgeConfirmed(false);
     setTermsAccepted(false);
     setForgotPasswordEmail('');
@@ -452,6 +468,20 @@ const Auth = () => {
                         onChange={(e) => setSignupEmail(e.target.value)}
                         required
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+91 9876543210"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Required for prize payment purposes
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label>Date of Birth</Label>
