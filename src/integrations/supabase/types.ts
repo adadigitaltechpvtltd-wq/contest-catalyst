@@ -14,16 +14,446 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contests: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string
+          id: string
+          judging_criteria: string[] | null
+          max_participants: number | null
+          min_participants: number
+          prize_amount: number
+          prize_currency: string
+          rules: string[] | null
+          start_date: string
+          status: Database["public"]["Enums"]["contest_status"]
+          theme: string | null
+          title: string
+          updated_at: string
+          voting_end_date: string | null
+          winner_id: string | null
+          winning_submission_id: string | null
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          judging_criteria?: string[] | null
+          max_participants?: number | null
+          min_participants?: number
+          prize_amount?: number
+          prize_currency?: string
+          rules?: string[] | null
+          start_date: string
+          status?: Database["public"]["Enums"]["contest_status"]
+          theme?: string | null
+          title: string
+          updated_at?: string
+          voting_end_date?: string | null
+          winner_id?: string | null
+          winning_submission_id?: string | null
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          judging_criteria?: string[] | null
+          max_participants?: number | null
+          min_participants?: number
+          prize_amount?: number
+          prize_currency?: string
+          rules?: string[] | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["contest_status"]
+          theme?: string | null
+          title?: string
+          updated_at?: string
+          voting_end_date?: string | null
+          winner_id?: string | null
+          winning_submission_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_winning_submission"
+            columns: ["winning_submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean | null
+          link: string | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          message: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bank_account_number: string | null
+          bank_ifsc: string | null
+          bio: string | null
+          created_at: string
+          date_of_birth: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          is_adult: boolean | null
+          kyc_verified: boolean | null
+          phone: string | null
+          updated_at: string
+          upi_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bank_account_number?: string | null
+          bank_ifsc?: string | null
+          bio?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          is_adult?: boolean | null
+          kyc_verified?: boolean | null
+          phone?: string | null
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bank_account_number?: string | null
+          bank_ifsc?: string | null
+          bio?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_adult?: boolean | null
+          kyc_verified?: boolean | null
+          phone?: string | null
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          description: string | null
+          evidence_urls: string[] | null
+          id: string
+          reason: string
+          reported_user_id: string | null
+          reporter_id: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["report_status"]
+          submission_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          evidence_urls?: string[] | null
+          id?: string
+          reason: string
+          reported_user_id?: string | null
+          reporter_id?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          submission_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          evidence_urls?: string[] | null
+          id?: string
+          reason?: string
+          reported_user_id?: string | null
+          reporter_id?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          submission_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submissions: {
+        Row: {
+          admin_notes: string | null
+          admin_score: number | null
+          ai_detection_provider: string | null
+          ai_detection_raw_response: Json | null
+          ai_probability_score: number | null
+          contest_id: string
+          created_at: string
+          description: string | null
+          exif_anomaly_reasons: string[] | null
+          exif_camera_make: string | null
+          exif_camera_model: string | null
+          exif_date_taken: string | null
+          exif_gps_lat: number | null
+          exif_gps_lng: number | null
+          exif_has_anomalies: boolean | null
+          exif_software: string | null
+          id: string
+          image_url: string
+          originality_confirmed: boolean
+          rejection_reason: string | null
+          report_count: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_score: number | null
+          status: Database["public"]["Enums"]["submission_status"]
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          visual_anomaly_reasons: string[] | null
+          visual_anomaly_score: number | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          admin_score?: number | null
+          ai_detection_provider?: string | null
+          ai_detection_raw_response?: Json | null
+          ai_probability_score?: number | null
+          contest_id: string
+          created_at?: string
+          description?: string | null
+          exif_anomaly_reasons?: string[] | null
+          exif_camera_make?: string | null
+          exif_camera_model?: string | null
+          exif_date_taken?: string | null
+          exif_gps_lat?: number | null
+          exif_gps_lng?: number | null
+          exif_has_anomalies?: boolean | null
+          exif_software?: string | null
+          id?: string
+          image_url: string
+          originality_confirmed?: boolean
+          rejection_reason?: string | null
+          report_count?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          visual_anomaly_reasons?: string[] | null
+          visual_anomaly_score?: number | null
+        }
+        Update: {
+          admin_notes?: string | null
+          admin_score?: number | null
+          ai_detection_provider?: string | null
+          ai_detection_raw_response?: Json | null
+          ai_probability_score?: number | null
+          contest_id?: string
+          created_at?: string
+          description?: string | null
+          exif_anomaly_reasons?: string[] | null
+          exif_camera_make?: string | null
+          exif_camera_model?: string | null
+          exif_date_taken?: string | null
+          exif_gps_lat?: number | null
+          exif_gps_lng?: number | null
+          exif_has_anomalies?: boolean | null
+          exif_software?: string | null
+          id?: string
+          image_url?: string
+          originality_confirmed?: boolean
+          rejection_reason?: string | null
+          report_count?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          visual_anomaly_reasons?: string[] | null
+          visual_anomaly_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          contest_id: string | null
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          processed_at: string | null
+          processed_by: string | null
+          status: Database["public"]["Enums"]["transaction_status"]
+          submission_id: string | null
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          contest_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          submission_id?: string | null
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          contest_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          submission_id?: string | null
+          type?: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_wallet_balance: { Args: { _user_id: string }; Returns: number }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
+      contest_status: "draft" | "active" | "voting" | "completed" | "cancelled"
+      report_status: "pending" | "reviewed" | "resolved" | "dismissed"
+      submission_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "winner"
+        | "disqualified"
+      transaction_status: "pending" | "completed" | "failed" | "cancelled"
+      transaction_type: "prize" | "withdrawal" | "bonus"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +580,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+      contest_status: ["draft", "active", "voting", "completed", "cancelled"],
+      report_status: ["pending", "reviewed", "resolved", "dismissed"],
+      submission_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "winner",
+        "disqualified",
+      ],
+      transaction_status: ["pending", "completed", "failed", "cancelled"],
+      transaction_type: ["prize", "withdrawal", "bonus"],
+    },
   },
 } as const
