@@ -1,0 +1,389 @@
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  CreditCard, 
+  Loader2, 
+  CheckCircle, 
+  XCircle, 
+  Clock,
+  User,
+  Trophy,
+  IndianRupee
+} from 'lucide-react';
+
+type TransactionStatus = 'pending' | 'completed' | 'failed' | 'cancelled';
+
+interface Transaction {
+  id: string;
+  type: string;
+  amount: number;
+  currency: string;
+  status: TransactionStatus;
+  payment_method: string | null;
+  payment_reference: string | null;
+  notes: string | null;
+  created_at: string;
+  profile: {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    upi_id: string | null;
+    bank_account_number: string | null;
+    bank_ifsc: string | null;
+  };
+  contest: {
+    title: string;
+  } | null;
+}
+
+const AdminPayments = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get('status') || 'pending';
+
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isProcessModalOpen, setIsProcessModalOpen] = useState(false);
+  const [paymentReference, setPaymentReference] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [statusFilter]);
+
+  const fetchTransactions = async () => {
+    setIsLoading(true);
+    
+    let query = supabase
+      .from('wallet_transactions')
+      .select(`
+        id,
+        type,
+        amount,
+        currency,
+        status,
+        payment_method,
+        payment_reference,
+        notes,
+        created_at,
+        profile:profiles(id, full_name, email, upi_id, bank_account_number, bank_ifsc),
+        contest:contests(title)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (statusFilter !== 'all' && ['pending', 'completed', 'failed', 'cancelled'].includes(statusFilter)) {
+      query = query.eq('status', statusFilter as TransactionStatus);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching transactions:', error);
+    } else {
+      setTransactions(data as unknown as Transaction[]);
+    }
+    setIsLoading(false);
+  };
+
+  const openProcessModal = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setPaymentReference('');
+    setIsProcessModalOpen(true);
+  };
+
+  const processPayment = async (action: 'complete' | 'cancel') => {
+    if (!selectedTransaction || !user) return;
+
+    setIsProcessing(true);
+
+    const { error } = await supabase
+      .from('wallet_transactions')
+      .update({
+        status: action === 'complete' ? 'completed' : 'cancelled',
+        payment_reference: paymentReference || null,
+        processed_by: user.id,
+        processed_at: new Date().toISOString(),
+      })
+      .eq('id', selectedTransaction.id);
+
+    if (error) {
+      toast({
+        title: 'Failed to process payment',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: action === 'complete' ? 'Payment completed' : 'Payment cancelled',
+        description: action === 'complete' 
+          ? `₹${selectedTransaction.amount} has been marked as paid.`
+          : 'Payment has been cancelled.',
+      });
+      setIsProcessModalOpen(false);
+      fetchTransactions();
+    }
+
+    setIsProcessing(false);
+  };
+
+  const getStatusBadge = (status: TransactionStatus) => {
+    const variants: Record<TransactionStatus, { class: string; icon: any }> = {
+      pending: { class: 'bg-amber-500', icon: Clock },
+      completed: { class: 'bg-success', icon: CheckCircle },
+      failed: { class: 'bg-destructive', icon: XCircle },
+      cancelled: { class: 'bg-secondary', icon: XCircle },
+    };
+    const v = variants[status];
+    const Icon = v.icon;
+    return (
+      <Badge className={`${v.class} gap-1`}>
+        <Icon className="h-3 w-3" />
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    );
+  };
+
+  const pendingTotal = transactions
+    .filter((t) => t.status === 'pending')
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-display font-bold">Payments</h1>
+          <p className="text-muted-foreground">Manage prize payouts and withdrawals</p>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <Card className="glass-card border-amber-500/50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Clock className="h-8 w-8 text-amber-500" />
+              <div>
+                <p className="text-2xl font-bold">₹{pendingTotal.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">Pending Payouts</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-8 w-8 text-success" />
+              <div>
+                <p className="text-2xl font-bold">
+                  {transactions.filter((t) => t.status === 'completed').length}
+                </p>
+                <p className="text-xs text-muted-foreground">Completed This Month</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <CreditCard className="h-8 w-8 text-primary" />
+              <div>
+                <p className="text-2xl font-bold">{transactions.length}</p>
+                <p className="text-xs text-muted-foreground">Total Transactions</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-2 mb-6">
+        {['pending', 'completed', 'cancelled', 'all'].map((status) => (
+          <Button
+            key={status}
+            variant={statusFilter === status ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setSearchParams({ status })}
+          >
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </Button>
+        ))}
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : transactions.length === 0 ? (
+        <Card className="glass-card">
+          <CardContent className="p-12 text-center">
+            <CreditCard className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No Transactions Found</h3>
+            <p className="text-muted-foreground">
+              No {statusFilter !== 'all' ? statusFilter : ''} transactions to display.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="glass-card">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-4 font-semibold">User</th>
+                    <th className="text-left p-4 font-semibold">Type</th>
+                    <th className="text-left p-4 font-semibold">Amount</th>
+                    <th className="text-left p-4 font-semibold">Status</th>
+                    <th className="text-left p-4 font-semibold">Date</th>
+                    <th className="text-left p-4 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.map((tx) => (
+                    <tr key={tx.id} className="border-b border-border/50 hover:bg-secondary/30">
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">{tx.profile?.full_name || 'Unknown'}</p>
+                            <p className="text-xs text-muted-foreground">{tx.profile?.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          {tx.type === 'prize' ? (
+                            <Trophy className="h-4 w-4 text-accent" />
+                          ) : (
+                            <IndianRupee className="h-4 w-4 text-primary" />
+                          )}
+                          <span className="capitalize">{tx.type}</span>
+                        </div>
+                        {tx.contest && (
+                          <p className="text-xs text-muted-foreground">{tx.contest.title}</p>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <span className="font-bold">₹{Number(tx.amount).toFixed(2)}</span>
+                      </td>
+                      <td className="p-4">{getStatusBadge(tx.status)}</td>
+                      <td className="p-4 text-sm text-muted-foreground">
+                        {new Date(tx.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="p-4">
+                        {tx.status === 'pending' && (
+                          <Button size="sm" onClick={() => openProcessModal(tx)}>
+                            Process
+                          </Button>
+                        )}
+                        {tx.payment_reference && (
+                          <p className="text-xs text-muted-foreground">Ref: {tx.payment_reference}</p>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Process Payment Modal */}
+      <Dialog open={isProcessModalOpen} onOpenChange={setIsProcessModalOpen}>
+        <DialogContent>
+          {selectedTransaction && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Process Payment</DialogTitle>
+                <DialogDescription>
+                  Approve or cancel this payout request
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div className="p-4 rounded-lg bg-secondary/30">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Recipient</p>
+                      <p className="font-semibold">{selectedTransaction.profile?.full_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Amount</p>
+                      <p className="font-semibold text-lg">₹{Number(selectedTransaction.amount).toFixed(2)}</p>
+                    </div>
+                    {selectedTransaction.profile?.upi_id && (
+                      <div>
+                        <p className="text-muted-foreground">UPI ID</p>
+                        <p className="font-semibold">{selectedTransaction.profile.upi_id}</p>
+                      </div>
+                    )}
+                    {selectedTransaction.profile?.bank_account_number && (
+                      <>
+                        <div>
+                          <p className="text-muted-foreground">Bank Account</p>
+                          <p className="font-semibold">{selectedTransaction.profile.bank_account_number}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">IFSC</p>
+                          <p className="font-semibold">{selectedTransaction.profile.bank_ifsc}</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Payment Reference (Transaction ID)</Label>
+                  <Input
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Enter transaction reference number"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="destructive"
+                    onClick={() => processPayment('cancel')}
+                    disabled={isProcessing}
+                    className="flex-1"
+                  >
+                    Cancel Payment
+                  </Button>
+                  <Button
+                    onClick={() => processPayment('complete')}
+                    disabled={isProcessing}
+                    className="flex-1 bg-success hover:bg-success/90"
+                  >
+                    {isProcessing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Mark as Paid
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default AdminPayments;

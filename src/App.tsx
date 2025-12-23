@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminLayout from "@/components/AdminLayout";
 import Index from "./pages/Index";
 import ContestDetail from "./pages/ContestDetail";
 import Auth from "./pages/Auth";
@@ -21,6 +22,11 @@ import ContestRules from "./pages/ContestRules";
 import Copyright from "./pages/Copyright";
 import AgePolicy from "./pages/AgePolicy";
 import ReportAbuse from "./pages/ReportAbuse";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminContests from "./pages/admin/AdminContests";
+import CreateContest from "./pages/admin/CreateContest";
+import AdminSubmissions from "./pages/admin/AdminSubmissions";
+import AdminPayments from "./pages/admin/AdminPayments";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,36 +45,21 @@ const App = () => (
             <Route path="/contest/:id" element={<ContestDetail />} />
             
             {/* Protected User Routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/submit/:contestId" element={
-              <ProtectedRoute>
-                <SubmitPhoto />
-              </ProtectedRoute>
-            } />
-            <Route path="/submissions" element={
-              <ProtectedRoute>
-                <MySubmissions />
-              </ProtectedRoute>
-            } />
-            <Route path="/wallet" element={
-              <ProtectedRoute>
-                <Wallet />
-              </ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } />
-            <Route path="/notifications" element={
-              <ProtectedRoute>
-                <Notifications />
-              </ProtectedRoute>
-            } />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/submit/:contestId" element={<ProtectedRoute><SubmitPhoto /></ProtectedRoute>} />
+            <Route path="/submissions" element={<ProtectedRoute><MySubmissions /></ProtectedRoute>} />
+            <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+
+            {/* Admin Routes */}
+            <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="contests" element={<AdminContests />} />
+              <Route path="contests/new" element={<CreateContest />} />
+              <Route path="submissions" element={<AdminSubmissions />} />
+              <Route path="payments" element={<AdminPayments />} />
+            </Route>
 
             {/* Legal Pages */}
             <Route path="/terms" element={<Terms />} />
