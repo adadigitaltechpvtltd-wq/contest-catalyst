@@ -169,31 +169,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           full_name: fullName,
           date_of_birth: dateOfBirth.toISOString().split('T')[0],
           is_adult: isAdult,
-          phone: phone,
+          phone,
         },
       },
     });
 
     if (error) {
-      // Check for duplicate email error
-      if (error.message.includes('duplicate key') || 
-          error.message.includes('already registered') ||
-          error.message.includes('User already registered') ||
-          error.message.includes('users_email_key')) {
-        return { error: new Error('This email is already registered. Please use a different email or try logging in.') };
+      const msg = (error.message ?? '').toLowerCase();
+      const isDuplicateEmail =
+        msg.includes('already registered') ||
+        msg.includes('user already registered') ||
+        msg.includes('users_email_key') ||
+        msg.includes('duplicate key') ||
+        msg.includes('email already') ||
+        msg.includes('database error saving new user');
+
+      if (isDuplicateEmail) {
+        return {
+          error: new Error(
+            'This email is already registered. Please log in or reset your password.'
+          ),
+        };
       }
+
       return { error };
     }
 
     // Update profile with additional data
-    const { data: { user: newUser } } = await supabase.auth.getUser();
+    const {
+      data: { user: newUser },
+    } = await supabase.auth.getUser();
     if (newUser) {
-      await supabase.from('profiles').update({
-        full_name: fullName,
-        date_of_birth: dateOfBirth.toISOString().split('T')[0],
-        is_adult: isAdult,
-        phone: phone,
-      }).eq('id', newUser.id);
+      await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          date_of_birth: dateOfBirth.toISOString().split('T')[0],
+          is_adult: isAdult,
+          phone,
+        })
+        .eq('id', newUser.id);
     }
 
     return { error: null };

@@ -163,14 +163,20 @@ const Auth = () => {
     const { error } = await signUp(signupEmail, signupPassword, fullName, dateOfBirth, cleanedPhone);
 
     if (error) {
-      // Show user-friendly message for duplicate email
-      const errorMessage = error.message.includes('Database error') 
-        ? 'This email is already registered. Please use a different email or try logging in.'
-        : error.message;
-      
+      const msg = (error.message ?? '').toLowerCase();
+      const isDuplicateEmail =
+        msg.includes('already registered') ||
+        msg.includes('user already registered') ||
+        msg.includes('users_email_key') ||
+        msg.includes('duplicate key') ||
+        msg.includes('email already') ||
+        msg.includes('database error saving new user');
+
       toast({
-        title: 'Signup failed',
-        description: errorMessage,
+        title: isDuplicateEmail ? 'Email already registered' : 'Signup failed',
+        description: isDuplicateEmail
+          ? 'This email already has an account. Please log in or reset your password.'
+          : error.message,
         variant: 'destructive',
       });
     } else {
