@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -33,10 +33,29 @@ const FieldError = ({ error }: { error?: string }) => {
 const Auth = () => {
   const { user, isLoading, signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState('login');
+  
+  // Determine active tab from URL
+  const getTabFromPath = () => {
+    if (location.pathname === '/signup') return 'signup';
+    return 'login';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getTabFromPath);
+  
+  // Sync tab state with URL changes
+  useEffect(() => {
+    setActiveTab(getTabFromPath());
+  }, [location.pathname]);
+  
+  // Handle tab change - update URL without page reload
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    navigate(value === 'signup' ? '/signup' : '/login', { replace: true });
+  };
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -373,6 +392,7 @@ const Auth = () => {
     setShowForgotPassword(false);
     setForgotPasswordSent(false);
     setActiveTab('login');
+    navigate('/login', { replace: true });
     // Clear signup form
     setSignupEmail('');
     setSignupPassword('');
@@ -591,7 +611,7 @@ const Auth = () => {
           </div>
 
           <Card className="glass-card">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
               <CardHeader>
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="login">Login</TabsTrigger>
