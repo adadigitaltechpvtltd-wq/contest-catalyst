@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
 import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator';
-import CountryCodeSelect from '@/components/CountryCodeSelect';
+import CountryCodeSelect, { detectCountryCode } from '@/components/CountryCodeSelect';
 
 // Validation helper component
 const FieldError = ({ error }: { error?: string }) => {
@@ -52,7 +52,7 @@ const Auth = () => {
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState<Date>();
-  const [countryCode, setCountryCode] = useState('+91');
+  const [countryCode, setCountryCode] = useState(() => detectCountryCode());
   const [phoneNumber, setPhoneNumber] = useState('');
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
