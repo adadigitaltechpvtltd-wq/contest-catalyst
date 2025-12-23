@@ -9,11 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Camera, Loader2 } from 'lucide-react';
+import { CalendarIcon, Camera, Loader2, Mail, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
+import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator';
 
 const Auth = () => {
   const { user, isLoading, signIn, signUp } = useAuth();
@@ -21,6 +22,9 @@ const Auth = () => {
   const { toast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
@@ -70,6 +74,15 @@ const Auth = () => {
     setIsSubmitting(false);
   };
 
+  const validatePasswordStrength = (password: string): boolean => {
+    const hasMinLength = password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    
+    return hasMinLength && hasUppercase && hasLowercase && hasNumber;
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -77,6 +90,15 @@ const Auth = () => {
       toast({
         title: 'Passwords do not match',
         description: 'Please make sure your passwords match.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!validatePasswordStrength(signupPassword)) {
+      toast({
+        title: 'Password too weak',
+        description: 'Please create a stronger password with at least 8 characters, uppercase, lowercase, and a number.',
         variant: 'destructive',
       });
       return;
@@ -120,14 +142,78 @@ const Auth = () => {
         variant: 'destructive',
       });
     } else {
-      toast({
-        title: 'Account created!',
-        description: 'Please check your email to verify your account.',
-      });
+      setRegisteredEmail(signupEmail);
+      setShowEmailConfirmation(true);
     }
 
     setIsSubmitting(false);
   };
+
+  const handleBackToLogin = () => {
+    setShowEmailConfirmation(false);
+    setActiveTab('login');
+    // Clear signup form
+    setSignupEmail('');
+    setSignupPassword('');
+    setSignupConfirmPassword('');
+    setFullName('');
+    setDateOfBirth(undefined);
+    setAgeConfirmed(false);
+    setTermsAccepted(false);
+  };
+
+  // Email confirmation view
+  if (showEmailConfirmation) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-12 pt-24">
+          <div className="max-w-md mx-auto">
+            <Card className="glass-card">
+              <CardContent className="pt-8 pb-8">
+                <div className="text-center space-y-6">
+                  <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Mail className="h-8 w-8 text-primary" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-display font-bold">Check your email</h2>
+                    <p className="text-muted-foreground">
+                      We've sent a verification link to
+                    </p>
+                    <p className="font-medium text-foreground">{registeredEmail}</p>
+                  </div>
+
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>Click the link in the email to verify your account</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>After verification, come back here to login</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Button
+                      onClick={handleBackToLogin}
+                      className="w-full gradient-primary"
+                    >
+                      Back to Login
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Didn't receive the email? Check your spam folder or try signing up again.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -145,7 +231,7 @@ const Auth = () => {
           </div>
 
           <Card className="glass-card">
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <CardHeader>
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="login">Login</TabsTrigger>
@@ -255,8 +341,9 @@ const Auth = () => {
                         value={signupPassword}
                         onChange={(e) => setSignupPassword(e.target.value)}
                         required
-                        minLength={6}
+                        minLength={8}
                       />
+                      <PasswordStrengthIndicator password={signupPassword} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-confirm-password">Confirm Password</Label>
@@ -267,7 +354,7 @@ const Auth = () => {
                         value={signupConfirmPassword}
                         onChange={(e) => setSignupConfirmPassword(e.target.value)}
                         required
-                        minLength={6}
+                        minLength={8}
                       />
                     </div>
                     <div className="flex items-center space-x-2">
