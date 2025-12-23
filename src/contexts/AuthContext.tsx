@@ -14,6 +14,8 @@ interface Profile {
   is_adult: boolean;
   phone: string | null;
   upi_id: string | null;
+  bank_account_number: string | null;
+  bank_ifsc: string | null;
   kyc_verified: boolean;
 }
 
