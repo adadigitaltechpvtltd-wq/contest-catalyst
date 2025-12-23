@@ -136,7 +136,11 @@ const Auth = () => {
       return;
     }
 
-    if (!phone.trim()) {
+    // International phone validation: must start with + and country code, 7-15 digits total
+    const phoneRegex = /^\+[1-9]\d{6,14}$/;
+    const cleanedPhone = phone.replace(/[\s\-\(\)]/g, ''); // Remove spaces, dashes, parentheses
+    
+    if (!cleanedPhone) {
       toast({
         title: 'Phone number required',
         description: 'Please enter your phone number for payment purposes.',
@@ -145,9 +149,18 @@ const Auth = () => {
       return;
     }
 
+    if (!phoneRegex.test(cleanedPhone)) {
+      toast({
+        title: 'Invalid phone number',
+        description: 'Please enter a valid international phone number starting with country code (e.g., +91 9876543210, +1 5551234567).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    const { error } = await signUp(signupEmail, signupPassword, fullName, dateOfBirth, phone);
+    const { error } = await signUp(signupEmail, signupPassword, fullName, dateOfBirth, cleanedPhone);
 
     if (error) {
       // Show user-friendly message for duplicate email
