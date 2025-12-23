@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
 import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator';
+import CountryCodeSelect from '@/components/CountryCodeSelect';
 
 // Validation helper component
 const FieldError = ({ error }: { error?: string }) => {
@@ -51,7 +52,8 @@ const Auth = () => {
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState<Date>();
-  const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
@@ -94,12 +96,13 @@ const Auth = () => {
 
     // Phone validation
     if (touched.phone) {
-      const phoneRegex = /^\+[1-9]\d{6,14}$/;
-      const cleanedPhone = phone.replace(/[\s\-\(\)]/g, '');
+      const cleanedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
       if (!cleanedPhone) {
         errors.phone = 'Phone number is required';
-      } else if (!phoneRegex.test(cleanedPhone)) {
-        errors.phone = 'Enter valid international format (e.g., +91 9876543210)';
+      } else if (cleanedPhone.length < 6 || cleanedPhone.length > 14) {
+        errors.phone = 'Phone number must be 6-14 digits';
+      } else if (!/^\d+$/.test(cleanedPhone)) {
+        errors.phone = 'Phone number must contain only digits';
       }
     }
 
@@ -111,7 +114,7 @@ const Auth = () => {
     }
 
     return errors;
-  }, [fullName, signupEmail, phone, signupPassword, signupConfirmPassword, touched]);
+  }, [fullName, signupEmail, phoneNumber, signupPassword, signupConfirmPassword, touched]);
 
   const handleBlur = (field: keyof typeof touched) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
@@ -271,9 +274,8 @@ const Auth = () => {
       return;
     }
 
-    // International phone validation: must start with + and country code, 7-15 digits total
-    const phoneRegex = /^\+[1-9]\d{6,14}$/;
-    const cleanedPhone = phone.replace(/[\s\-\(\)]/g, ''); // Remove spaces, dashes, parentheses
+    // Phone validation
+    const cleanedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
     
     if (!cleanedPhone) {
       toast({
@@ -284,18 +286,20 @@ const Auth = () => {
       return;
     }
 
-    if (!phoneRegex.test(cleanedPhone)) {
+    if (cleanedPhone.length < 6 || cleanedPhone.length > 14 || !/^\d+$/.test(cleanedPhone)) {
       toast({
         title: 'Invalid phone number',
-        description: 'Please enter a valid international phone number starting with country code (e.g., +91 9876543210, +1 5551234567).',
+        description: 'Please enter a valid phone number (6-14 digits).',
         variant: 'destructive',
       });
       return;
     }
 
+    const fullPhone = `${countryCode}${cleanedPhone}`;
+
     setIsSubmitting(true);
 
-    const { error } = await signUp(signupEmail, signupPassword, fullName, dateOfBirth, cleanedPhone);
+    const { error } = await signUp(signupEmail, signupPassword, fullName, dateOfBirth, fullPhone);
 
     if (error) {
       const msg = (error.message ?? '').toLowerCase();
@@ -333,7 +337,8 @@ const Auth = () => {
     setSignupConfirmPassword('');
     setFullName('');
     setDateOfBirth(undefined);
-    setPhone('');
+    setCountryCode('+91');
+    setPhoneNumber('');
     setAgeConfirmed(false);
     setTermsAccepted(false);
     setForgotPasswordEmail('');
@@ -631,21 +636,27 @@ const Auth = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="+91 9876543210"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        onBlur={() => handleBlur('phone')}
-                        className={cn(fieldErrors.phone && 'border-destructive')}
-                        required
-                      />
+                      <div className="flex gap-2">
+                        <CountryCodeSelect 
+                          value={countryCode} 
+                          onChange={setCountryCode} 
+                        />
+                        <Input
+                          id="phone"
+                          type="tel"
+                          placeholder="9876543210"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          onBlur={() => handleBlur('phone')}
+                          className={cn('flex-1', fieldErrors.phone && 'border-destructive')}
+                          required
+                        />
+                      </div>
                       {fieldErrors.phone ? (
                         <FieldError error={fieldErrors.phone} />
                       ) : (
                         <p className="text-xs text-muted-foreground">
-                          Required for prize payments. Include country code (e.g., +91)
+                          Required for prize payments
                         </p>
                       )}
                     </div>
