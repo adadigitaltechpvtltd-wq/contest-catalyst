@@ -15,8 +15,13 @@
     --popover: 0 0% 7%;
     --popover-foreground: 0 0% 98%;
 
+    /* Brand accents (HSL) */
     --primary: 4 85% 58%;
     --primary-foreground: 0 0% 100%;
+    --warm-orange: 24 95% 56%;
+    --warm-pink: 330 92% 60%;
+    --cool-blue: 214 96% 62%;
+    --cool-purple: 260 88% 66%;
 
     --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 98%;
@@ -79,28 +84,56 @@
   }
 
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(35 100% 50%));
-  }
-
-  .gradient-hero {
-    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(0 0% 6%) 100%);
+    background: linear-gradient(
+      90deg,
+      hsl(var(--warm-orange)),
+      hsl(var(--primary)),
+      hsl(var(--warm-pink))
+    );
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(35 100% 55%));
+    background: linear-gradient(
+      90deg,
+      hsl(var(--warm-orange)),
+      hsl(var(--primary)),
+      hsl(var(--warm-pink))
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
+  .text-gradient-cool {
+    background: linear-gradient(90deg, hsl(var(--cool-blue)), hsl(var(--cool-purple)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-atmosphere {
+    background:
+      radial-gradient(900px 420px at 50% 18%, hsl(var(--cool-purple) / 0.18), transparent 60%),
+      radial-gradient(650px 360px at 72% 22%, hsl(var(--primary) / 0.22), transparent 60%),
+      radial-gradient(600px 340px at 22% 82%, hsl(var(--cool-blue) / 0.16), transparent 60%),
+      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(0 0% 2%) 100%);
+  }
+
   .shadow-glow {
-    box-shadow: 0 0 60px hsl(var(--primary) / 0.3);
+    box-shadow: 0 0 80px hsl(var(--primary) / 0.25);
   }
 
   .glass-card {
-    background: hsl(0 0% 9% / 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid hsl(0 0% 20%);
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 10% / 0.72),
+      hsl(0 0% 7% / 0.72)
+    );
+    backdrop-filter: blur(16px);
+    border: 1px solid hsl(0 0% 16%);
+    box-shadow:
+      0 30px 90px hsl(0 0% 0% / 0.55),
+      inset 0 1px 0 hsl(0 0% 100% / 0.06);
   }
 }
 
