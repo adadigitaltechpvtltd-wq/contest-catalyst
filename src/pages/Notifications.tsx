@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -30,55 +31,30 @@ interface Notification {
 
 const Notifications = () => {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { markAsRead, markAllAsRead, unreadCount } = useRealtimeNotifications();
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!user) return;
-
+  const { data: notifications = [], isLoading } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      if (!user) return [];
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching notifications:', error);
-      } else {
-        setNotifications(data);
-      }
-      setIsLoading(false);
-    };
+      if (error) throw error;
+      return data as Notification[];
+    },
+    enabled: !!user,
+  });
 
-    fetchNotifications();
-  }, [user]);
-
-  const markAsRead = async (notificationId: string) => {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('id', notificationId);
-
-    if (!error) {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n))
-      );
-    }
+  const handleMarkAsRead = async (notificationId: string) => {
+    await markAsRead(notificationId);
   };
 
-  const markAllAsRead = async () => {
-    if (!user) return;
-
-    const { error } = await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('user_id', user.id)
-      .eq('is_read', false);
-
-    if (!error) {
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    }
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
   };
 
   const getNotificationIcon = (type: string) => {
@@ -96,7 +72,7 @@ const Notifications = () => {
     }
   };
 
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -133,7 +109,7 @@ const Notifications = () => {
               </p>
             </div>
             {unreadCount > 0 && (
-              <Button variant="outline" onClick={markAllAsRead}>
+              <Button variant="outline" onClick={handleMarkAllAsRead}>
                 <CheckCheck className="h-4 w-4 mr-2" />
                 Mark all read
               </Button>
@@ -186,7 +162,7 @@ const Notifications = () => {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 flex-shrink-0"
-                              onClick={() => markAsRead(notification.id)}
+                              onClick={() => handleMarkAsRead(notification.id)}
                             >
                               <Check className="h-4 w-4" />
                             </Button>
