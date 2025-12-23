@@ -1,7 +1,9 @@
 import { Clock, DollarSign, Users, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 interface Contest {
+  id: string;
   title: string;
   description: string;
   prize: string;
@@ -15,6 +17,7 @@ interface Contest {
 
 const contests: Contest[] = [
   {
+    id: "morning-routine",
     title: '"My Morning Routine"',
     description: "Share a photo of your morning ritual. Coffee? Yoga? Chaos? Show us your real mornings!",
     prize: "$500",
@@ -26,6 +29,7 @@ const contests: Contest[] = [
     gradient: "from-orange-500/20 to-red-500/20",
   },
   {
+    id: "pet-of-the-week",
     title: '"Pet of the Week"',
     description: "Show off your furry, feathered, or scaly friend! Most adorable pet wins.",
     prize: "$300 + Gift Card",
@@ -37,6 +41,7 @@ const contests: Contest[] = [
     gradient: "from-purple-500/20 to-pink-500/20",
   },
   {
+    id: "summer-vibes",
     title: '"Summer Vibes"',
     description: "Capture your best summer moment. Beach, BBQ, or backyard - we want to see it!",
     prize: "$750 + Merchandise",
@@ -48,6 +53,7 @@ const contests: Contest[] = [
     gradient: "from-yellow-500/20 to-orange-500/20",
   },
   {
+    id: "desk-setup-goals",
     title: '"Desk Setup Goals"',
     description: "Show us your workspace. Clean or cluttered, we love seeing where the magic happens.",
     prize: "$1000 + tech bundle",
@@ -132,9 +138,11 @@ const ActiveContests = () => {
 
                 {/* Action */}
                 {contest.status === "live" ? (
-                  <Button className="w-full">
-                    Enter Contest <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
+                  <Link to={`/contest/${contest.id}`}>
+                    <Button className="w-full">
+                      Enter Contest <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
                 ) : contest.status === "soon" ? (
                   <Button variant="outline" className="w-full">
                     Notify Me <ArrowRight className="w-4 h-4 ml-1" />
