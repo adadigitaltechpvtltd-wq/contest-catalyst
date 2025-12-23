@@ -116,7 +116,7 @@ const Navbar = () => {
                   </DropdownMenu>
                 </>
               ) : (
-                <Link to="/auth">
+                <Link to="/login">
                   <Button size="sm" className="hidden md:inline-flex">
                     Log in / Join Free
                   </Button>

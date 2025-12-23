@@ -151,7 +151,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
               Log Out
             </Button>
           ) : (
-            <Link to="/auth" onClick={onClose}>
+            <Link to="/login" onClick={onClose}>
               <Button className="w-full">
                 Log in / Join Free
               </Button>

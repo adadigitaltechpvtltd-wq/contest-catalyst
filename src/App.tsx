@@ -46,6 +46,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Auth />} />
+            <Route path="/signup" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/contests" element={<Contests />} />
             <Route path="/contest/:id" element={<ContestDetail />} />
