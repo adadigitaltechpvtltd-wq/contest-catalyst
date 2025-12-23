@@ -93,7 +93,7 @@ const Auth = () => {
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(
     savedData?.dateOfBirth ? new Date(savedData.dateOfBirth) : undefined
   );
-  const [countryCode, setCountryCode] = useState(savedData?.countryCode || detectCountryCode());
+  const [countryCode, setCountryCode] = useState(detectCountryCode());
   const [phoneNumber, setPhoneNumber] = useState(savedData?.phoneNumber || '');
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -107,14 +107,13 @@ const Auth = () => {
     signupConfirmPassword: false,
   });
 
-  // Auto-save form data to localStorage (excluding passwords)
+  // Auto-save form data to localStorage (excluding passwords and country code - country code auto-detects each session)
   useEffect(() => {
     const formData = {
       loginEmail,
       signupEmail,
       fullName,
       dateOfBirth: dateOfBirth?.toISOString(),
-      countryCode,
       phoneNumber,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
