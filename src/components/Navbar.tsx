@@ -116,18 +116,11 @@ const Navbar = () => {
                   </DropdownMenu>
                 </>
               ) : (
-                <>
-                  <Link to="/auth">
-                    <Button variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:text-foreground">
-                      Log In
-                    </Button>
-                  </Link>
-                  <Link to="/auth">
-                    <Button size="sm" className="hidden md:inline-flex">
-                      Join Free
-                    </Button>
-                  </Link>
-                </>
+                <Link to="/auth">
+                  <Button size="sm" className="hidden md:inline-flex">
+                    Log in / Join Free
+                  </Button>
+                </Link>
               )}
               
               {/* Mobile menu button */}

@@ -43,18 +43,39 @@ const Auth = () => {
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
 
+  // Storage key for form auto-save
+  const STORAGE_KEY = 'auth_form_draft';
+
+  // Load saved form data from localStorage
+  const loadSavedFormData = () => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    return null;
+  };
+
+  // Initialize state with saved data or defaults
+  const savedData = loadSavedFormData();
+
   // Login state
-  const [loginEmail, setLoginEmail] = useState('');
+  const [loginEmail, setLoginEmail] = useState(savedData?.loginEmail || '');
   const [loginPassword, setLoginPassword] = useState('');
   
   // Signup state
-  const [signupEmail, setSignupEmail] = useState('');
+  const [signupEmail, setSignupEmail] = useState(savedData?.signupEmail || '');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState<Date>();
-  const [countryCode, setCountryCode] = useState(() => detectCountryCode());
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [fullName, setFullName] = useState(savedData?.fullName || '');
+  const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(
+    savedData?.dateOfBirth ? new Date(savedData.dateOfBirth) : undefined
+  );
+  const [countryCode, setCountryCode] = useState(savedData?.countryCode || detectCountryCode());
+  const [phoneNumber, setPhoneNumber] = useState(savedData?.phoneNumber || '');
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
@@ -66,6 +87,24 @@ const Auth = () => {
     signupPassword: false,
     signupConfirmPassword: false,
   });
+
+  // Auto-save form data to localStorage (excluding passwords)
+  useEffect(() => {
+    const formData = {
+      loginEmail,
+      signupEmail,
+      fullName,
+      dateOfBirth: dateOfBirth?.toISOString(),
+      countryCode,
+      phoneNumber,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+  }, [loginEmail, signupEmail, fullName, dateOfBirth, countryCode, phoneNumber]);
+
+  // Clear saved form data after successful auth
+  const clearSavedFormData = () => {
+    localStorage.removeItem(STORAGE_KEY);
+  };
 
   // Date restrictions for 18+ (max date is 18 years ago from today)
   const maxDate = useMemo(() => subYears(new Date(), 18), []);
@@ -146,6 +185,7 @@ const Auth = () => {
         variant: 'destructive',
       });
     } else {
+      clearSavedFormData();
       toast({
         title: 'Welcome back!',
         description: 'You have successfully logged in.',
@@ -320,6 +360,7 @@ const Auth = () => {
         variant: 'destructive',
       });
     } else {
+      clearSavedFormData();
       setRegisteredEmail(signupEmail);
       setShowEmailConfirmation(true);
     }
