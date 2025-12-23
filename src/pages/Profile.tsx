@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 
 const Profile = () => {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, paymentDetails, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -42,11 +42,16 @@ const Profile = () => {
       setFullName(profile.full_name || '');
       setBio(profile.bio || '');
       setPhone(profile.phone || '');
-      setUpiId(profile.upi_id || '');
-      setBankAccountNumber(profile.bank_account_number || '');
-      setBankIfsc(profile.bank_ifsc || '');
     }
   }, [profile]);
+
+  useEffect(() => {
+    if (paymentDetails) {
+      setUpiId(paymentDetails.upi_id || '');
+      setBankAccountNumber(paymentDetails.bank_account_number || '');
+      setBankIfsc(paymentDetails.bank_ifsc || '');
+    }
+  }, [paymentDetails]);
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -84,14 +89,15 @@ const Profile = () => {
 
     setIsSaving(true);
 
+    // Upsert into payment_details table
     const { error } = await supabase
-      .from('profiles')
-      .update({
+      .from('payment_details')
+      .upsert({
+        user_id: user.id,
         upi_id: upiId,
         bank_account_number: bankAccountNumber,
         bank_ifsc: bankIfsc,
-      })
-      .eq('id', user.id);
+      }, { onConflict: 'user_id' });
 
     if (error) {
       toast({
@@ -102,7 +108,7 @@ const Profile = () => {
     } else {
       toast({
         title: 'Payment info updated',
-        description: 'Your payment details have been saved.',
+        description: 'Your payment details have been saved securely.',
       });
       await refreshProfile();
     }
