@@ -46,7 +46,7 @@ const Auth = () => {
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  
   // Signup state
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
@@ -590,16 +590,6 @@ const Auth = () => {
                         onChange={(e) => setLoginPassword(e.target.value)}
                         required
                       />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="remember-me"
-                        checked={rememberMe}
-                        onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                      />
-                      <Label htmlFor="remember-me" className="text-sm text-muted-foreground">
-                        Remember me
-                      </Label>
                     </div>
                     <Button
                       type="submit"
