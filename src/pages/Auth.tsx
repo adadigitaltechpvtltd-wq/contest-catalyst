@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
 import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator';
 import CountryCodeSelect, { detectCountryCode } from '@/components/CountryCodeSelect';
+import PasswordInput from '@/components/PasswordInput';
 
 // Validation helper component
 const FieldError = ({ error }: { error?: string }) => {
@@ -45,7 +46,7 @@ const Auth = () => {
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-
+  const [rememberMe, setRememberMe] = useState(false);
   // Signup state
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
@@ -582,14 +583,23 @@ const Auth = () => {
                           Forgot password?
                         </button>
                       </div>
-                      <Input
+                      <PasswordInput
                         id="login-password"
-                        type="password"
                         placeholder="••••••••"
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
                         required
                       />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="remember-me"
+                        checked={rememberMe}
+                        onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                      />
+                      <Label htmlFor="remember-me" className="text-sm text-muted-foreground">
+                        Remember me
+                      </Label>
                     </div>
                     <Button
                       type="submit"
@@ -696,9 +706,8 @@ const Auth = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-password">Password</Label>
-                      <Input
+                      <PasswordInput
                         id="signup-password"
-                        type="password"
                         placeholder="••••••••"
                         value={signupPassword}
                         onChange={(e) => setSignupPassword(e.target.value)}
@@ -710,9 +719,8 @@ const Auth = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-                      <Input
+                      <PasswordInput
                         id="signup-confirm-password"
-                        type="password"
                         placeholder="••••••••"
                         value={signupConfirmPassword}
                         onChange={(e) => setSignupConfirmPassword(e.target.value)}
