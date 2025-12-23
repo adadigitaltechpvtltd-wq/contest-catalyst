@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { escapeLikePattern } from "@/lib/searchUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -77,7 +78,8 @@ const AdminReports = () => {
       }
 
       if (searchTerm) {
-        query = query.or(`reason.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+        const safeTerm = escapeLikePattern(searchTerm);
+        query = query.or(`reason.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%`);
       }
 
       const { data, error } = await query;

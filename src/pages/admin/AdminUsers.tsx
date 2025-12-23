@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { escapeLikePattern } from "@/lib/searchUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +69,8 @@ const AdminUsers = () => {
         .order("created_at", { ascending: false });
 
       if (searchTerm) {
-        query = query.or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
+        const safeTerm = escapeLikePattern(searchTerm);
+        query = query.or(`full_name.ilike.%${safeTerm}%,email.ilike.%${safeTerm}%`);
       }
 
       const { data, error } = await query;
