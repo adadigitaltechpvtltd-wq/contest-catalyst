@@ -1,4 +1,5 @@
 import { RefreshCw, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const leaders = [
@@ -83,11 +84,12 @@ const Leaderboard = () => {
               ))}
             </div>
 
-            {/* Footer */}
             <div className="px-6 py-4 border-t border-border">
-              <Button variant="outline" className="w-full">
-                View Full Leaderboard
-              </Button>
+              <Link to="/leaderboard">
+                <Button variant="outline" className="w-full">
+                  View Full Leaderboard
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

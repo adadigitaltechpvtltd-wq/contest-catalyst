@@ -27,6 +27,8 @@ import AdminContests from "./pages/admin/AdminContests";
 import CreateContest from "./pages/admin/CreateContest";
 import AdminSubmissions from "./pages/admin/AdminSubmissions";
 import AdminPayments from "./pages/admin/AdminPayments";
+import AdminUsers from "./pages/admin/AdminUsers";
+import LeaderboardPage from "./pages/LeaderboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +45,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/contests" element={<Contests />} />
             <Route path="/contest/:id" element={<ContestDetail />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
             
             {/* Protected User Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -59,6 +62,7 @@ const App = () => (
               <Route path="contests/new" element={<CreateContest />} />
               <Route path="submissions" element={<AdminSubmissions />} />
               <Route path="payments" element={<AdminPayments />} />
+              <Route path="users" element={<AdminUsers />} />
             </Route>
 
             {/* Legal Pages */}

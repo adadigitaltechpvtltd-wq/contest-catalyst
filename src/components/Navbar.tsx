@@ -22,9 +22,9 @@ const Navbar = () => {
 
             {/* Center nav - Desktop */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="/#contests" className="text-foreground font-medium text-sm hover:text-primary transition-colors">Contests</a>
+              <Link to="/contests" className="text-foreground font-medium text-sm hover:text-primary transition-colors">Contests</Link>
               <a href="/#how-it-works" className="text-muted-foreground text-sm hover:text-foreground transition-colors">How It Works</a>
-              <a href="/#leaderboard" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Leaderboard</a>
+              <Link to="/leaderboard" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Leaderboard</Link>
               <a href="/#brands" className="text-muted-foreground text-sm hover:text-foreground transition-colors">For Brands</a>
             </div>
 
