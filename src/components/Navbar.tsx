@@ -30,12 +30,16 @@ const Navbar = () => {
 
             {/* Right side */}
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:text-foreground">
-                Log In
-              </Button>
-              <Button size="sm" className="hidden md:inline-flex">
-                Join Free
-              </Button>
+              <Link to="/auth">
+                <Button variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:text-foreground">
+                  Log In
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button size="sm" className="hidden md:inline-flex">
+                  Join Free
+                </Button>
+              </Link>
               
               {/* Mobile menu button */}
               <button
