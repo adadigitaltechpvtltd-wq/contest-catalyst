@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { getUserFriendlyError } from '@/lib/errorMapping';
 import { AlertTriangle, Flag, Loader2, CheckCircle } from 'lucide-react';
 
 const ReportAbuse = () => {
@@ -56,10 +57,10 @@ const ReportAbuse = () => {
         title: 'Report submitted',
         description: 'Thank you for helping keep our community safe.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Failed to submit report',
-        description: error.message || 'An error occurred. Please try again.',
+        description: getUserFriendlyError(error),
         variant: 'destructive',
       });
     }
