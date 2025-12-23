@@ -153,9 +153,9 @@ const Privacy = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">10. Children and Privacy</h2>
                 <p className="text-muted-foreground mb-4">
-                  Our platform is available to users aged 13 and above. We do not knowingly collect 
-                  information from children under 13. If you believe we have collected data from a 
-                  child under 13, please contact us immediately.
+                  Our platform is available to users aged 18 and above only. We do not knowingly collect 
+                  information from minors. If you believe we have collected data from someone 
+                  under 18, please contact us immediately.
                 </p>
               </section>
 

@@ -40,15 +40,11 @@ const Terms = () => {
                   To use Contestify, you must:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>Be at least 13 years of age</li>
+                  <li>Be at least 18 years of age</li>
                   <li>Have a valid email address</li>
                   <li>Provide accurate information during registration</li>
                   <li>Comply with all applicable laws in your jurisdiction</li>
                 </ul>
-                <p className="text-muted-foreground mt-4">
-                  <strong>Note:</strong> Users under 18 years of age may participate but are subject to 
-                  payout restrictions as outlined in our Age & Eligibility Policy.
-                </p>
               </section>
 
               <section className="mb-8">
