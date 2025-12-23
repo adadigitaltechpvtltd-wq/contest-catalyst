@@ -1,12 +1,7 @@
+import { Link } from "react-router-dom";
 import { Trophy, Instagram, Twitter, Youtube, Linkedin } from "lucide-react";
 
 const Footer = () => {
-  const footerLinks = {
-    Platform: ["Browse Contests", "How It Works", "Leaderboard", "Prizes & Payouts"],
-    "For Brands": ["Partner With Us", "Success Stories", "Pricing", "Brand Resources"],
-    Connect: ["Help Center", "Contact Us"],
-  };
-
   const socialLinks = [
     { icon: Instagram, href: "#" },
     { icon: Twitter, href: "#" },
@@ -20,32 +15,47 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
           {/* Logo & Description */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
+            <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
                 <Trophy className="w-4 h-4 text-primary-foreground" />
               </div>
               <span className="font-display font-bold text-foreground">Contestify</span>
-            </div>
+            </Link>
             <p className="text-sm text-muted-foreground mb-4">
-              The gamified platform where creativity meets rewards. Join thousands of creators winning every week.
+              Skill-based photography contests where creativity meets rewards. Free to enter, win real prizes.
             </p>
           </div>
 
-          {/* Links */}
-          {Object.entries(footerLinks).map(([title, links]) => (
-            <div key={title}>
-              <h4 className="font-display font-semibold text-foreground mb-4">{title}</h4>
-              <ul className="space-y-2">
-                {links.map((link) => (
-                  <li key={link}>
-                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      {link}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Platform */}
+          <div>
+            <h4 className="font-display font-semibold text-foreground mb-4">Platform</h4>
+            <ul className="space-y-2">
+              <li><Link to="/contests" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Browse Contests</Link></li>
+              <li><Link to="/#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</Link></li>
+              <li><Link to="/leaderboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Leaderboard</Link></li>
+              <li><Link to="/contest-rules" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contest Rules</Link></li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h4 className="font-display font-semibold text-foreground mb-4">Legal</h4>
+            <ul className="space-y-2">
+              <li><Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms & Conditions</Link></li>
+              <li><Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/copyright" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Copyright Policy</Link></li>
+              <li><Link to="/age-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Age & Eligibility</Link></li>
+            </ul>
+          </div>
+
+          {/* Support */}
+          <div>
+            <h4 className="font-display font-semibold text-foreground mb-4">Support</h4>
+            <ul className="space-y-2">
+              <li><Link to="/report" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Report Abuse</Link></li>
+              <li><a href="mailto:support@contestify.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact Us</a></li>
+            </ul>
+          </div>
 
           {/* Social */}
           <div>
@@ -61,18 +71,6 @@ const Footer = () => {
                 </a>
               ))}
             </div>
-            <ul className="space-y-2">
-              <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Help Center
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Contact Us
-                </a>
-              </li>
-            </ul>
           </div>
         </div>
 
@@ -82,13 +80,10 @@ const Footer = () => {
             © 2024 Contestify. All rights reserved.
           </p>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-foreground transition-colors">Cookie Policy</a>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <Link to="/contest-rules" className="hover:text-foreground transition-colors">Rules</Link>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Edit on <span className="text-primary">Lovable</span>
-          </p>
         </div>
       </div>
     </footer>
