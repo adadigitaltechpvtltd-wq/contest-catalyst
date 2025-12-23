@@ -129,6 +129,8 @@ export type Database = {
           avatar_url: string | null
           bank_account_number: string | null
           bank_ifsc: string | null
+          banned_at: string | null
+          banned_reason: string | null
           bio: string | null
           created_at: string
           date_of_birth: string | null
@@ -136,6 +138,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_adult: boolean | null
+          is_banned: boolean | null
           kyc_verified: boolean | null
           phone: string | null
           updated_at: string
@@ -145,6 +148,8 @@ export type Database = {
           avatar_url?: string | null
           bank_account_number?: string | null
           bank_ifsc?: string | null
+          banned_at?: string | null
+          banned_reason?: string | null
           bio?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -152,6 +157,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_adult?: boolean | null
+          is_banned?: boolean | null
           kyc_verified?: boolean | null
           phone?: string | null
           updated_at?: string
@@ -161,6 +167,8 @@ export type Database = {
           avatar_url?: string | null
           bank_account_number?: string | null
           bank_ifsc?: string | null
+          banned_at?: string | null
+          banned_reason?: string | null
           bio?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -168,6 +176,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_adult?: boolean | null
+          is_banned?: boolean | null
           kyc_verified?: boolean | null
           phone?: string | null
           updated_at?: string
@@ -453,7 +462,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      leaderboard_stats: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          contests_entered: number | null
+          full_name: string | null
+          total_submissions: number | null
+          user_id: string | null
+          wins: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_wallet_balance: { Args: { _user_id: string }; Returns: number }
