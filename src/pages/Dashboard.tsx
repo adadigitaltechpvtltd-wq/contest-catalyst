@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,8 +45,8 @@ const Dashboard = () => {
     walletBalance: 0,
   });
   const [activeContests, setActiveContests] = useState<ActiveContest[]>([]);
-  const [notifications, setNotifications] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  const { unreadCount: notifications } = useRealtimeNotifications();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -101,14 +102,6 @@ const Dashboard = () => {
         );
       }
 
-      // Fetch unread notifications count
-      const { count } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false);
-
-      setNotifications(count || 0);
       setIsLoading(false);
     };
 
