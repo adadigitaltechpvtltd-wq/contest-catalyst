@@ -11,6 +11,10 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Contests from "./pages/Contests";
 import SubmitPhoto from "./pages/SubmitPhoto";
+import MySubmissions from "./pages/MySubmissions";
+import Wallet from "./pages/Wallet";
+import Profile from "./pages/Profile";
+import Notifications from "./pages/Notifications";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import ContestRules from "./pages/ContestRules";
@@ -33,6 +37,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/contests" element={<Contests />} />
             <Route path="/contest/:id" element={<ContestDetail />} />
+            
+            {/* Protected User Routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
@@ -43,6 +49,27 @@ const App = () => (
                 <SubmitPhoto />
               </ProtectedRoute>
             } />
+            <Route path="/submissions" element={
+              <ProtectedRoute>
+                <MySubmissions />
+              </ProtectedRoute>
+            } />
+            <Route path="/wallet" element={
+              <ProtectedRoute>
+                <Wallet />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            } />
+
             {/* Legal Pages */}
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
@@ -50,6 +77,7 @@ const App = () => (
             <Route path="/copyright" element={<Copyright />} />
             <Route path="/age-policy" element={<AgePolicy />} />
             <Route path="/report" element={<ReportAbuse />} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
