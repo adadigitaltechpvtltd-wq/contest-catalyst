@@ -13,16 +13,21 @@ interface Profile {
   date_of_birth: string | null;
   is_adult: boolean;
   phone: string | null;
+  kyc_verified: boolean;
+}
+
+interface PaymentDetails {
+  user_id: string;
   upi_id: string | null;
   bank_account_number: string | null;
   bank_ifsc: string | null;
-  kyc_verified: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  paymentDetails: PaymentDetails | null;
   roles: AppRole[];
   isLoading: boolean;
   isAdmin: boolean;
@@ -39,13 +44,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, email, full_name, avatar_url, bio, date_of_birth, is_adult, phone, kyc_verified')
       .eq('id', userId)
       .maybeSingle();
 
@@ -54,6 +60,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return null;
     }
     return data as Profile | null;
+  };
+
+  const fetchPaymentDetails = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('payment_details')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching payment details:', error);
+      return null;
+    }
+    return data as PaymentDetails | null;
   };
 
   const fetchRoles = async (userId: string) => {
@@ -71,11 +91,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = async () => {
     if (user) {
-      const [profileData, rolesData] = await Promise.all([
+      const [profileData, paymentData, rolesData] = await Promise.all([
         fetchProfile(user.id),
+        fetchPaymentDetails(user.id),
         fetchRoles(user.id),
       ]);
       setProfile(profileData);
+      setPaymentDetails(paymentData);
       setRoles(rolesData);
     }
   };
@@ -88,9 +110,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         Promise.all([
           fetchProfile(session.user.id),
+          fetchPaymentDetails(session.user.id),
           fetchRoles(session.user.id),
-        ]).then(([profileData, rolesData]) => {
+        ]).then(([profileData, paymentData, rolesData]) => {
           setProfile(profileData);
+          setPaymentDetails(paymentData);
           setRoles(rolesData);
           setIsLoading(false);
         });
@@ -106,14 +130,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          const [profileData, rolesData] = await Promise.all([
+          const [profileData, paymentData, rolesData] = await Promise.all([
             fetchProfile(session.user.id),
+            fetchPaymentDetails(session.user.id),
             fetchRoles(session.user.id),
           ]);
           setProfile(profileData);
+          setPaymentDetails(paymentData);
           setRoles(rolesData);
         } else {
           setProfile(null);
+          setPaymentDetails(null);
           setRoles([]);
         }
         setIsLoading(false);
@@ -176,6 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setSession(null);
     setProfile(null);
+    setPaymentDetails(null);
     setRoles([]);
   };
 
@@ -188,6 +216,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         session,
         profile,
+        paymentDetails,
         roles,
         isLoading,
         isAdmin,

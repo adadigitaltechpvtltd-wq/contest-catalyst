@@ -32,14 +32,17 @@ interface Transaction {
   payment_reference: string | null;
   notes: string | null;
   created_at: string;
+  user_id: string;
   profile: {
     id: string;
     full_name: string | null;
     email: string | null;
+  };
+  payment_details: {
     upi_id: string | null;
     bank_account_number: string | null;
     bank_ifsc: string | null;
-  };
+  } | null;
   contest: {
     title: string;
   } | null;
@@ -77,7 +80,8 @@ const AdminPayments = () => {
         payment_reference,
         notes,
         created_at,
-        profile:profiles(id, full_name, email, upi_id, bank_account_number, bank_ifsc),
+        user_id,
+        profile:profiles!wallet_transactions_user_id_fkey(id, full_name, email),
         contest:contests(title)
       `)
       .order('created_at', { ascending: false });
@@ -90,8 +94,24 @@ const AdminPayments = () => {
 
     if (error) {
       console.error('Error fetching transactions:', error);
+      setTransactions([]);
     } else {
-      setTransactions(data as unknown as Transaction[]);
+      // Fetch payment details for each transaction
+      const transactionsWithPayments = await Promise.all(
+        (data || []).map(async (tx: any) => {
+          const { data: paymentData } = await supabase
+            .from('payment_details')
+            .select('upi_id, bank_account_number, bank_ifsc')
+            .eq('user_id', tx.user_id)
+            .maybeSingle();
+          
+          return {
+            ...tx,
+            payment_details: paymentData,
+          } as Transaction;
+        })
+      );
+      setTransactions(transactionsWithPayments);
     }
     setIsLoading(false);
   };
@@ -323,21 +343,21 @@ const AdminPayments = () => {
                       <p className="text-muted-foreground">Amount</p>
                       <p className="font-semibold text-lg">₹{Number(selectedTransaction.amount).toFixed(2)}</p>
                     </div>
-                    {selectedTransaction.profile?.upi_id && (
+                    {selectedTransaction.payment_details?.upi_id && (
                       <div>
                         <p className="text-muted-foreground">UPI ID</p>
-                        <p className="font-semibold">{selectedTransaction.profile.upi_id}</p>
+                        <p className="font-semibold">{selectedTransaction.payment_details.upi_id}</p>
                       </div>
                     )}
-                    {selectedTransaction.profile?.bank_account_number && (
+                    {selectedTransaction.payment_details?.bank_account_number && (
                       <>
                         <div>
                           <p className="text-muted-foreground">Bank Account</p>
-                          <p className="font-semibold">{selectedTransaction.profile.bank_account_number}</p>
+                          <p className="font-semibold">{selectedTransaction.payment_details.bank_account_number}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">IFSC</p>
-                          <p className="font-semibold">{selectedTransaction.profile.bank_ifsc}</p>
+                          <p className="font-semibold">{selectedTransaction.payment_details.bank_ifsc}</p>
                         </div>
                       </>
                     )}

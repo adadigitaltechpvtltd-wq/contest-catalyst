@@ -124,6 +124,33 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_details: {
+        Row: {
+          bank_account_number: string | null
+          bank_ifsc: string | null
+          created_at: string
+          updated_at: string
+          upi_id: string | null
+          user_id: string
+        }
+        Insert: {
+          bank_account_number?: string | null
+          bank_ifsc?: string | null
+          created_at?: string
+          updated_at?: string
+          upi_id?: string | null
+          user_id: string
+        }
+        Update: {
+          bank_account_number?: string | null
+          bank_ifsc?: string | null
+          created_at?: string
+          updated_at?: string
+          upi_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

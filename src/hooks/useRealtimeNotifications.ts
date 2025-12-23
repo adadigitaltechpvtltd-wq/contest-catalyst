@@ -136,31 +136,5 @@ export const useRealtimeNotifications = () => {
     markAllAsRead,
   };
 };
-
-// Helper function to create notifications (for use in other parts of the app)
-export const createNotification = async ({
-  userId,
-  title,
-  message,
-  type = "info",
-  link,
-}: {
-  userId: string;
-  title: string;
-  message: string;
-  type?: string;
-  link?: string;
-}) => {
-  const { error } = await supabase.from("notifications").insert({
-    user_id: userId,
-    title,
-    message,
-    type,
-    link,
-  });
-
-  if (error) {
-    console.error("Error creating notification:", error);
-    throw error;
-  }
-};
+// Note: Notification creation is now restricted to admin/moderator roles only via RLS
+// Use server-side Edge Functions with service role key for system notifications
