@@ -22,18 +22,21 @@ const Copyright = () => {
                   <li><strong>You retain full ownership</strong> of all photographs you submit</li>
                   <li>Gaal does not claim ownership of user-submitted content</li>
                   <li>Your copyright remains with you at all times</li>
-                  <li>We do not sell or license your photographs to third parties</li>
+                  <li>We do not sell user photographs. Only usage rights may be licensed, and only with your explicit consent</li>
+                  <li>You can delete your content at any time</li>
                 </ul>
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">2. License Granted to Contestify</h2>
+                <h2 className="text-2xl font-semibold mb-4">2. License Granted to Gaal</h2>
                 <p className="text-muted-foreground mb-4">
-                  By submitting a photograph to our contests, you grant Gaal a limited license to:
+                  By submitting a photograph to our platform, you grant Gaal a limited license to:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>Display your photo on our platform for contest purposes</li>
+                  <li>Show your photo in search results (like Google)</li>
                   <li>Feature your photo in our gallery of submissions</li>
+                  <li>Show previews to brands (for potential licensing opportunities)</li>
                   <li>Use your photo in promotional materials (with attribution)</li>
                   <li>Create thumbnails and resized versions for display</li>
                 </ul>
@@ -44,12 +47,34 @@ const Copyright = () => {
                   <li><strong>Non-exclusive:</strong> You can use and license your photo elsewhere</li>
                   <li><strong>Royalty-free:</strong> No fees are charged for this display license</li>
                   <li><strong>Revocable:</strong> You can request removal at any time</li>
-                  <li><strong>Limited:</strong> Only for display and promotional purposes</li>
+                  <li><strong>Limited:</strong> For display, search visibility, and promotional purposes</li>
                 </ul>
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">3. Your Responsibilities</h2>
+                <h2 className="text-2xl font-semibold mb-4">3. Brand Licensing (Opt-In)</h2>
+                <p className="text-muted-foreground mb-4">
+                  By default, photos are used only for contest and platform display purposes. Any brand licensing or commercial usage:
+                </p>
+                <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+                  <li><strong>Requires your explicit opt-in</strong> — you choose whether your content is brand-licensable</li>
+                  <li>Brands pay for usage rights through Gaal</li>
+                  <li>Gaal manages the license on your behalf</li>
+                  <li>You earn a share of the revenue from any licensing</li>
+                  <li>Your content is never sold — only usage rights are licensed</li>
+                </ul>
+                <p className="text-muted-foreground mt-4">
+                  You can choose whether your content is:
+                </p>
+                <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+                  <li><strong>Contest-only:</strong> Used only for contests you enter</li>
+                  <li><strong>Brand-licensable:</strong> Available for brands to license (you earn revenue)</li>
+                  <li><strong>SEO-visible only:</strong> Visible in search results but not for brand licensing</li>
+                </ul>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold mb-4">4. Your Responsibilities</h2>
                 <p className="text-muted-foreground mb-4">
                   When submitting photographs, you represent and warrant that:
                 </p>
@@ -63,7 +88,7 @@ const Copyright = () => {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">4. Copyright Infringement</h2>
+                <h2 className="text-2xl font-semibold mb-4">5. Copyright Infringement</h2>
                 <p className="text-muted-foreground mb-4">
                   We take copyright infringement seriously. The following are strictly prohibited:
                 </p>
@@ -78,7 +103,7 @@ const Copyright = () => {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">5. DMCA Takedown Process</h2>
+                <h2 className="text-2xl font-semibold mb-4">6. DMCA Takedown Process</h2>
                 <p className="text-muted-foreground mb-4">
                   If you believe your copyrighted work has been infringed, please submit a DMCA takedown notice containing:
                 </p>
@@ -99,7 +124,7 @@ const Copyright = () => {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">6. Counter-Notification</h2>
+                <h2 className="text-2xl font-semibold mb-4">7. Counter-Notification</h2>
                 <p className="text-muted-foreground mb-4">
                   If you believe your content was wrongly removed, you may submit a counter-notification containing:
                 </p>
@@ -113,7 +138,7 @@ const Copyright = () => {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">7. Repeat Infringer Policy</h2>
+                <h2 className="text-2xl font-semibold mb-4">8. Repeat Infringer Policy</h2>
                 <p className="text-muted-foreground mb-4">
                   We maintain a policy for handling repeat infringers:
                 </p>
@@ -125,7 +150,7 @@ const Copyright = () => {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">8. Model and Property Releases</h2>
+                <h2 className="text-2xl font-semibold mb-4">9. Model and Property Releases</h2>
                 <p className="text-muted-foreground mb-4">
                   When submitting photographs featuring:
                 </p>
@@ -138,7 +163,7 @@ const Copyright = () => {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">9. Removal Requests</h2>
+                <h2 className="text-2xl font-semibold mb-4">10. Removal Requests</h2>
                 <p className="text-muted-foreground mb-4">
                   You may request removal of your photographs at any time:
                 </p>
@@ -147,11 +172,12 @@ const Copyright = () => {
                   <li>Provide proof of ownership if requested</li>
                   <li>Allow up to 7 business days for processing</li>
                   <li>Note: Removal may affect your participation in ongoing contests</li>
+                  <li>If a brand is already using your content under a paid license, that license will continue until it ends — then the content is fully removed</li>
                 </ul>
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-4">10. Contact</h2>
+                <h2 className="text-2xl font-semibold mb-4">11. Contact</h2>
                 <p className="text-muted-foreground">
                   For copyright-related inquiries, please contact:{' '}
                   <a href="mailto:copyright@gaal.com" className="text-primary hover:underline">
