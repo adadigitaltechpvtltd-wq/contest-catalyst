@@ -22,50 +22,79 @@ const ProtectedRoute = ({
   // Server-side role verification for admin/moderator routes
   useEffect(() => {
     const verifyRole = async () => {
+      console.log('ProtectedRoute: Verifying role, user:', user?.id, 'isLoading:', isLoading);
+      
       if (!user) {
+        console.log('ProtectedRoute: No user, setting unauthorized');
         setVerifiedRole('unauthorized');
         return;
       }
 
       // If no special role required, authorize immediately
       if (!requireAdmin && !requireModerator) {
+        console.log('ProtectedRoute: No special role required, authorizing');
         setVerifiedRole('authorized');
         return;
       }
 
       // Verify role directly from database, not from client state
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id);
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
 
-      if (error) {
-        console.error('Role verification failed:', error);
+        if (error) {
+          console.error('Role verification failed:', error);
+          setVerifiedRole('unauthorized');
+          return;
+        }
+
+        const roles = data?.map(r => r.role) || [];
+        const hasAdminRole = roles.includes('admin');
+        const hasModeratorRole = roles.includes('moderator');
+
+        console.log('ProtectedRoute: User roles:', roles);
+
+        if (requireAdmin && !hasAdminRole) {
+          setVerifiedRole('unauthorized');
+          return;
+        }
+
+        if (requireModerator && !hasModeratorRole && !hasAdminRole) {
+          setVerifiedRole('unauthorized');
+          return;
+        }
+
+        setVerifiedRole('authorized');
+      } catch (err) {
+        console.error('Exception in role verification:', err);
         setVerifiedRole('unauthorized');
-        return;
       }
-
-      const roles = data?.map(r => r.role) || [];
-      const hasAdminRole = roles.includes('admin');
-      const hasModeratorRole = roles.includes('moderator');
-
-      if (requireAdmin && !hasAdminRole) {
-        setVerifiedRole('unauthorized');
-        return;
-      }
-
-      if (requireModerator && !hasModeratorRole && !hasAdminRole) {
-        setVerifiedRole('unauthorized');
-        return;
-      }
-
-      setVerifiedRole('authorized');
     };
 
     if (!isLoading) {
       verifyRole();
     }
   }, [user, isLoading, requireAdmin, requireModerator]);
+
+  // Add timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (verifiedRole === 'loading' && !isLoading) {
+        console.warn('ProtectedRoute: Role verification timed out, defaulting to check user');
+        if (!user) {
+          setVerifiedRole('unauthorized');
+        } else if (!requireAdmin && !requireModerator) {
+          setVerifiedRole('authorized');
+        } else {
+          setVerifiedRole('unauthorized');
+        }
+      }
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [verifiedRole, isLoading, user, requireAdmin, requireModerator]);
 
   if (isLoading || verifiedRole === 'loading') {
     return (

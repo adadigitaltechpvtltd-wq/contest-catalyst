@@ -51,7 +51,7 @@ interface PreviousSubmission {
 
 const SubmitPhoto = () => {
   const { contestId } = useParams<{ contestId: string }>();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -104,52 +104,78 @@ const SubmitPhoto = () => {
 
   useEffect(() => {
     const fetchContest = async () => {
-      if (!contestId) return;
-
-      const { data, error } = await supabase
-        .from('contests')
-        .select('id, title, description, theme, prize_amount, rules, end_date')
-        .eq('id', contestId)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (error || !data) {
-        toast({
-          title: 'Contest not found',
-          description: 'This contest may have ended or does not exist.',
-          variant: 'destructive',
-        });
-        navigate('/contests');
+      if (!contestId) {
+        setIsLoading(false);
         return;
       }
 
-      setContest(data);
-      setTimeRemaining(calculateTimeRemaining(data.end_date));
-
-      // Check if user already submitted
-      if (user) {
-        const { data: submission } = await supabase
-          .from('submissions')
-          .select('id')
-          .eq('contest_id', contestId)
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (submission) {
-          setHasSubmitted(true);
-        }
+      // Wait for auth to load before checking user
+      if (authLoading) {
+        console.log('SubmitPhoto: Auth still loading...');
+        return;
       }
 
-      setIsLoading(false);
+      console.log('SubmitPhoto: Fetching contest:', contestId, 'User:', user?.id);
+
+      try {
+        const { data, error } = await supabase
+          .from('contests')
+          .select('id, title, description, theme, prize_amount, rules, end_date')
+          .eq('id', contestId)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching contest:', error);
+          toast({
+            title: 'Error loading contest',
+            description: 'Please try again later.',
+            variant: 'destructive',
+          });
+          navigate('/contests');
+          return;
+        }
+
+        if (!data) {
+          toast({
+            title: 'Contest not found',
+            description: 'This contest may have ended or does not exist.',
+            variant: 'destructive',
+          });
+          navigate('/contests');
+          return;
+        }
+
+        setContest(data);
+        setTimeRemaining(calculateTimeRemaining(data.end_date));
+
+        // Check if user already submitted
+        if (user) {
+          const { data: submission, error: subError } = await supabase
+            .from('submissions')
+            .select('id')
+            .eq('contest_id', contestId)
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (!subError && submission) {
+            setHasSubmitted(true);
+          }
+        }
+      } catch (err) {
+        console.error('Exception in fetchContest:', err);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchContest();
-  }, [contestId, user, navigate, toast, calculateTimeRemaining]);
+  }, [contestId, user, authLoading, navigate, toast, calculateTimeRemaining]);
 
   // Fetch previous submissions
   useEffect(() => {
     const fetchPreviousSubmissions = async () => {
-      if (!user) return;
+      if (authLoading || !user) return;
       
       setIsLoadingGallery(true);
       
@@ -175,7 +201,7 @@ const SubmitPhoto = () => {
     };
 
     fetchPreviousSubmissions();
-  }, [user]);
+  }, [user, authLoading]);
 
   // Update countdown every second
   useEffect(() => {
@@ -309,7 +335,7 @@ const SubmitPhoto = () => {
     setIsSubmitting(false);
   };
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
