@@ -22,7 +22,9 @@ import {
   X,
   Image as ImageIcon,
   Clock,
-  Crop
+  Crop,
+  Images,
+  ExternalLink
 } from 'lucide-react';
 import ImageCropper from '@/components/ImageCropper';
 
@@ -34,6 +36,17 @@ interface Contest {
   prize_amount: number;
   rules: string[] | null;
   end_date: string;
+}
+
+interface PreviousSubmission {
+  id: string;
+  title: string;
+  image_url: string;
+  status: string;
+  created_at: string;
+  contest: {
+    title: string;
+  } | null;
 }
 
 const SubmitPhoto = () => {
@@ -59,6 +72,10 @@ const SubmitPhoto = () => {
 
   // Check if user already submitted
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  
+  // Previous submissions gallery
+  const [previousSubmissions, setPreviousSubmissions] = useState<PreviousSubmission[]>([]);
+  const [isLoadingGallery, setIsLoadingGallery] = useState(false);
 
   // Time remaining state
   const [timeRemaining, setTimeRemaining] = useState<{
@@ -128,6 +145,37 @@ const SubmitPhoto = () => {
 
     fetchContest();
   }, [contestId, user, navigate, toast, calculateTimeRemaining]);
+
+  // Fetch previous submissions
+  useEffect(() => {
+    const fetchPreviousSubmissions = async () => {
+      if (!user) return;
+      
+      setIsLoadingGallery(true);
+      
+      const { data, error } = await supabase
+        .from('submissions')
+        .select(`
+          id,
+          title,
+          image_url,
+          status,
+          created_at,
+          contest:contests(title)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(12);
+
+      if (!error && data) {
+        setPreviousSubmissions(data as PreviousSubmission[]);
+      }
+      
+      setIsLoadingGallery(false);
+    };
+
+    fetchPreviousSubmissions();
+  }, [user]);
 
   // Update countdown every second
   useEffect(() => {
@@ -512,6 +560,69 @@ const SubmitPhoto = () => {
                       </li>
                     ))}
                   </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Previous Submissions Gallery */}
+            {previousSubmissions.length > 0 && (
+              <Card className="glass-card mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Images className="h-5 w-5" />
+                    Your Previous Submissions
+                  </CardTitle>
+                  <CardDescription>
+                    Photos you've submitted to other contests
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingGallery ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      {previousSubmissions.map((submission) => (
+                        <a
+                          key={submission.id}
+                          href={`/submissions/${submission.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative aspect-square rounded-lg overflow-hidden bg-secondary"
+                        >
+                          <img
+                            src={submission.image_url}
+                            alt={submission.title}
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute bottom-0 left-0 right-0 p-2">
+                              <p className="text-white text-xs font-medium truncate">
+                                {submission.title}
+                              </p>
+                              <p className="text-white/70 text-[10px] truncate">
+                                {submission.contest?.title}
+                              </p>
+                            </div>
+                            <div className="absolute top-2 right-2">
+                              <ExternalLink className="h-3.5 w-3.5 text-white" />
+                            </div>
+                          </div>
+                          {/* Status badge */}
+                          <div className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                            submission.status === 'approved' ? 'bg-green-500/90 text-white' :
+                            submission.status === 'winner' ? 'bg-amber-500/90 text-white' :
+                            submission.status === 'rejected' ? 'bg-red-500/90 text-white' :
+                            'bg-secondary/90 text-foreground'
+                          }`}>
+                            {submission.status}
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
