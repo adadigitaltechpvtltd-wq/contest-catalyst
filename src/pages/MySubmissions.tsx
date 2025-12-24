@@ -52,7 +52,7 @@ interface Submission {
 }
 
 const MySubmissions = () => {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,33 +60,44 @@ const MySubmissions = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
   const fetchSubmissions = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
 
-    const { data, error } = await supabase
-      .from('submissions')
-      .select(`
-        id,
-        title,
-        description,
-        image_url,
-        status,
-        admin_score,
-        rejection_reason,
-        created_at,
-        contest:contests(id, title, prize_amount, status)
-      `)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('submissions')
+        .select(`
+          id,
+          title,
+          description,
+          image_url,
+          status,
+          admin_score,
+          rejection_reason,
+          created_at,
+          contest:contests(id, title, prize_amount, status)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching submissions:', error);
-    } else {
-      setSubmissions(data as unknown as Submission[]);
+      if (error) {
+        console.error('Error fetching submissions:', error);
+      } else {
+        console.log('Fetched submissions for user:', user.id, data);
+        setSubmissions(data as unknown as Submission[]);
+      }
+    } catch (err) {
+      console.error('Exception fetching submissions:', err);
     }
     setIsLoading(false);
   }, [user]);
 
   useEffect(() => {
+    // Wait for auth to finish loading before fetching
+    if (authLoading) return;
+    
     fetchSubmissions();
 
     // Real-time subscription for user's submissions
@@ -129,7 +140,7 @@ const MySubmissions = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, fetchSubmissions, toast]);
+  }, [user, authLoading, fetchSubmissions, toast]);
 
   const handleDelete = async (submissionId: string, imageUrl: string) => {
     setDeletingId(submissionId);
