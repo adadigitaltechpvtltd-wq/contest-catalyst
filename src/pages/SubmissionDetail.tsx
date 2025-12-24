@@ -1,0 +1,364 @@
+import { useEffect, useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { 
+  ArrowLeft,
+  Clock, 
+  CheckCircle, 
+  XCircle, 
+  Trophy, 
+  Loader2,
+  AlertCircle,
+  Calendar,
+  Image as ImageIcon,
+  MessageSquare,
+  Star,
+  Eye
+} from 'lucide-react';
+
+type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
+
+interface Submission {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string;
+  status: SubmissionStatus;
+  admin_score: number | null;
+  admin_notes: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  reviewed_at: string | null;
+  contest: {
+    id: string;
+    title: string;
+    prize_amount: number;
+    prize_currency: string;
+    status: string;
+    end_date: string;
+  };
+}
+
+const SubmissionDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [submission, setSubmission] = useState<Submission | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSubmission = async () => {
+      if (!user || !id) return;
+
+      const { data, error } = await supabase
+        .from('submissions')
+        .select(`
+          id,
+          title,
+          description,
+          image_url,
+          status,
+          admin_score,
+          admin_notes,
+          rejection_reason,
+          created_at,
+          updated_at,
+          reviewed_at,
+          contest:contests(id, title, prize_amount, prize_currency, status, end_date)
+        `)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching submission:', error);
+        navigate('/submissions');
+        return;
+      }
+
+      if (!data) {
+        navigate('/submissions');
+        return;
+      }
+
+      setSubmission(data as unknown as Submission);
+      setIsLoading(false);
+    };
+
+    fetchSubmission();
+
+    // Real-time subscription for this submission
+    const channel = supabase
+      .channel(`submission-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'submissions',
+          filter: `id=eq.${id}`
+        },
+        (payload) => {
+          console.log('Submission updated:', payload);
+          fetchSubmission();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, user, navigate]);
+
+  const getStatusBadge = (status: SubmissionStatus) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="secondary" className="gap-1 text-base px-4 py-2"><Clock className="h-4 w-4" />Pending Review</Badge>;
+      case 'approved':
+        return <Badge className="bg-success gap-1 text-base px-4 py-2"><CheckCircle className="h-4 w-4" />Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive" className="gap-1 text-base px-4 py-2"><XCircle className="h-4 w-4" />Rejected</Badge>;
+      case 'winner':
+        return <Badge className="bg-accent gap-1 text-base px-4 py-2"><Trophy className="h-4 w-4" />Winner!</Badge>;
+      case 'disqualified':
+        return <Badge variant="destructive" className="gap-1 text-base px-4 py-2"><AlertCircle className="h-4 w-4" />Disqualified</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusTimeline = () => {
+    if (!submission) return [];
+
+    const timeline = [
+      {
+        label: 'Submitted',
+        date: submission.created_at,
+        completed: true,
+        icon: ImageIcon
+      }
+    ];
+
+    if (submission.reviewed_at) {
+      timeline.push({
+        label: submission.status === 'approved' || submission.status === 'winner' ? 'Approved' : 'Reviewed',
+        date: submission.reviewed_at,
+        completed: true,
+        icon: submission.status === 'approved' || submission.status === 'winner' ? CheckCircle : XCircle
+      });
+    }
+
+    if (submission.status === 'winner') {
+      timeline.push({
+        label: 'Selected as Winner',
+        date: submission.updated_at,
+        completed: true,
+        icon: Trophy
+      });
+    }
+
+    if (submission.status === 'pending') {
+      timeline.push({
+        label: 'Awaiting Review',
+        date: null,
+        completed: false,
+        icon: Clock
+      });
+    }
+
+    return timeline;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!submission) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <Navbar />
+      <main className="flex-1 container mx-auto px-4 py-8 pt-24">
+        <Button
+          variant="ghost"
+          className="mb-6"
+          onClick={() => navigate('/submissions')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Submissions
+        </Button>
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Image Card */}
+            <Card className="glass-card overflow-hidden">
+              <div className="relative">
+                <img
+                  src={submission.image_url}
+                  alt={submission.title}
+                  className="w-full max-h-[600px] object-contain bg-secondary"
+                />
+                <div className="absolute top-4 right-4">
+                  {getStatusBadge(submission.status)}
+                </div>
+                {submission.status === 'winner' && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-accent/20 to-transparent pointer-events-none" />
+                )}
+              </div>
+              <CardContent className="p-6">
+                <h1 className="text-2xl font-display font-bold mb-2">{submission.title}</h1>
+                {submission.description && (
+                  <p className="text-muted-foreground">{submission.description}</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Admin Feedback */}
+            {(submission.admin_notes || submission.rejection_reason || submission.admin_score !== null) && (
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Admin Feedback
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {submission.admin_score !== null && (
+                    <div className="flex items-center gap-3">
+                      <Star className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Score</p>
+                        <p className="text-xl font-bold text-primary">{submission.admin_score}/100</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {submission.rejection_reason && (
+                    <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                      <p className="text-sm font-medium text-destructive mb-1">Rejection Reason</p>
+                      <p className="text-sm">{submission.rejection_reason}</p>
+                    </div>
+                  )}
+
+                  {submission.admin_notes && (
+                    <div className="p-4 bg-secondary rounded-lg">
+                      <p className="text-sm font-medium mb-1">Notes</p>
+                      <p className="text-sm text-muted-foreground">{submission.admin_notes}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Contest Info */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="text-lg">Contest Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Contest</p>
+                  <p className="font-medium">{submission.contest.title}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Prize</p>
+                  <p className="font-bold text-primary text-lg">
+                    {submission.contest.prize_currency} {submission.contest.prize_amount.toLocaleString()}
+                  </p>
+                </div>
+                <Separator />
+                <Button asChild variant="outline" className="w-full">
+                  <Link to={`/contest/${submission.contest.id}`}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Contest
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Status Timeline */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="text-lg">Status History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {getStatusTimeline().map((item, index) => (
+                    <div key={index} className="flex gap-3">
+                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                        item.completed ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
+                      }`}>
+                        <item.icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <p className={`font-medium ${!item.completed && 'text-muted-foreground'}`}>
+                          {item.label}
+                        </p>
+                        {item.date && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(item.date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Submission Info */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="text-lg">Submission Info</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Submitted</span>
+                  <span>{new Date(submission.created_at).toLocaleDateString()}</span>
+                </div>
+                {submission.reviewed_at && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Reviewed</span>
+                    <span>{new Date(submission.reviewed_at).toLocaleDateString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status</span>
+                  <span className="capitalize">{submission.status}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+export default SubmissionDetail;
