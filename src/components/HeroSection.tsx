@@ -127,7 +127,7 @@ const HeroSection = () => {
 
           {/* Watch How It Works */}
           <div className="mt-10 flex justify-center">
-            <a href="/#how-it-works">
+            <Link to="/#how-it-works">
               <Button
                 variant="outline"
                 size="lg"
@@ -136,7 +136,7 @@ const HeroSection = () => {
                 <Play className="w-4 h-4" />
                 Watch How It Works
               </Button>
-            </a>
+            </Link>
           </div>
 
           {/* Stats */}
