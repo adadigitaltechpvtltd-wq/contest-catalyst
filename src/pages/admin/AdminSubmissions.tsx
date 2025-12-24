@@ -106,7 +106,7 @@ const AdminSubmissions = () => {
           admin_score,
           admin_notes,
           created_at,
-          contest:contests(id, title, status),
+          contest:contests!submissions_contest_id_fkey(id, title, status),
           profile:profiles!submissions_user_id_profiles_fkey(id, full_name, email)
         `)
         .order('risk_score', { ascending: false });

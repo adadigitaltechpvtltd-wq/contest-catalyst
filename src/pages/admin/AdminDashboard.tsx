@@ -76,7 +76,7 @@ const AdminDashboard = () => {
           status,
           risk_score,
           created_at,
-          contest:contests(title),
+          contest:contests!submissions_contest_id_fkey(title),
           profile:profiles!submissions_user_id_profiles_fkey(full_name)
         `
         )
