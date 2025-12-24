@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, User, LogOut, Settings, Image, Wallet, Heart } from "lucide-react";
+import { Menu, User, LogOut, Settings, Image, Wallet } from "lucide-react";
 import GaalLogo from "./GaalLogo";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -91,12 +91,6 @@ const Navbar = () => {
                         <Link to="/submissions" className="cursor-pointer">
                           <Image className="mr-2 h-4 w-4" />
                           My Submissions
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/saved" className="cursor-pointer">
-                          <Heart className="mr-2 h-4 w-4" />
-                          Saved Contests
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>

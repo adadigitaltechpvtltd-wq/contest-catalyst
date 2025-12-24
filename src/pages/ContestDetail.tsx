@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Users, Trophy, CheckCircle, Share2, Heart, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check } from "lucide-react";
+import { ArrowLeft, Clock, Users, Trophy, CheckCircle, Share2, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -47,8 +47,6 @@ const ContestDetail = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [contest, setContest] = useState<Contest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [participantCount, setParticipantCount] = useState(0);
@@ -63,48 +61,6 @@ const ContestDetail = () => {
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
   const shareText = contest ? `Check out "${contest.title}" contest on GAAL!` : "Check out this contest on GAAL!";
-
-  const handleSave = async () => {
-    if (!user) {
-      toast.info("Please log in to save contests");
-      navigate("/auth");
-      return;
-    }
-    
-    if (!id || isSaving) return;
-    
-    setIsSaving(true);
-    
-    if (isSaved) {
-      // Unsave
-      const { error } = await supabase
-        .from("saved_contests")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("contest_id", id);
-      
-      if (error) {
-        toast.error("Failed to remove from saved");
-      } else {
-        setIsSaved(false);
-        toast.success("Contest removed from saved");
-      }
-    } else {
-      // Save
-      const { error } = await supabase
-        .from("saved_contests")
-        .insert({ user_id: user.id, contest_id: id });
-      
-      if (error) {
-        toast.error("Failed to save contest");
-      } else {
-        setIsSaved(true);
-        toast.success("Contest saved!");
-      }
-    }
-    
-    setIsSaving(false);
-  };
 
   const handleShare = (platform: string) => {
     const encodedUrl = encodeURIComponent(shareUrl);
@@ -179,16 +135,6 @@ const ContestDetail = () => {
           if (submission) {
             setUserSubmission(submission);
           }
-          
-          // Check if contest is saved
-          const { data: savedData } = await supabase
-            .from("saved_contests")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("contest_id", id)
-            .maybeSingle();
-          
-          setIsSaved(!!savedData);
         }
 
         // Get total count of approved submissions
@@ -445,20 +391,9 @@ const ContestDetail = () => {
                     </Button>
                   </Link>
                 ) : null}
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                  >
-                    <Heart className={`w-4 h-4 mr-2 ${isSaved ? "fill-primary text-primary" : ""}`} />
-                    {isSaved ? "Saved" : "Save"}
-                  </Button>
-                  <Button variant="outline" size="icon" onClick={() => setIsShareDialogOpen(true)}>
-                    <Share2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Button variant="outline" size="icon" onClick={() => setIsShareDialogOpen(true)}>
+                  <Share2 className="w-4 h-4" />
+                </Button>
 
                 {/* Share Dialog */}
                 <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
