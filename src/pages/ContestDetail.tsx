@@ -52,6 +52,11 @@ const ContestDetail = () => {
   const [userSubmission, setUserSubmission] = useState<{ id: string; title: string } | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedImage, setSelectedImage] = useState<Submission | null>(null);
+  const [hasMoreSubmissions, setHasMoreSubmissions] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [totalApproved, setTotalApproved] = useState(0);
+
+  const SUBMISSIONS_PER_PAGE = 12;
 
   useEffect(() => {
     const fetchContest = async () => {
@@ -97,6 +102,15 @@ const ContestDetail = () => {
           }
         }
 
+        // Get total count of approved submissions
+        const { count: approvedCount } = await supabase
+          .from("submissions")
+          .select("*", { count: "exact", head: true })
+          .eq("contest_id", id)
+          .in("status", ["approved", "winner"]);
+
+        setTotalApproved(approvedCount || 0);
+
         // Fetch approved submissions for gallery
         const { data: approvedSubmissions } = await supabase
           .from("submissions")
@@ -115,10 +129,11 @@ const ContestDetail = () => {
           .eq("contest_id", id)
           .in("status", ["approved", "winner"])
           .order("created_at", { ascending: false })
-          .limit(12);
+          .limit(SUBMISSIONS_PER_PAGE);
 
         if (approvedSubmissions) {
           setSubmissions(approvedSubmissions as unknown as Submission[]);
+          setHasMoreSubmissions((approvedCount || 0) > SUBMISSIONS_PER_PAGE);
         }
       }
 
@@ -127,6 +142,39 @@ const ContestDetail = () => {
 
     fetchContest();
   }, [id, user]);
+
+  const loadMoreSubmissions = async () => {
+    if (!id || isLoadingMore) return;
+
+    setIsLoadingMore(true);
+
+    const { data: moreSubmissions } = await supabase
+      .from("submissions")
+      .select(`
+        id,
+        title,
+        image_url,
+        user_id,
+        status,
+        created_at,
+        profiles:user_id (
+          full_name,
+          avatar_url
+        )
+      `)
+      .eq("contest_id", id)
+      .in("status", ["approved", "winner"])
+      .order("created_at", { ascending: false })
+      .range(submissions.length, submissions.length + SUBMISSIONS_PER_PAGE - 1);
+
+    if (moreSubmissions) {
+      const newSubmissions = [...submissions, ...(moreSubmissions as unknown as Submission[])];
+      setSubmissions(newSubmissions);
+      setHasMoreSubmissions(newSubmissions.length < totalApproved);
+    }
+
+    setIsLoadingMore(false);
+  };
 
   const formatTimeLeft = (endDate: string) => {
     const end = new Date(endDate);
@@ -472,6 +520,40 @@ const ContestDetail = () => {
               </div>
             ))}
           </div>
+
+          {/* Load More Button */}
+          {hasMoreSubmissions && (
+            <div className="flex justify-center mt-8">
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={loadMoreSubmissions}
+                disabled={isLoadingMore}
+                className="min-w-[200px]"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    Load More
+                    <span className="ml-2 text-muted-foreground text-sm">
+                      ({submissions.length} of {totalApproved})
+                    </span>
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Showing all indicator */}
+          {!hasMoreSubmissions && submissions.length > SUBMISSIONS_PER_PAGE && (
+            <p className="text-center text-muted-foreground text-sm mt-8">
+              Showing all {submissions.length} entries
+            </p>
+          )}
         </section>
       )}
 
