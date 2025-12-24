@@ -45,6 +45,11 @@ const HeroSection = () => {
             </div>
           </div>
 
+          {/* Tagline */}
+          <p className="font-display text-lg md:text-xl font-medium text-muted-foreground tracking-wide mb-4">
+            Real moments. Real value.
+          </p>
+
           {/* Headline */}
           <h1 className="font-display text-[44px] leading-[1.02] md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground">
             <span className="text-foreground">Create Bold.</span>{" "}
@@ -55,7 +60,7 @@ const HeroSection = () => {
 
           {/* Subheadline */}
           <p className="mt-6 mx-auto max-w-3xl text-lg md:text-xl text-muted-foreground">
-            Turn everyday moments into opportunities. Gaal is a skill-based photo contest platform where creators compete in short challenges and earn cash, products, and brand recognition — all for free.
+            <span className="font-semibold text-foreground">Gaal — Where everyday photos earn.</span> A skill-based photo contest platform where creators compete in short challenges and earn cash, products, and brand recognition — all for free.
           </p>
 
           {/* Featured Contest Card */}
