@@ -8,6 +8,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { 
   ArrowLeft,
   Clock, 
@@ -21,7 +33,8 @@ import {
   MessageSquare,
   Star,
   Eye,
-  Trash2
+  Trash2,
+  Pencil
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -67,6 +80,10 @@ const SubmissionDetail = () => {
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -228,6 +245,70 @@ const SubmissionDetail = () => {
     }
   };
 
+  const openEditDialog = () => {
+    if (!submission) return;
+    setEditTitle(submission.title);
+    setEditDescription(submission.description || '');
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!submission) return;
+    
+    const trimmedTitle = editTitle.trim();
+    if (!trimmedTitle) {
+      toast({
+        title: 'Title required',
+        description: 'Please enter a title for your submission.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (trimmedTitle.length > 100) {
+      toast({
+        title: 'Title too long',
+        description: 'Title must be less than 100 characters.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('submissions')
+        .update({
+          title: trimmedTitle,
+          description: editDescription.trim() || null,
+        })
+        .eq('id', submission.id);
+
+      if (error) throw error;
+
+      setSubmission({
+        ...submission,
+        title: trimmedTitle,
+        description: editDescription.trim() || null,
+      });
+
+      toast({
+        title: 'Changes saved',
+        description: 'Your submission has been updated.',
+      });
+      
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating submission:', error);
+      toast({
+        title: 'Update failed',
+        description: 'Could not update submission. Please try again.',
+        variant: 'destructive',
+      });
+    }
+    setIsSaving(false);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -254,38 +335,101 @@ const SubmissionDetail = () => {
           </Button>
           
           {submission.status === 'pending' && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  variant="destructive" 
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Trash2 className="h-4 w-4 mr-2" />
-                  )}
-                  Delete Submission
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete your submission "{submission.title}". This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            <div className="flex items-center gap-2">
+              <Dialog open={isEditing} onOpenChange={setIsEditing}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" onClick={openEditDialog}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Submission</DialogTitle>
+                    <DialogDescription>
+                      Update your submission title and description before admin review.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-title">Title</Label>
+                      <Input
+                        id="edit-title"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        maxLength={100}
+                        placeholder="Enter submission title"
+                      />
+                      <p className="text-xs text-muted-foreground text-right">
+                        {editTitle.length}/100
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-description">Description (Optional)</Label>
+                      <Textarea
+                        id="edit-description"
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        maxLength={500}
+                        placeholder="Tell us about your photo..."
+                        rows={4}
+                      />
+                      <p className="text-xs text-muted-foreground text-right">
+                        {editDescription.length}/500
+                      </p>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsEditing(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSaveEdit} disabled={isSaving}>
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Saving...
+                        </>
+                      ) : (
+                        'Save Changes'
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="destructive" 
+                    disabled={isDeleting}
                   >
+                    {isDeleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
                     Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete your submission "{submission.title}". This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           )}
         </div>
 
