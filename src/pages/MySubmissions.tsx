@@ -43,12 +43,13 @@ interface Submission {
   admin_score: number | null;
   rejection_reason: string | null;
   created_at: string;
+  contest_id: string;
   contest: {
     id: string;
     title: string;
     prize_amount: number;
     status: string;
-  };
+  } | null;
 }
 
 const MySubmissions = () => {
@@ -61,20 +62,21 @@ const MySubmissions = () => {
 
   const fetchSubmissions = useCallback(async (userId: string) => {
     try {
-      console.log('Fetching submissions for user:', userId);
-      const { data, error } = await supabase
+      const { data: subs, error } = await supabase
         .from('submissions')
-        .select(`
-          id,
-          title,
-          description,
-          image_url,
-          status,
-          admin_score,
-          rejection_reason,
-          created_at,
-          contest:contests(id, title, prize_amount, status)
-        `)
+        .select(
+          [
+            'id',
+            'title',
+            'description',
+            'image_url',
+            'status',
+            'admin_score',
+            'rejection_reason',
+            'created_at',
+            'contest_id',
+          ].join(',')
+        )
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -82,15 +84,53 @@ const MySubmissions = () => {
         console.error('Error fetching submissions:', error);
         toast({
           title: 'Error loading submissions',
-          description: 'Please try refreshing the page.',
+          description: error.message || 'Please try refreshing the page.',
           variant: 'destructive',
         });
-      } else {
-        console.log('Fetched submissions:', data);
-        setSubmissions(data as unknown as Submission[]);
+        setSubmissions([]);
+        return;
       }
+
+      const submissionRows = (subs ?? []) as unknown as Array<
+        Omit<Submission, 'contest'> & { contest: never }
+      >;
+
+      const contestIds = Array.from(
+        new Set(submissionRows.map((s) => s.contest_id).filter(Boolean))
+      );
+
+      let contestsById = new Map<string, Submission['contest']>();
+
+      if (contestIds.length 
+0) {
+        const { data: contests, error: contestError } = await supabase
+          .from('contests')
+          .select('id, title, prize_amount, status')
+          .in('id', contestIds);
+
+        if (contestError) {
+          console.error('Error fetching contests for submissions:', contestError);
+        } else {
+          (contests ?? []).forEach((c) => {
+            contestsById.set(c.id, c as any);
+          });
+        }
+      }
+
+      const merged: Submission[] = submissionRows.map((s) => ({
+        ...(s as any),
+        contest: contestsById.get(s.contest_id) ?? null,
+      }));
+
+      setSubmissions(merged);
     } catch (err) {
       console.error('Exception fetching submissions:', err);
+      toast({
+        title: 'Error loading submissions',
+        description: 'Please try refreshing the page.',
+        variant: 'destructive',
+      });
+      setSubmissions([]);
     } finally {
       setIsLoading(false);
     }
@@ -281,7 +321,7 @@ const MySubmissions = () => {
                   <CardContent className="p-4">
                     <h3 className="font-semibold mb-1 line-clamp-1">{submission.title}</h3>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Contest: {submission.contest.title}
+                      Contest: {submission.contest?.title ?? 'Unknown contest'}
                     </p>
                     
                     {submission.admin_score !== null && (
