@@ -153,15 +153,15 @@ const Auth = () => {
       }
     }
 
-    // Phone validation
+    // Phone validation - must be exactly 10 digits
     if (touched.phone) {
       const cleanedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
       if (!cleanedPhone) {
         errors.phone = 'Phone number is required';
-      } else if (cleanedPhone.length < 6 || cleanedPhone.length > 14) {
-        errors.phone = 'Phone number must be 6-14 digits';
       } else if (!/^\d+$/.test(cleanedPhone)) {
         errors.phone = 'Phone number must contain only digits';
+      } else if (cleanedPhone.length !== 10) {
+        errors.phone = 'Phone number must be exactly 10 digits';
       }
     }
 
@@ -334,7 +334,7 @@ const Auth = () => {
       return;
     }
 
-    // Phone validation
+    // Phone validation - must be exactly 10 digits
     const cleanedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
     
     if (!cleanedPhone) {
@@ -346,10 +346,19 @@ const Auth = () => {
       return;
     }
 
-    if (cleanedPhone.length < 6 || cleanedPhone.length > 14 || !/^\d+$/.test(cleanedPhone)) {
+    if (!/^\d+$/.test(cleanedPhone)) {
       toast({
         title: 'Invalid phone number',
-        description: 'Please enter a valid phone number (6-14 digits).',
+        description: 'Phone number must contain only digits.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (cleanedPhone.length !== 10) {
+      toast({
+        title: 'Invalid phone number',
+        description: 'Phone number must be exactly 10 digits.',
         variant: 'destructive',
       });
       return;
