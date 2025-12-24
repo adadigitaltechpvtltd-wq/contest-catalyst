@@ -12,7 +12,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2, RotateCw, ZoomIn, Crop as CropIcon } from 'lucide-react';
+import { Loader2, RotateCw, ZoomIn, Crop as CropIcon, Square, RectangleHorizontal, RectangleVertical } from 'lucide-react';
+
+const ASPECT_PRESETS = [
+  { label: 'Free', value: undefined, icon: Square },
+  { label: '1:1', value: 1, icon: Square },
+  { label: '4:3', value: 4 / 3, icon: RectangleHorizontal },
+  { label: '3:4', value: 3 / 4, icon: RectangleVertical },
+  { label: '16:9', value: 16 / 9, icon: RectangleHorizontal },
+  { label: '9:16', value: 9 / 16, icon: RectangleVertical },
+] as const;
 
 interface ImageCropperProps {
   file: File;
@@ -61,6 +70,7 @@ const ImageCropper = ({
   const [scale, setScale] = useState(1);
   const [rotate, setRotate] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [currentAspect, setCurrentAspect] = useState<number | undefined>(aspectRatio);
   const imgRef = useRef<HTMLImageElement>(null);
 
   // Load image when file changes
@@ -77,7 +87,25 @@ const ImageCropper = ({
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { width, height } = e.currentTarget;
-      const aspect = aspectRatio || undefined;
+      if (currentAspect) {
+        setCrop(centerAspectCrop(width, height, currentAspect));
+      } else {
+        setCrop({
+          unit: '%',
+          x: 5,
+          y: 5,
+          width: 90,
+          height: 90,
+        });
+      }
+    },
+    [currentAspect]
+  );
+
+  const handleAspectChange = (aspect: number | undefined) => {
+    setCurrentAspect(aspect);
+    if (imgRef.current) {
+      const { width, height } = imgRef.current;
       if (aspect) {
         setCrop(centerAspectCrop(width, height, aspect));
       } else {
@@ -89,9 +117,8 @@ const ImageCropper = ({
           height: 90,
         });
       }
-    },
-    [aspectRatio]
-  );
+    }
+  };
 
   const getCroppedImg = useCallback(async (): Promise<File> => {
     const image = imgRef.current;
@@ -249,7 +276,7 @@ const ImageCropper = ({
                 crop={crop}
                 onChange={(_, percentCrop) => setCrop(percentCrop)}
                 onComplete={(c) => setCompletedCrop(c)}
-                aspect={aspectRatio}
+                aspect={currentAspect}
               >
                 <img
                   ref={imgRef}
@@ -264,6 +291,28 @@ const ImageCropper = ({
                 />
               </ReactCrop>
             )}
+          </div>
+
+          {/* Aspect Ratio Presets */}
+          <div className="space-y-2">
+            <Label>Aspect Ratio</Label>
+            <div className="flex flex-wrap gap-2">
+              {ASPECT_PRESETS.map((preset) => {
+                const Icon = preset.icon;
+                return (
+                  <Button
+                    key={preset.label}
+                    variant={currentAspect === preset.value ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleAspectChange(preset.value)}
+                    className="gap-1.5"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {preset.label}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Controls */}
