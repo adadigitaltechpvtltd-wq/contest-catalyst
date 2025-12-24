@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
+import OfflineBanner from "@/components/OfflineBanner";
 import AdminLayout from "@/components/AdminLayout";
 import Index from "./pages/Index";
 import ContestDetail from "./pages/ContestDetail";
@@ -45,6 +46,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <OfflineBanner />
       <BrowserRouter>
         <AuthProvider>
           <ScrollToTop />

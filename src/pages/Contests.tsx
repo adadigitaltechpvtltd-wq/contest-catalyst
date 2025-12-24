@@ -4,11 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ErrorState from '@/components/ErrorState';
+import ContestCardSkeleton from '@/components/skeletons/ContestCardSkeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Clock, Users, Loader2, Camera } from 'lucide-react';
+import { Trophy, Clock, Users, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 
 type ContestStatus = 'active' | 'voting' | 'completed';
@@ -169,8 +170,10 @@ const Contests = () => {
           </TabsList>
 
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <ContestCardSkeleton key={i} />
+              ))}
             </div>
           ) : error ? (
             <ErrorState

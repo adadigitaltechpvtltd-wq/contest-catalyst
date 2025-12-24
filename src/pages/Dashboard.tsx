@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import ErrorState from '@/components/ErrorState';
+import DashboardSkeleton from '@/components/skeletons/DashboardSkeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,8 +19,7 @@ import {
   Bell, 
   Clock,
   ArrowRight,
-  TrendingUp,
-  Loader2
+  TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -152,9 +152,7 @@ const Dashboard = () => {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
+          <DashboardSkeleton />
         ) : error ? (
           <ErrorState
             title="Failed to Load Dashboard"
