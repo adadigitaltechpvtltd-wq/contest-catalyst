@@ -4,10 +4,10 @@ import GaalLogo from "./GaalLogo";
 
 const Footer = () => {
   const socialLinks = [
-    { icon: Instagram, href: "#" },
-    { icon: Twitter, href: "#" },
-    { icon: Youtube, href: "#" },
-    { icon: Linkedin, href: "#" },
+    { icon: Instagram, href: "https://www.instagram.com/gaal.app/" },
+    { icon: Twitter, href: "https://x.com/gaalapp" },
+    { icon: Youtube, href: "https://www.youtube.com/@gaalapp" },
+    { icon: Linkedin, href: "https://www.linkedin.com/in/gaalapp/" },
   ];
 
   return (
@@ -63,6 +63,8 @@ const Footer = () => {
                 <a 
                   key={i}
                   href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
                 >
                   <social.icon className="w-4 h-4" />

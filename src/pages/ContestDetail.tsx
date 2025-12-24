@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Clock, Users, Trophy, CheckCircle, Share2, Heart, Calendar, Loader2, Eye, Image as ImageIcon, User } from "lucide-react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Clock, Users, Trophy, CheckCircle, Share2, Heart, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -8,7 +8,8 @@ import SubmissionModal from "@/components/SubmissionModal";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface Contest {
   id: string;
@@ -44,6 +45,7 @@ interface Submission {
 const ContestDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [contest, setContest] = useState<Contest | null>(null);
@@ -55,6 +57,50 @@ const ContestDetail = () => {
   const [hasMoreSubmissions, setHasMoreSubmissions] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [totalApproved, setTotalApproved] = useState(0);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const shareText = contest ? `Check out "${contest.title}" contest on GAAL!` : "Check out this contest on GAAL!";
+
+  const handleSave = () => {
+    if (!user) {
+      toast.info("Please log in to save contests");
+      navigate("/auth");
+      return;
+    }
+    setIsLiked(!isLiked);
+    toast.success(isLiked ? "Contest removed from saved" : "Contest saved!");
+  };
+
+  const handleShare = (platform: string) => {
+    const encodedUrl = encodeURIComponent(shareUrl);
+    const encodedText = encodeURIComponent(shareText);
+    
+    let shareLink = "";
+    switch (platform) {
+      case "twitter":
+        shareLink = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+        break;
+      case "linkedin":
+        shareLink = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+        break;
+      case "instagram":
+        // Instagram doesn't have direct web share, copy link instead
+        handleCopyLink();
+        toast.info("Link copied! Share it on Instagram");
+        return;
+    }
+    window.open(shareLink, "_blank", "noopener,noreferrer");
+    setIsShareDialogOpen(false);
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(shareUrl);
+    setIsCopied(true);
+    toast.success("Link copied to clipboard!");
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
   const SUBMISSIONS_PER_PAGE = 12;
 
@@ -360,15 +406,61 @@ const ContestDetail = () => {
                   <Button 
                     variant="outline" 
                     className="flex-1"
-                    onClick={() => setIsLiked(!isLiked)}
+                    onClick={handleSave}
                   >
                     <Heart className={`w-4 h-4 mr-2 ${isLiked ? "fill-primary text-primary" : ""}`} />
                     {isLiked ? "Saved" : "Save"}
                   </Button>
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="icon" onClick={() => setIsShareDialogOpen(true)}>
                     <Share2 className="w-4 h-4" />
                   </Button>
                 </div>
+
+                {/* Share Dialog */}
+                <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Share this contest</DialogTitle>
+                      <DialogDescription>
+                        Share "{contest?.title}" with your friends
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-4 gap-3 py-4">
+                      <Button 
+                        variant="outline" 
+                        className="flex-col h-auto py-4 gap-2"
+                        onClick={() => handleShare("twitter")}
+                      >
+                        <Twitter className="w-5 h-5" />
+                        <span className="text-xs">Twitter</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex-col h-auto py-4 gap-2"
+                        onClick={() => handleShare("instagram")}
+                      >
+                        <Instagram className="w-5 h-5" />
+                        <span className="text-xs">Instagram</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex-col h-auto py-4 gap-2"
+                        onClick={() => handleShare("linkedin")}
+                      >
+                        <Linkedin className="w-5 h-5" />
+                        <span className="text-xs">LinkedIn</span>
+                      </Button>
+                      <Button 
+                        variant={isCopied ? "secondary" : "outline"}
+                        className="flex-col h-auto py-4 gap-2"
+                        onClick={handleCopyLink}
+                      >
+                        {isCopied ? <Check className="w-5 h-5 text-success" /> : <Copy className="w-5 h-5" />}
+                        <span className="text-xs">{isCopied ? "Copied!" : "Copy Link"}</span>
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </div>
