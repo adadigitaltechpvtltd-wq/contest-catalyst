@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -31,6 +32,7 @@ const CreateContest = () => {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [status, setStatus] = useState<'draft' | 'active'>('draft');
+  const [featuredInHero, setFeaturedInHero] = useState(false);
   const [rules, setRules] = useState<string[]>(['']);
   const [judgingCriteria, setJudgingCriteria] = useState<string[]>(['']);
 
@@ -84,6 +86,7 @@ const CreateContest = () => {
       start_date: startDate.toISOString(),
       end_date: endDate.toISOString(),
       status,
+      featured_in_hero: featuredInHero,
       rules: rules.filter((r) => r.trim() !== ''),
       judging_criteria: judgingCriteria.filter((c) => c.trim() !== ''),
       created_by: user?.id,
@@ -324,10 +327,10 @@ const CreateContest = () => {
 
         <Card className="glass-card mb-6">
           <CardHeader>
-            <CardTitle>Status</CardTitle>
+            <CardTitle>Status & Visibility</CardTitle>
             <CardDescription>Save as draft or publish immediately</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <Select value={status} onValueChange={(v) => setStatus(v as 'draft' | 'active')}>
               <SelectTrigger className="w-full md:w-64">
                 <SelectValue />
@@ -337,6 +340,17 @@ const CreateContest = () => {
                 <SelectItem value="active">Publish & Go Live</SelectItem>
               </SelectContent>
             </Select>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="featuredInHero" 
+                checked={featuredInHero} 
+                onCheckedChange={(checked) => setFeaturedInHero(checked === true)}
+              />
+              <Label htmlFor="featuredInHero" className="text-sm font-normal cursor-pointer">
+                Feature this contest in the homepage hero section
+              </Label>
+            </div>
           </CardContent>
         </Card>
 

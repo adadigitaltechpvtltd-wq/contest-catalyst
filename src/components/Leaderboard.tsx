@@ -1,14 +1,18 @@
+import { useEffect, useState } from "react";
 import { RefreshCw, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const leaders = [
-  { rank: 1, name: "Sarah Chen", wins: 8, badge: "🏆", points: 12450, avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100" },
-  { rank: 2, name: "Marcus Johnson", wins: 6, badge: "🥈", points: 11200, avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" },
-  { rank: 3, name: "Aisha Patel", wins: 5, badge: "🥉", points: 9800, avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100" },
-  { rank: 4, name: "Jake Williams", wins: 5, badge: null, points: 8900, avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100" },
-  { rank: 5, name: "Luna Rodriguez", wins: 4, badge: null, points: 8450, avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100" },
-];
+interface LeaderboardEntry {
+  user_id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  wins: number;
+  total_submissions: number;
+  contests_entered: number;
+}
 
 const rankStyles = (rank: number) => {
   if (rank === 1) return "bg-primary/15 text-primary";
@@ -17,7 +21,39 @@ const rankStyles = (rank: number) => {
   return "bg-muted text-muted-foreground";
 };
 
+const getBadge = (rank: number) => {
+  if (rank === 1) return "🏆";
+  if (rank === 2) return "🥈";
+  if (rank === 3) return "🥉";
+  return null;
+};
+
 const Leaderboard = () => {
+  const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      const { data, error } = await supabase
+        .from("leaderboard_stats")
+        .select("user_id, full_name, avatar_url, wins, total_submissions, contests_entered")
+        .order("wins", { ascending: false })
+        .limit(5);
+
+      if (!error && data) {
+        setLeaders(data as LeaderboardEntry[]);
+      }
+      setLoading(false);
+    };
+
+    fetchLeaderboard();
+  }, []);
+
+  // Calculate points based on wins and submissions
+  const calculatePoints = (leader: LeaderboardEntry) => {
+    return (leader.wins * 1000) + (leader.total_submissions * 50) + (leader.contests_entered * 100);
+  };
+
   return (
     <section id="leaderboard" className="py-20 relative overflow-hidden">
       <div className="container mx-auto px-4">
@@ -42,46 +78,82 @@ const Leaderboard = () => {
 
             {/* Leaders */}
             <div className="divide-y divide-border">
-              {leaders.map((leader) => (
-                <div
-                  key={leader.rank}
-                  className={
-                    "flex items-center gap-4 px-6 py-4 hover:bg-muted/20 transition-colors " +
-                    (leader.rank <= 3 ? "bg-gradient-to-r from-primary/10 to-transparent" : "")
-                  }
-                >
-                  <div
-                    className={
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold " +
-                      rankStyles(leader.rank)
-                    }
-                  >
-                    {leader.rank}
-                  </div>
-
-                  <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-border">
-                    <img
-                      src={leader.avatar}
-                      alt={`${leader.name} avatar`}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-
-                  <div className="flex-1 min-w-0 text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground truncate">{leader.name}</span>
-                      {leader.badge && <span>{leader.badge}</span>}
+              {loading ? (
+                // Skeleton loading state
+                [...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 px-6 py-4">
+                    <Skeleton className="w-8 h-8 rounded-full" />
+                    <Skeleton className="w-10 h-10 rounded-full" />
+                    <div className="flex-1">
+                      <Skeleton className="h-4 w-32 mb-1" />
+                      <Skeleton className="h-3 w-24" />
                     </div>
-                    <span className="text-xs text-muted-foreground">{leader.wins} wins this month</span>
+                    <div className="text-right">
+                      <Skeleton className="h-5 w-16 mb-1" />
+                      <Skeleton className="h-3 w-12" />
+                    </div>
                   </div>
-
-                  <div className="text-right">
-                    <div className="font-display font-bold text-primary">{leader.points.toLocaleString()}</div>
-                    <span className="text-xs text-muted-foreground">points</span>
-                  </div>
+                ))
+              ) : leaders.length === 0 ? (
+                <div className="px-6 py-8 text-center text-muted-foreground">
+                  No leaderboard data available yet. Start competing to see your name here!
                 </div>
-              ))}
+              ) : (
+                leaders.map((leader, index) => {
+                  const rank = index + 1;
+                  const badge = getBadge(rank);
+                  const points = calculatePoints(leader);
+
+                  return (
+                    <div
+                      key={leader.user_id}
+                      className={
+                        "flex items-center gap-4 px-6 py-4 hover:bg-muted/20 transition-colors " +
+                        (rank <= 3 ? "bg-gradient-to-r from-primary/10 to-transparent" : "")
+                      }
+                    >
+                      <div
+                        className={
+                          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold " +
+                          rankStyles(rank)
+                        }
+                      >
+                        {rank}
+                      </div>
+
+                      <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-border bg-muted">
+                        {leader.avatar_url ? (
+                          <img
+                            src={leader.avatar_url}
+                            alt={`${leader.full_name || "User"} avatar`}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                            {(leader.full_name || "U")[0].toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-foreground truncate">
+                            {leader.full_name || "Anonymous Creator"}
+                          </span>
+                          {badge && <span>{badge}</span>}
+                        </div>
+                        <span className="text-xs text-muted-foreground">{leader.wins} wins this month</span>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="font-display font-bold text-primary">{points.toLocaleString()}</div>
+                        <span className="text-xs text-muted-foreground">points</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
 
             <div className="px-6 py-4 border-t border-border">
