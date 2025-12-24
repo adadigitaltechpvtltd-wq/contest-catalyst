@@ -17,8 +17,20 @@ import {
   Trophy, 
   Loader2,
   AlertCircle,
-  Eye
+  Eye,
+  Trash2
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
 
@@ -44,6 +56,7 @@ const MySubmissions = () => {
   const { toast } = useToast();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
   const fetchSubmissions = useCallback(async () => {
@@ -117,6 +130,40 @@ const MySubmissions = () => {
       supabase.removeChannel(channel);
     };
   }, [user, fetchSubmissions, toast]);
+
+  const handleDelete = async (submissionId: string, imageUrl: string) => {
+    setDeletingId(submissionId);
+    try {
+      // Extract file path from URL for storage deletion
+      const urlParts = imageUrl.split('/submissions/');
+      if (urlParts[1]) {
+        const filePath = urlParts[1];
+        await supabase.storage.from('submissions').remove([filePath]);
+      }
+
+      const { error } = await supabase
+        .from('submissions')
+        .delete()
+        .eq('id', submissionId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Submission deleted',
+        description: 'Your submission has been removed.',
+      });
+      
+      setSubmissions(prev => prev.filter(s => s.id !== submissionId));
+    } catch (error) {
+      console.error('Error deleting submission:', error);
+      toast({
+        title: 'Delete failed',
+        description: 'Could not delete submission. Please try again.',
+        variant: 'destructive',
+      });
+    }
+    setDeletingId(null);
+  };
 
   const getStatusBadge = (status: SubmissionStatus) => {
     switch (status) {
@@ -230,12 +277,49 @@ const MySubmissions = () => {
 
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>{new Date(submission.created_at).toLocaleDateString()}</span>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/submission/${submission.id}`}>
-                          <Eye className="h-4 w-4 mr-1" />
-                          View Details
-                        </Link>
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        {submission.status === 'pending' && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-destructive hover:text-destructive"
+                                disabled={deletingId === submission.id}
+                              >
+                                {deletingId === submission.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently delete your submission "{submission.title}". This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(submission.id, submission.image_url)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to={`/submission/${submission.id}`}>
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

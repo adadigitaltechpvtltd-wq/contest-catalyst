@@ -20,8 +20,21 @@ import {
   Image as ImageIcon,
   MessageSquare,
   Star,
-  Eye
+  Eye,
+  Trash2
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
 
@@ -53,6 +66,8 @@ const SubmissionDetail = () => {
   const navigate = useNavigate();
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchSubmission = async () => {
@@ -177,6 +192,42 @@ const SubmissionDetail = () => {
     return timeline;
   };
 
+  const handleDelete = async () => {
+    if (!submission) return;
+    
+    setIsDeleting(true);
+    try {
+      // Extract file path from URL for storage deletion
+      const urlParts = submission.image_url.split('/submissions/');
+      if (urlParts[1]) {
+        const filePath = urlParts[1];
+        await supabase.storage.from('submissions').remove([filePath]);
+      }
+
+      const { error } = await supabase
+        .from('submissions')
+        .delete()
+        .eq('id', submission.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Submission deleted',
+        description: 'Your submission has been removed.',
+      });
+      
+      navigate('/submissions');
+    } catch (error) {
+      console.error('Error deleting submission:', error);
+      toast({
+        title: 'Delete failed',
+        description: 'Could not delete submission. Please try again.',
+        variant: 'destructive',
+      });
+      setIsDeleting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -193,14 +244,50 @@ const SubmissionDetail = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-8 pt-24">
-        <Button
-          variant="ghost"
-          className="mb-6"
-          onClick={() => navigate('/submissions')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Submissions
-        </Button>
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/submissions')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Submissions
+          </Button>
+          
+          {submission.status === 'pending' && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="destructive" 
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 mr-2" />
+                  )}
+                  Delete Submission
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete your submission "{submission.title}". This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
