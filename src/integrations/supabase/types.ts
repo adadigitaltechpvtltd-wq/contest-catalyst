@@ -401,6 +401,20 @@ export type Database = {
             referencedRelation: "contests"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "submissions_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "submissions_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
