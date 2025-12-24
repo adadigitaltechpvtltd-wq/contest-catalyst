@@ -8,7 +8,7 @@ interface GaalLogoProps {
 
 const sizeMap = {
   sm: { icon: 'w-6 h-6', text: 'text-base', gap: 'gap-1.5' },
-  md: { icon: 'w-10 h-10', text: 'text-[2.5rem]', gap: 'gap-2.5' },
+  md: { icon: 'w-10 h-10', text: 'text-[2rem]', gap: 'gap-2.5' },
   lg: { icon: 'w-12 h-12', text: 'text-4xl', gap: 'gap-3' },
   xl: { icon: 'w-16 h-16', text: 'text-5xl', gap: 'gap-3.5' },
 };
