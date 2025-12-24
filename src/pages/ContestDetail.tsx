@@ -47,7 +47,8 @@ const ContestDetail = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [contest, setContest] = useState<Contest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [participantCount, setParticipantCount] = useState(0);
@@ -63,14 +64,46 @@ const ContestDetail = () => {
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
   const shareText = contest ? `Check out "${contest.title}" contest on GAAL!` : "Check out this contest on GAAL!";
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!user) {
       toast.info("Please log in to save contests");
       navigate("/auth");
       return;
     }
-    setIsLiked(!isLiked);
-    toast.success(isLiked ? "Contest removed from saved" : "Contest saved!");
+    
+    if (!id || isSaving) return;
+    
+    setIsSaving(true);
+    
+    if (isSaved) {
+      // Unsave
+      const { error } = await supabase
+        .from("saved_contests")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("contest_id", id);
+      
+      if (error) {
+        toast.error("Failed to remove from saved");
+      } else {
+        setIsSaved(false);
+        toast.success("Contest removed from saved");
+      }
+    } else {
+      // Save
+      const { error } = await supabase
+        .from("saved_contests")
+        .insert({ user_id: user.id, contest_id: id });
+      
+      if (error) {
+        toast.error("Failed to save contest");
+      } else {
+        setIsSaved(true);
+        toast.success("Contest saved!");
+      }
+    }
+    
+    setIsSaving(false);
   };
 
   const handleShare = (platform: string) => {
@@ -134,7 +167,7 @@ const ContestDetail = () => {
         
         setParticipantCount(count || 0);
 
-        // Check if current user has submitted
+        // Check if current user has submitted and if contest is saved
         if (user) {
           const { data: submission } = await supabase
             .from("submissions")
@@ -146,6 +179,16 @@ const ContestDetail = () => {
           if (submission) {
             setUserSubmission(submission);
           }
+          
+          // Check if contest is saved
+          const { data: savedData } = await supabase
+            .from("saved_contests")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("contest_id", id)
+            .maybeSingle();
+          
+          setIsSaved(!!savedData);
         }
 
         // Get total count of approved submissions
@@ -407,9 +450,10 @@ const ContestDetail = () => {
                     variant="outline" 
                     className="flex-1"
                     onClick={handleSave}
+                    disabled={isSaving}
                   >
-                    <Heart className={`w-4 h-4 mr-2 ${isLiked ? "fill-primary text-primary" : ""}`} />
-                    {isLiked ? "Saved" : "Save"}
+                    <Heart className={`w-4 h-4 mr-2 ${isSaved ? "fill-primary text-primary" : ""}`} />
+                    {isSaved ? "Saved" : "Save"}
                   </Button>
                   <Button variant="outline" size="icon" onClick={() => setIsShareDialogOpen(true)}>
                     <Share2 className="w-4 h-4" />
