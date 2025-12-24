@@ -28,6 +28,7 @@ const SubmissionModal = ({ isOpen, onClose, contestTitle }: SubmissionModalProps
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     title: "",
     description: "",
@@ -60,10 +61,7 @@ const SubmissionModal = ({ isOpen, onClose, contestTitle }: SubmissionModalProps
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = (file: File) => {
     // Validate file type
     if (!file.type.startsWith("image/")) {
       setErrors(prev => ({ ...prev, photo: "Please select an image file" }));
@@ -87,6 +85,40 @@ const SubmissionModal = ({ isOpen, onClose, contestTitle }: SubmissionModalProps
       setErrors(prev => ({ ...prev, photo: undefined }));
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processFile(file);
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
   };
 
   const removePhoto = () => {
@@ -188,16 +220,26 @@ const SubmissionModal = ({ isOpen, onClose, contestTitle }: SubmissionModalProps
             ) : (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
-                  errors.photo 
-                    ? "border-destructive bg-destructive/5" 
-                    : "border-border hover:border-primary/50 hover:bg-muted/50"
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                  isDragging
+                    ? "border-primary bg-primary/10 scale-[1.02]"
+                    : errors.photo 
+                      ? "border-destructive bg-destructive/5" 
+                      : "border-border hover:border-primary/50 hover:bg-muted/50"
                 }`}
               >
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                  <Upload className="w-6 h-6 text-muted-foreground" />
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 transition-colors ${
+                  isDragging ? "bg-primary/20" : "bg-muted"
+                }`}>
+                  <Upload className={`w-6 h-6 transition-colors ${isDragging ? "text-primary" : "text-muted-foreground"}`} />
                 </div>
-                <p className="text-foreground font-medium mb-1">Click to upload photo</p>
+                <p className="text-foreground font-medium mb-1">
+                  {isDragging ? "Drop your photo here" : "Click to upload or drag and drop"}
+                </p>
                 <p className="text-sm text-muted-foreground">JPG, PNG, or GIF up to 10MB</p>
               </div>
             )}
