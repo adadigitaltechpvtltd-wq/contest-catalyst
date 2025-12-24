@@ -93,24 +93,24 @@ const ContestDetail = () => {
 
   const SUBMISSIONS_PER_PAGE = 12;
 
-  useEffect(() => {
-    const fetchContest = async () => {
-      if (!id) return;
+  const fetchContest = async () => {
+    if (!id) return;
 
-      setIsLoading(true);
-      
-      // Fetch contest
-      const { data: contestData, error: contestError } = await supabase
-        .from("contests")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+    setIsLoading(true);
+    
+    // Fetch contest
+    const { data: contestData, error: contestError } = await supabase
+      .from("contests")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
 
-      if (contestError) {
-        console.error("Error fetching contest:", contestError);
-        setIsLoading(false);
-        return;
-      }
+    if (contestError) {
+      console.error("Error fetching contest:", contestError);
+      toast.error("Failed to load contest details. Please try again.");
+      setIsLoading(false);
+      return;
+    }
 
       setContest(contestData);
 
@@ -172,9 +172,10 @@ const ContestDetail = () => {
         }
       }
 
-      setIsLoading(false);
-    };
+    setIsLoading(false);
+  };
 
+  useEffect(() => {
     fetchContest();
   }, [id, user]);
 

@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ErrorState from '@/components/ErrorState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Clock, Users, Loader2, Camera } from 'lucide-react';
+import { toast } from 'sonner';
 
 type ContestStatus = 'active' | 'voting' | 'completed';
 
@@ -28,6 +30,7 @@ interface Contest {
 const Contests = () => {
   const [contests, setContests] = useState<Contest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
 
   useEffect(() => {
@@ -35,6 +38,9 @@ const Contests = () => {
   }, []);
 
   const fetchContests = async () => {
+    setIsLoading(true);
+    setError(null);
+    
     const { data, error } = await supabase
       .from('contests')
       .select('*')
@@ -43,6 +49,8 @@ const Contests = () => {
 
     if (error) {
       console.error('Error fetching contests:', error);
+      setError('Failed to load contests');
+      toast.error('Failed to load contests. Please try again.');
     } else {
       setContests(data as Contest[]);
     }
@@ -164,6 +172,12 @@ const Contests = () => {
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
+          ) : error ? (
+            <ErrorState
+              title="Failed to Load Contests"
+              message={error}
+              onRetry={fetchContests}
+            />
           ) : (
             <>
               <TabsContent value="active">
