@@ -88,7 +88,7 @@ const Navbar = () => {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/my-submissions" className="cursor-pointer">
+                        <Link to="/submissions" className="cursor-pointer">
                           <Image className="mr-2 h-4 w-4" />
                           My Submissions
                         </Link>

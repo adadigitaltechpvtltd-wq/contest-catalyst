@@ -29,48 +29,65 @@ interface SavedContest {
 }
 
 const SavedContests = () => {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [savedContests, setSavedContests] = useState<SavedContest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchSavedContests = async () => {
-      if (!user) return;
+      if (authLoading && !user) return;
+
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from("saved_contests")
-        .select(`
-          id,
-          contest_id,
-          created_at,
-          contests (
-            id,
-            title,
-            description,
-            theme,
-            prize_amount,
-            prize_currency,
-            start_date,
-            end_date,
-            status,
-            cover_image_url
-          )
-        `)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching saved contests:", error);
-        toast.error("Failed to load saved contests");
-      } else {
+      try {
+        const { data, error } = await supabase
+          .from("saved_contests")
+          .select(
+            `
+            id,
+            contest_id,
+            created_at,
+            contests (
+              id,
+              title,
+              description,
+              theme,
+              prize_amount,
+              prize_currency,
+              start_date,
+              end_date,
+              status,
+              cover_image_url
+            )
+          `
+          )
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching saved contests:", error);
+          toast.error(error.message || "Failed to load saved contests");
+          setSavedContests([]);
+          return;
+        }
+
         setSavedContests((data as unknown as SavedContest[]) || []);
+      } catch (e) {
+        console.error("Exception fetching saved contests:", e);
+        toast.error("Failed to load saved contests");
+        setSavedContests([]);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchSavedContests();
-  }, [user]);
+  }, [user, authLoading]);
 
   const handleUnsave = async (savedId: string, contestTitle: string) => {
     const { error } = await supabase
