@@ -83,45 +83,66 @@ const AdminSubmissions = () => {
 
   const fetchSubmissions = async () => {
     setIsLoading(true);
-    
-    let query = supabase
-      .from('submissions')
-      .select(`
-        id,
-        title,
-        description,
-        image_url,
-        status,
-        originality_confirmed,
-        exif_camera_make,
-        exif_camera_model,
-        exif_date_taken,
-        exif_has_anomalies,
-        exif_anomaly_reasons,
-        ai_probability_score,
-        visual_anomaly_score,
-        risk_score,
-        report_count,
-        admin_score,
-        admin_notes,
-        created_at,
-        contest:contests(id, title, status),
-        profile:profiles(id, full_name, email)
-      `)
-      .order('risk_score', { ascending: false });
 
-    if (statusFilter !== 'all' && ['pending', 'approved', 'rejected', 'winner', 'disqualified'].includes(statusFilter)) {
-      query = query.eq('status', statusFilter as SubmissionStatus);
+    try {
+      let query = supabase
+        .from('submissions')
+        .select(`
+          id,
+          title,
+          description,
+          image_url,
+          status,
+          originality_confirmed,
+          exif_camera_make,
+          exif_camera_model,
+          exif_date_taken,
+          exif_has_anomalies,
+          exif_anomaly_reasons,
+          ai_probability_score,
+          visual_anomaly_score,
+          risk_score,
+          report_count,
+          admin_score,
+          admin_notes,
+          created_at,
+          contest:contests(id, title, status),
+          profile:profiles!submissions_user_id_profiles_fkey(id, full_name, email)
+        `)
+        .order('risk_score', { ascending: false });
+
+      if (
+        statusFilter !== 'all' &&
+        ['pending', 'approved', 'rejected', 'winner', 'disqualified'].includes(statusFilter)
+      ) {
+        query = query.eq('status', statusFilter as SubmissionStatus);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching submissions:', error);
+        toast({
+          title: 'Failed to load submissions',
+          description: error.message,
+          variant: 'destructive',
+        });
+        setSubmissions([]);
+        return;
+      }
+
+      setSubmissions((data as unknown as Submission[]) ?? []);
+    } catch (err: any) {
+      console.error('Exception fetching submissions:', err);
+      toast({
+        title: 'Failed to load submissions',
+        description: err?.message ?? 'Unexpected error',
+        variant: 'destructive',
+      });
+      setSubmissions([]);
+    } finally {
+      setIsLoading(false);
     }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching submissions:', error);
-    } else {
-      setSubmissions(data as unknown as Submission[]);
-    }
-    setIsLoading(false);
   };
 
   const openReviewModal = (submission: Submission) => {

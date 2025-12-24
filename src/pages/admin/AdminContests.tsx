@@ -4,14 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Plus, 
-  Trophy, 
-  Users, 
-  Clock, 
-  Edit, 
+import { useToast } from '@/hooks/use-toast';
+import {
+  Plus,
+  Trophy,
+  Users,
+  Clock,
+  Edit,
   Eye,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 
 type ContestStatus = 'draft' | 'active' | 'voting' | 'completed' | 'cancelled';
@@ -30,46 +31,75 @@ interface Contest {
 }
 
 const AdminContests = () => {
+  const { toast } = useToast();
   const [contests, setContests] = useState<Contest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchContests = async () => {
-      const { data, error } = await supabase
-        .from('contests')
-        .select(`
-          id,
-          title,
-          theme,
-          prize_amount,
-          min_participants,
-          start_date,
-          end_date,
-          status,
-          created_at
-        `)
-        .order('created_at', { ascending: false });
+      setIsLoading(true);
 
-      if (error) {
-        console.error('Error fetching contests:', error);
-      } else {
+      try {
+        const { data, error } = await supabase
+          .from('contests')
+          .select(
+            `
+            id,
+            title,
+            theme,
+            prize_amount,
+            min_participants,
+            start_date,
+            end_date,
+            status,
+            created_at
+          `
+          )
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching contests:', error);
+          toast({
+            title: 'Failed to load contests',
+            description: error.message,
+            variant: 'destructive',
+          });
+          setContests([]);
+          return;
+        }
+
         // Fetch submission counts
         const contestsWithCounts = await Promise.all(
           (data || []).map(async (contest) => {
-            const { count } = await supabase
+            const { count, error: countError } = await supabase
               .from('submissions')
               .select('*', { count: 'exact', head: true })
               .eq('contest_id', contest.id);
+
+            if (countError) {
+              console.error('Error fetching submissions count:', countError);
+            }
+
             return { ...contest, submission_count: count || 0 };
           })
         );
-        setContests(contestsWithCounts);
+
+        setContests(contestsWithCounts as unknown as Contest[]);
+      } catch (err: any) {
+        console.error('Exception fetching contests:', err);
+        toast({
+          title: 'Failed to load contests',
+          description: err?.message ?? 'Unexpected error',
+          variant: 'destructive',
+        });
+        setContests([]);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchContests();
-  }, []);
+  }, [toast]);
 
   const getStatusBadge = (status: ContestStatus) => {
     const variants: Record<ContestStatus, { class: string; label: string }> = {
