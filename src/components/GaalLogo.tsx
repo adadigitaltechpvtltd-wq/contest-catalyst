@@ -8,9 +8,9 @@ interface GaalLogoProps {
 
 const sizeMap = {
   sm: { icon: 'w-6 h-6', text: 'text-base', gap: 'gap-1.5' },
-  md: { icon: 'w-8 h-8', text: 'text-lg', gap: 'gap-2' },
-  lg: { icon: 'w-10 h-10', text: 'text-2xl', gap: 'gap-2.5' },
-  xl: { icon: 'w-14 h-14', text: 'text-4xl', gap: 'gap-3' },
+  md: { icon: 'w-10 h-10', text: 'text-[2.5rem]', gap: 'gap-2.5' },
+  lg: { icon: 'w-12 h-12', text: 'text-4xl', gap: 'gap-3' },
+  xl: { icon: 'w-16 h-16', text: 'text-5xl', gap: 'gap-3.5' },
 };
 
 const GaalLogo = ({ size = 'md', showText = true, className }: GaalLogoProps) => {
