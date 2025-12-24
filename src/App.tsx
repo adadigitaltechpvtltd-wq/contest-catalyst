@@ -35,7 +35,6 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import LeaderboardPage from "./pages/LeaderboardPage";
-import SavedContests from "./pages/SavedContests";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -66,7 +65,6 @@ const App = () => (
             <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-            <Route path="/saved" element={<ProtectedRoute><SavedContests /></ProtectedRoute>} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
