@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorMapping';
+import { differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds } from 'date-fns';
 import { 
   Upload, 
   Camera, 
@@ -19,7 +20,8 @@ import {
   AlertTriangle, 
   CheckCircle,
   X,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Clock
 } from 'lucide-react';
 
 interface Contest {
@@ -29,6 +31,7 @@ interface Contest {
   theme: string | null;
   prize_amount: number;
   rules: string[] | null;
+  end_date: string;
 }
 
 const SubmitPhoto = () => {
@@ -53,13 +56,38 @@ const SubmitPhoto = () => {
   // Check if user already submitted
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
+  // Time remaining state
+  const [timeRemaining, setTimeRemaining] = useState<{
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+    isExpired: boolean;
+  } | null>(null);
+
+  const calculateTimeRemaining = useCallback((endDate: string) => {
+    const end = new Date(endDate);
+    const now = new Date();
+    
+    if (end <= now) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true };
+    }
+    
+    const days = differenceInDays(end, now);
+    const hours = differenceInHours(end, now) % 24;
+    const minutes = differenceInMinutes(end, now) % 60;
+    const seconds = differenceInSeconds(end, now) % 60;
+    
+    return { days, hours, minutes, seconds, isExpired: false };
+  }, []);
+
   useEffect(() => {
     const fetchContest = async () => {
       if (!contestId) return;
 
       const { data, error } = await supabase
         .from('contests')
-        .select('id, title, description, theme, prize_amount, rules')
+        .select('id, title, description, theme, prize_amount, rules, end_date')
         .eq('id', contestId)
         .eq('status', 'active')
         .maybeSingle();
@@ -75,6 +103,7 @@ const SubmitPhoto = () => {
       }
 
       setContest(data);
+      setTimeRemaining(calculateTimeRemaining(data.end_date));
 
       // Check if user already submitted
       if (user) {
@@ -94,7 +123,18 @@ const SubmitPhoto = () => {
     };
 
     fetchContest();
-  }, [contestId, user, navigate, toast]);
+  }, [contestId, user, navigate, toast, calculateTimeRemaining]);
+
+  // Update countdown every second
+  useEffect(() => {
+    if (!contest?.end_date) return;
+
+    const interval = setInterval(() => {
+      setTimeRemaining(calculateTimeRemaining(contest.end_date));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [contest?.end_date, calculateTimeRemaining]);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -228,6 +268,30 @@ const SubmitPhoto = () => {
     );
   }
 
+  // If contest deadline passed
+  if (timeRemaining?.isExpired) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-4 py-8 pt-24 flex items-center justify-center">
+          <Card className="glass-card max-w-md w-full text-center">
+            <CardContent className="p-8">
+              <Clock className="h-16 w-16 text-destructive mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Submissions Closed</h2>
+              <p className="text-muted-foreground mb-6">
+                The deadline for this contest has passed.
+              </p>
+              <Button asChild>
+                <a href="/contests">Browse Other Contests</a>
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
@@ -240,6 +304,22 @@ const SubmitPhoto = () => {
             <p className="text-muted-foreground">
               Contest: <span className="text-foreground font-medium">{contest?.title}</span>
             </p>
+            
+            {/* Countdown Timer */}
+            {timeRemaining && !timeRemaining.isExpired && (
+              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">
+                  Time left:{' '}
+                  <span className="text-primary">
+                    {timeRemaining.days > 0 && `${timeRemaining.days}d `}
+                    {timeRemaining.hours.toString().padStart(2, '0')}:
+                    {timeRemaining.minutes.toString().padStart(2, '0')}:
+                    {timeRemaining.seconds.toString().padStart(2, '0')}
+                  </span>
+                </span>
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleSubmit}>
