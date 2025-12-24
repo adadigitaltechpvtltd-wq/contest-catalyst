@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import WalletSkeleton from '@/components/skeletons/WalletSkeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,12 +13,10 @@ import { toast } from 'sonner';
 import { 
   Wallet as WalletIcon, 
   ArrowUpRight, 
-  ArrowDownLeft, 
   Trophy,
   Clock,
   CheckCircle,
   XCircle,
-  Loader2,
   IndianRupee,
   Gift
 } from 'lucide-react';
@@ -42,16 +43,15 @@ const Wallet = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchWalletData = async () => {
-      if (authLoading && !user) return;
+  const fetchWalletData = useCallback(async () => {
+    if (authLoading && !user) return;
 
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
 
-      setIsLoading(true);
+    setIsLoading(true);
 
       try {
         // Fetch balance
@@ -98,13 +98,18 @@ const Wallet = () => {
         console.error('Exception fetching wallet data:', e);
         toast.error('Failed to load wallet data');
         setTransactions([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchWalletData();
+    } finally {
+      setIsLoading(false);
+    }
   }, [user, authLoading]);
+
+  useEffect(() => {
+    fetchWalletData();
+  }, [fetchWalletData]);
+
+  const { pullDistance, isRefreshing, containerProps } = usePullToRefresh({
+    onRefresh: fetchWalletData,
+  });
 
   const getTransactionIcon = (type: TransactionType) => {
     switch (type) {
@@ -152,11 +157,16 @@ const Wallet = () => {
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col" {...containerProps}>
       <Navbar />
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       <main className="flex-1 container mx-auto px-4 py-8 pt-24">
         <h1 className="text-3xl font-display font-bold mb-8">Wallet & Rewards</h1>
 
+        {isLoading ? (
+          <WalletSkeleton />
+        ) : (
+          <>
         {/* Balance Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <Card className="glass-card">
@@ -239,7 +249,7 @@ const Wallet = () => {
           <CardContent>
             {isLoading ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <WalletIcon className="h-8 w-8 animate-pulse text-muted-foreground" />
               </div>
             ) : transactions.length === 0 ? (
               <div className="text-center py-8">
@@ -291,6 +301,8 @@ const Wallet = () => {
             )}
           </CardContent>
         </Card>
+          </>
+        )}
       </main>
       <Footer />
     </div>

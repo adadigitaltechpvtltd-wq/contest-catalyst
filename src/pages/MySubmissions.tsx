@@ -4,6 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { MySubmissionsSkeleton } from '@/components/skeletons/SubmissionSkeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -254,9 +257,20 @@ const MySubmissions = () => {
   const approvedCount = submissions.filter((s) => s.status === 'approved' || s.status === 'winner').length;
   const rejectedCount = submissions.filter((s) => s.status === 'rejected' || s.status === 'disqualified').length;
 
+  const handleRefresh = useCallback(async () => {
+    if (user) {
+      await fetchSubmissions(user.id);
+    }
+  }, [user, fetchSubmissions]);
+
+  const { pullDistance, isRefreshing, containerProps } = usePullToRefresh({
+    onRefresh: handleRefresh,
+  });
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col" {...containerProps}>
       <Navbar />
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       <main className="flex-1 container mx-auto px-4 py-8 pt-24">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
@@ -279,9 +293,7 @@ const MySubmissions = () => {
           </TabsList>
 
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <MySubmissionsSkeleton />
           ) : filteredSubmissions.length === 0 ? (
             <Card className="glass-card">
               <CardContent className="p-12 text-center">
