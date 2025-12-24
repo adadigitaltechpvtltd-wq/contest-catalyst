@@ -19,8 +19,8 @@ const contests: Contest[] = [
   {
     id: "morning-routine",
     title: '"My Morning Routine"',
-    description: "Share a photo of your morning ritual. Coffee? Yoga? Chaos? Show us your real mornings!",
-    prize: "$500",
+    description: "Coffee or chaos, calm or rush — show us what your mornings really look like.",
+    prize: "Up to $500",
     participants: 247,
     timeLeft: "3d 11h",
     status: "live",
@@ -43,7 +43,7 @@ const contests: Contest[] = [
   {
     id: "summer-vibes",
     title: '"Summer Vibes"',
-    description: "Capture your best summer moment. Beach, BBQ, or backyard - we want to see it!",
+    description: "Capture your best summer moment. Beach, BBQ, or backyard — we want to see it!",
     prize: "$750 + Merchandise",
     participants: 412,
     timeLeft: "Starts Jul 1",
@@ -56,7 +56,7 @@ const contests: Contest[] = [
     id: "desk-setup-goals",
     title: '"Desk Setup Goals"',
     description: "Show us your workspace. Clean or cluttered, we love seeing where the magic happens.",
-    prize: "$1000 + tech bundle",
+    prize: "$1,000 + Tech Bundle",
     participants: 2341,
     timeLeft: "Ended",
     status: "ended",
@@ -76,7 +76,7 @@ const ActiveContests = () => {
             Active <span className="text-gradient">Contests</span>
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Jump into any contest that sparks your creativity. New challenges added every week.
+            Discover challenges that spark your creativity. New contests launch every week.
           </p>
         </div>
 

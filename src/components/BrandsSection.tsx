@@ -5,12 +5,12 @@ const benefits = [
   {
     icon: Check,
     title: "Authentic UGC",
-    description: "Get real content from real people who love your brand.",
+    description: "Real content from real people who genuinely engage with your brand.",
   },
   {
     icon: Share2,
-    title: "Viral Potential",
-    description: "Contest entries get shared, liked, and talked about.",
+    title: "High Participation",
+    description: "Contest entries get shared, liked, and talked about organically.",
   },
   {
     icon: Users,
@@ -39,10 +39,10 @@ const BrandsSection = () => {
           {/* Left Content */}
           <div>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Brands <span className="text-gradient">Love Us</span>
+              Built for <span className="text-gradient">Brands</span>
             </h2>
             <p className="text-muted-foreground mb-8 max-w-lg">
-              Partner with Contestify to launch engaging campaigns that generate authentic user-generated content and build lasting customer relationships.
+              Launch creative campaigns that generate genuine user-generated content and meaningful engagement. Authentic UGC that feels human.
             </p>
 
             {/* Benefits */}
@@ -72,7 +72,7 @@ const BrandsSection = () => {
               <div className="absolute -top-20 -right-20 w-60 h-60 bg-gradient-to-bl from-primary/30 via-orange-500/20 to-transparent rounded-full blur-3xl" />
               
               <div className="relative">
-                <p className="text-sm text-muted-foreground mb-6">Trusted by 500+ brands worldwide</p>
+                <p className="text-sm text-muted-foreground mb-6">Trusted by hundreds of brands across lifestyle, tech, food, and fashion</p>
                 
                 {/* Brand icons grid */}
                 <div className="grid grid-cols-3 gap-4 mb-8">

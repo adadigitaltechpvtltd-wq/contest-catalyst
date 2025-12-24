@@ -47,16 +47,15 @@ const HeroSection = () => {
 
           {/* Headline */}
           <h1 className="font-display text-[44px] leading-[1.02] md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground">
-            <span className="text-foreground">Win Big.</span>{" "}
-            <span className="text-gradient">Create Bold.</span>
+            <span className="text-foreground">Create Bold.</span>{" "}
+            <span className="text-gradient">Compete Fair.</span>
             <br />
             <span className="text-gradient-cool">Get Rewarded.</span>
           </h1>
 
           {/* Subheadline */}
           <p className="mt-6 mx-auto max-w-3xl text-lg md:text-xl text-muted-foreground">
-            Join weekly micro-contests, showcase your creativity, and win amazing
-            prizes from top brands. No design skills required.
+            Turn everyday moments into opportunities. Contestify is a skill-based photo contest platform where creators compete in short challenges and earn cash, products, and brand recognition — all for free.
           </p>
 
           {/* Featured Contest Card */}
@@ -69,7 +68,7 @@ const HeroSection = () => {
                     🌱
                   </div>
                   <div className="text-left">
-                    <div className="text-sm text-muted-foreground">This Week's Contest</div>
+                    <div className="text-sm text-muted-foreground">This Week's Challenge</div>
                     <div className="font-display text-2xl font-bold text-foreground">"My Morning Routine"</div>
                   </div>
                 </div>
@@ -79,7 +78,7 @@ const HeroSection = () => {
               </div>
 
               <p className="mt-4 text-left text-muted-foreground">
-                Share a photo of your morning ritual. Coffee? Yoga? Chaos? Show us your real mornings!
+                Coffee or chaos, calm or rush — show us what your mornings really look like.
               </p>
 
               {/* Countdown row */}
@@ -108,7 +107,7 @@ const HeroSection = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <Trophy className="w-4 h-4" />
-                    <span>$500 Prize</span>
+                    <span>Up to $500 in rewards</span>
                   </div>
                 </div>
 

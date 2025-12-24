@@ -3,26 +3,26 @@ import { UserPlus, Camera, Star, Trophy, Settings } from "lucide-react";
 const steps = [
   {
     icon: UserPlus,
-    title: "Sign Up Free",
-    description: "Create your profile in seconds. No credit card, no commitment, just creativity.",
+    title: "Join for Free",
+    description: "Create your profile in seconds. No credit card required.",
     color: "from-blue-500 to-cyan-500",
   },
   {
     icon: Camera,
     title: "Submit Your Entry",
-    description: "Upload your photo, video, or creative answer. Show off you are — authenticity wins!",
+    description: "Upload an original photo or video that fits the challenge theme.",
     color: "from-purple-500 to-pink-500",
   },
   {
     icon: Star,
-    title: "Get Scored",
-    description: "Contestify uses a judge-mix AI. Creativity, originality, and engagement matters.",
+    title: "Get Evaluated Fairly",
+    description: "Each submission is reviewed based on creativity, originality, engagement, and authenticity.",
     color: "from-orange-500 to-red-500",
   },
   {
     icon: Trophy,
-    title: "Win Prizes",
-    description: "Top scorers win cash, products, and exclusive brand partnerships.",
+    title: "Earn Rewards",
+    description: "Top-scoring creators receive prizes, recognition, and brand opportunities.",
     color: "from-yellow-500 to-orange-500",
   },
 ];
@@ -34,10 +34,10 @@ const HowItWorks = () => {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-            How It <span className="text-gradient">Works</span>
+            How Contestify <span className="text-gradient">Works</span>
           </h2>
           <p className="text-muted-foreground">
-            From sign-up to winning – it's simpler than you think
+            From sign-up to earning rewards — it's simpler than you think
           </p>
         </div>
 
