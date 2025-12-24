@@ -47,7 +47,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
 
   const userLinks = [
     { label: "Dashboard", href: "/dashboard", icon: User },
-    { label: "My Submissions", href: "/my-submissions", icon: Image },
+    { label: "My Submissions", href: "/submissions", icon: Image },
     { label: "Saved Contests", href: "/saved", icon: Heart },
     { label: "Wallet", href: "/wallet", icon: Wallet },
     { label: "Profile Settings", href: "/profile", icon: Settings },

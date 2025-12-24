@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 import { 
   Wallet as WalletIcon, 
   ArrowUpRight, 
@@ -36,51 +37,74 @@ interface Transaction {
 }
 
 const Wallet = () => {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [balance, setBalance] = useState<number>(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchWalletData = async () => {
-      if (!user) return;
+      if (authLoading && !user) return;
 
-      // Fetch balance
-      const { data: balanceData } = await supabase.rpc('get_wallet_balance', {
-        _user_id: user.id,
-      });
-
-      if (balanceData !== null) {
-        setBalance(balanceData);
+      if (!user) {
+        setIsLoading(false);
+        return;
       }
 
-      // Fetch transactions
-      const { data: txData, error } = await supabase
-        .from('wallet_transactions')
-        .select(`
-          id,
-          type,
-          amount,
-          currency,
-          status,
-          notes,
-          created_at,
-          contest:contests(title)
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      setIsLoading(true);
 
-      if (error) {
-        console.error('Error fetching transactions:', error);
-      } else {
-        setTransactions(txData as unknown as Transaction[]);
+      try {
+        // Fetch balance
+        const { data: balanceData, error: balanceError } = await supabase.rpc(
+          'get_wallet_balance',
+          {
+            _user_id: user.id,
+          }
+        );
+
+        if (balanceError) {
+          console.error('Error fetching wallet balance:', balanceError);
+          toast.error(balanceError.message || 'Failed to load wallet balance');
+        } else if (balanceData !== null) {
+          setBalance(Number(balanceData));
+        }
+
+        // Fetch transactions
+        const { data: txData, error: txError } = await supabase
+          .from('wallet_transactions')
+          .select(
+            `
+            id,
+            type,
+            amount,
+            currency,
+            status,
+            notes,
+            created_at,
+            contest:contests(title)
+          `
+          )
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (txError) {
+          console.error('Error fetching transactions:', txError);
+          toast.error(txError.message || 'Failed to load transactions');
+          setTransactions([]);
+        } else {
+          setTransactions((txData as unknown as Transaction[]) || []);
+        }
+      } catch (e) {
+        console.error('Exception fetching wallet data:', e);
+        toast.error('Failed to load wallet data');
+        setTransactions([]);
+      } finally {
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     };
 
     fetchWalletData();
-  }, [user]);
+  }, [user, authLoading]);
 
   const getTransactionIcon = (type: TransactionType) => {
     switch (type) {
