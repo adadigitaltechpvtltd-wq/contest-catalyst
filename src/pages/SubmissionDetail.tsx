@@ -34,7 +34,10 @@ import {
   Star,
   Eye,
   Trash2,
-  Pencil
+  Pencil,
+  Upload,
+  X,
+  RefreshCw
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -82,6 +85,10 @@ const SubmissionDetail = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isReplacingImage, setIsReplacingImage] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [newPhotoFile, setNewPhotoFile] = useState<File | null>(null);
+  const [newPhotoPreview, setNewPhotoPreview] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const { toast } = useToast();
@@ -309,6 +316,101 @@ const SubmissionDetail = () => {
     setIsSaving(false);
   };
 
+  const handleNewPhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload a JPEG, PNG, or WebP image.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Please upload an image smaller than 10MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setNewPhotoFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setNewPhotoPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCancelImageReplace = () => {
+    setNewPhotoFile(null);
+    setNewPhotoPreview(null);
+    setIsReplacingImage(false);
+  };
+
+  const handleReplaceImage = async () => {
+    if (!submission || !newPhotoFile || !user) return;
+
+    setIsUploadingImage(true);
+    try {
+      // Upload new image
+      const fileExt = newPhotoFile.name.split('.').pop();
+      const fileName = `${user.id}/${submission.contest.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('submissions')
+        .upload(fileName, newPhotoFile);
+
+      if (uploadError) throw uploadError;
+
+      // Get new public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('submissions')
+        .getPublicUrl(fileName);
+
+      // Delete old image from storage
+      const oldUrlParts = submission.image_url.split('/submissions/');
+      if (oldUrlParts[1]) {
+        const oldFilePath = oldUrlParts[1];
+        await supabase.storage.from('submissions').remove([oldFilePath]);
+      }
+
+      // Update submission with new image URL
+      const { error: updateError } = await supabase
+        .from('submissions')
+        .update({ image_url: publicUrl })
+        .eq('id', submission.id);
+
+      if (updateError) throw updateError;
+
+      setSubmission({
+        ...submission,
+        image_url: publicUrl,
+      });
+
+      toast({
+        title: 'Photo replaced',
+        description: 'Your submission photo has been updated.',
+      });
+
+      handleCancelImageReplace();
+    } catch (error) {
+      console.error('Error replacing image:', error);
+      toast({
+        title: 'Upload failed',
+        description: 'Could not replace photo. Please try again.',
+        variant: 'destructive',
+      });
+    }
+    setIsUploadingImage(false);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -439,18 +541,111 @@ const SubmissionDetail = () => {
             {/* Image Card */}
             <Card className="glass-card overflow-hidden">
               <div className="relative">
-                <img
-                  src={submission.image_url}
-                  alt={submission.title}
-                  className="w-full max-h-[600px] object-contain bg-secondary"
-                />
+                {isReplacingImage && newPhotoPreview ? (
+                  <img
+                    src={newPhotoPreview}
+                    alt="New photo preview"
+                    className="w-full max-h-[600px] object-contain bg-secondary"
+                  />
+                ) : (
+                  <img
+                    src={submission.image_url}
+                    alt={submission.title}
+                    className="w-full max-h-[600px] object-contain bg-secondary"
+                  />
+                )}
                 <div className="absolute top-4 right-4">
                   {getStatusBadge(submission.status)}
                 </div>
                 {submission.status === 'winner' && (
                   <div className="absolute inset-0 bg-gradient-to-t from-accent/20 to-transparent pointer-events-none" />
                 )}
+                
+                {/* Replace image button for pending submissions */}
+                {submission.status === 'pending' && !isReplacingImage && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="absolute bottom-4 right-4"
+                    onClick={() => setIsReplacingImage(true)}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Replace Photo
+                  </Button>
+                )}
               </div>
+              
+              {/* Image replacement UI */}
+              {submission.status === 'pending' && isReplacingImage && (
+                <div className="p-4 border-t border-border bg-secondary/30">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">
+                        {newPhotoPreview ? 'New photo selected' : 'Select a new photo'}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCancelImageReplace}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
+                    
+                    {!newPhotoPreview ? (
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                        <div className="flex flex-col items-center justify-center">
+                          <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground">
+                            Click to upload a new photo
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            JPEG, PNG, or WebP (max 10MB)
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={handleNewPhotoSelect}
+                        />
+                      </label>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => {
+                            setNewPhotoFile(null);
+                            setNewPhotoPreview(null);
+                          }}
+                        >
+                          Choose Different
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          onClick={handleReplaceImage}
+                          disabled={isUploadingImage}
+                        >
+                          {isUploadingImage ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 mr-2" />
+                              Confirm Replace
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
               <CardContent className="p-6">
                 <h1 className="text-2xl font-display font-bold mb-2">{submission.title}</h1>
                 {submission.description && (
