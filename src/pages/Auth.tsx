@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Camera, Loader2, Mail, CheckCircle, ArrowLeft, AlertCircle } from 'lucide-react';
+import { CalendarIcon, Loader2, Mail, CheckCircle, ArrowLeft, AlertCircle } from 'lucide-react';
+import GaalLogo from '@/components/GaalLogo';
 import { format, subYears } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -487,9 +488,8 @@ const Auth = () => {
         <div className="container mx-auto px-4 py-12 pt-24">
           <div className="max-w-md mx-auto">
             <div className="text-center mb-8">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <Camera className="h-10 w-10 text-primary" />
-                <span className="text-3xl font-display font-bold text-gradient">Gaal</span>
+              <div className="flex items-center justify-center mb-4">
+                <GaalLogo size="lg" />
               </div>
               <p className="text-muted-foreground">
                 Reset your password
@@ -600,9 +600,8 @@ const Auth = () => {
       <div className="container mx-auto px-4 py-12 pt-24">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Camera className="h-10 w-10 text-primary" />
-              <span className="text-3xl font-display font-bold text-gradient">Gaal</span>
+            <div className="flex items-center justify-center mb-4">
+              <GaalLogo size="lg" />
             </div>
             <p className="text-muted-foreground">
               Join the community of photographers and win amazing prizes!

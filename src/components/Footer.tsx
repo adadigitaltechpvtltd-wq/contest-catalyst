@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Trophy, Instagram, Twitter, Youtube, Linkedin } from "lucide-react";
+import { Instagram, Twitter, Youtube, Linkedin } from "lucide-react";
+import GaalLogo from "./GaalLogo";
 
 const Footer = () => {
   const socialLinks = [
@@ -15,11 +16,8 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
           {/* Logo & Description */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                <Trophy className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <span className="font-display font-bold text-foreground">Gaal</span>
+            <Link to="/" className="flex items-center mb-4">
+              <GaalLogo size="md" />
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
               Skill-based photography contests where creativity meets rewards. Free to enter, win real prizes.

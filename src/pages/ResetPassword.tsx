@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Camera, Loader2, CheckCircle, KeyRound } from 'lucide-react';
+import { Loader2, CheckCircle, KeyRound } from 'lucide-react';
+import GaalLogo from '@/components/GaalLogo';
 import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
 import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator';
@@ -163,9 +164,8 @@ const ResetPassword = () => {
       <div className="container mx-auto px-4 py-12 pt-24">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Camera className="h-10 w-10 text-primary" />
-              <span className="text-3xl font-display font-bold text-gradient">Gaal</span>
+            <div className="flex items-center justify-center mb-4">
+              <GaalLogo size="lg" />
             </div>
             <p className="text-muted-foreground">
               Create a new password for your account

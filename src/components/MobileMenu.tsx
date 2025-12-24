@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { X, Trophy, User, LogOut, Image, Wallet, Settings } from "lucide-react";
+import { X, User, LogOut, Image, Wallet, Settings } from "lucide-react";
+import GaalLogo from "./GaalLogo";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -69,12 +70,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-              <Trophy className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-lg text-foreground">Gaal</span>
-          </div>
+          <GaalLogo size="md" />
           <button 
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-muted transition-colors"
