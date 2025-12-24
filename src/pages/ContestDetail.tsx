@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Clock, Users, Trophy, CheckCircle, Share2, Heart, Calendar, Loader2 } from "lucide-react";
+import { ArrowLeft, Clock, Users, Trophy, CheckCircle, Share2, Heart, Calendar, Loader2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SubmissionModal from "@/components/SubmissionModal";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Contest {
   id: string;
@@ -28,11 +29,13 @@ interface Contest {
 
 const ContestDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [contest, setContest] = useState<Contest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [participantCount, setParticipantCount] = useState(0);
+  const [userSubmission, setUserSubmission] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => {
     const fetchContest = async () => {
@@ -63,13 +66,27 @@ const ContestDetail = () => {
           .eq("contest_id", id);
         
         setParticipantCount(count || 0);
+
+        // Check if current user has submitted
+        if (user) {
+          const { data: submission } = await supabase
+            .from("submissions")
+            .select("id, title")
+            .eq("contest_id", id)
+            .eq("user_id", user.id)
+            .maybeSingle();
+          
+          if (submission) {
+            setUserSubmission(submission);
+          }
+        }
       }
 
       setIsLoading(false);
     };
 
     fetchContest();
-  }, [id]);
+  }, [id, user]);
 
   const formatTimeLeft = (endDate: string) => {
     const end = new Date(endDate);
@@ -237,11 +254,20 @@ const ContestDetail = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-3 min-w-[200px]">
-                {contest.status === "active" && (
-                  <Button size="lg" onClick={() => setIsSubmitModalOpen(true)}>
-                    Submit Entry
-                  </Button>
-                )}
+                {userSubmission ? (
+                  <Link to="/submissions">
+                    <Button size="lg" variant="secondary" className="w-full">
+                      <Eye className="w-4 h-4 mr-2" />
+                      View My Submission
+                    </Button>
+                  </Link>
+                ) : contest.status === "active" ? (
+                  <Link to={`/submit/${contest.id}`}>
+                    <Button size="lg" className="w-full">
+                      Submit Entry
+                    </Button>
+                  </Link>
+                ) : null}
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
