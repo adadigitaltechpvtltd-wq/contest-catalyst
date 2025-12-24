@@ -40,6 +40,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import ImageCropper from '@/components/ImageCropper';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,6 +90,8 @@ const SubmissionDetail = () => {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [newPhotoFile, setNewPhotoFile] = useState<File | null>(null);
   const [newPhotoPreview, setNewPhotoPreview] = useState<string | null>(null);
+  const [rawPhotoFile, setRawPhotoFile] = useState<File | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const { toast } = useToast();
@@ -330,22 +333,40 @@ const SubmissionDetail = () => {
       return;
     }
 
-    // Validate file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
+    // Validate file size (20MB max for raw, will be compressed)
+    if (file.size > 20 * 1024 * 1024) {
       toast({
         title: 'File too large',
-        description: 'Please upload an image smaller than 10MB.',
+        description: 'Please upload an image smaller than 20MB.',
         variant: 'destructive',
       });
       return;
     }
 
-    setNewPhotoFile(file);
+    // Open cropper with the raw file
+    setRawPhotoFile(file);
+    setShowCropper(true);
+  };
+
+  const handleCropComplete = (croppedFile: File) => {
+    setNewPhotoFile(croppedFile);
     const reader = new FileReader();
     reader.onload = (e) => {
       setNewPhotoPreview(e.target?.result as string);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(croppedFile);
+    setRawPhotoFile(null);
+    setShowCropper(false);
+    
+    toast({
+      title: 'Image optimized',
+      description: `Compressed to ${(croppedFile.size / 1024 / 1024).toFixed(2)} MB`,
+    });
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setRawPhotoFile(null);
   };
 
   const handleCancelImageReplace = () => {
@@ -601,7 +622,7 @@ const SubmissionDetail = () => {
                             Click to upload a new photo
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            JPEG, PNG, or WebP (max 10MB)
+                            JPEG, PNG, or WebP (max 20MB) - Will be cropped &amp; compressed
                           </p>
                         </div>
                         <input
@@ -783,6 +804,19 @@ const SubmissionDetail = () => {
         </div>
       </main>
       <Footer />
+      
+      {/* Image Cropper Modal */}
+      {rawPhotoFile && (
+        <ImageCropper
+          file={rawPhotoFile}
+          isOpen={showCropper}
+          onClose={handleCropCancel}
+          onCropComplete={handleCropComplete}
+          maxWidth={1920}
+          maxHeight={1920}
+          quality={0.85}
+        />
+      )}
     </div>
   );
 };
