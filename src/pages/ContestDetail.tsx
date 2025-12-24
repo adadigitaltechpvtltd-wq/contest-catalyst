@@ -1,95 +1,110 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Clock, Users, Trophy, CheckCircle, Share2, Heart, Calendar } from "lucide-react";
+import { ArrowLeft, Clock, Users, Trophy, CheckCircle, Share2, Heart, Calendar, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SubmissionModal from "@/components/SubmissionModal";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow, format } from "date-fns";
 
-// Sample contest data - in a real app this would come from an API
-const contestsData: Record<string, {
+interface Contest {
   id: string;
   title: string;
-  description: string;
-  fullDescription: string;
-  prize: string;
-  prizeDetails: string[];
-  participants: number;
-  timeLeft: string;
-  endDate: string;
-  status: "live" | "soon" | "ended";
-  brand: string;
-  brandLogo: string;
-  image: string;
-  rules: string[];
-  judgingCriteria: { name: string; weight: number }[];
-}> = {
-  "morning-routine": {
-    id: "morning-routine",
-    title: '"My Morning Routine"',
-    description: "Share a photo of your morning ritual. Coffee? Yoga? Chaos? Show us your real mornings!",
-    fullDescription: "We're looking for authentic, creative photos that capture the essence of your morning routine. Whether you're a sunrise yoga enthusiast, a coffee-first person, or someone who hits snooze five times - we want to see the real you! No professional equipment needed - just your creativity and a smartphone.",
-    prize: "$500",
-    prizeDetails: ["$500 Cash Prize", "$100 BrewCo Gift Card", "Featured on BrewCo Social Media", "1-Year Supply of Premium Coffee"],
-    participants: 247,
-    timeLeft: "3d 11h",
-    endDate: "December 27, 2024",
-    status: "live",
-    brand: "BrewCo",
-    brandLogo: "https://images.unsplash.com/photo-1559305616-3f99cd43e353?w=100&auto=format&fit=crop",
-    image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&auto=format&fit=crop",
-    rules: [
-      "One entry per person",
-      "Photo must be your own original work",
-      "No heavily edited or AI-generated images",
-      "Must include a morning-related element",
-      "Entries must be submitted before the deadline",
-      "Winner will be announced within 48 hours of contest end",
-    ],
-    judgingCriteria: [
-      { name: "Creativity", weight: 40 },
-      { name: "Authenticity", weight: 30 },
-      { name: "Visual Appeal", weight: 20 },
-      { name: "Relevance to Theme", weight: 10 },
-    ],
-  },
-  "pet-of-the-week": {
-    id: "pet-of-the-week",
-    title: '"Pet of the Week"',
-    description: "Show off your furry, feathered, or scaly friend! Most adorable pet wins.",
-    fullDescription: "Calling all pet parents! We want to see your adorable companions in their element. Whether your pet is napping, playing, or just being their quirky selves - capture that moment and share it with us. All pets welcome: dogs, cats, birds, fish, reptiles, and everything in between!",
-    prize: "$300 + Gift Card",
-    prizeDetails: ["$300 Cash Prize", "$150 PetPals Gift Card", "Premium Pet Treats Bundle", "Feature in PetPals Newsletter"],
-    participants: 182,
-    timeLeft: "5d 8h",
-    endDate: "December 29, 2024",
-    status: "live",
-    brand: "PetPals",
-    brandLogo: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=100&auto=format&fit=crop",
-    image: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&auto=format&fit=crop",
-    rules: [
-      "One entry per person",
-      "Pet must be your own",
-      "Photo must be original and unedited",
-      "No harmful or distressing content",
-      "All pet types are welcome",
-      "Winner announced 24 hours after contest ends",
-    ],
-    judgingCriteria: [
-      { name: "Cuteness Factor", weight: 35 },
-      { name: "Photo Quality", weight: 25 },
-      { name: "Personality Captured", weight: 25 },
-      { name: "Uniqueness", weight: 15 },
-    ],
-  },
-};
+  description: string | null;
+  theme: string | null;
+  prize_amount: number;
+  prize_currency: string;
+  start_date: string;
+  end_date: string;
+  voting_end_date: string | null;
+  status: 'draft' | 'active' | 'voting' | 'completed' | 'cancelled';
+  cover_image_url: string | null;
+  rules: string[] | null;
+  judging_criteria: string[] | null;
+  min_participants: number;
+  max_participants: number | null;
+}
 
 const ContestDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [contest, setContest] = useState<Contest | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [participantCount, setParticipantCount] = useState(0);
 
-  const contest = id ? contestsData[id] : null;
+  useEffect(() => {
+    const fetchContest = async () => {
+      if (!id) return;
+
+      setIsLoading(true);
+      
+      // Fetch contest
+      const { data: contestData, error: contestError } = await supabase
+        .from("contests")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (contestError) {
+        console.error("Error fetching contest:", contestError);
+        setIsLoading(false);
+        return;
+      }
+
+      setContest(contestData);
+
+      // Fetch participant count
+      if (contestData) {
+        const { count } = await supabase
+          .from("submissions")
+          .select("*", { count: "exact", head: true })
+          .eq("contest_id", id);
+        
+        setParticipantCount(count || 0);
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchContest();
+  }, [id]);
+
+  const formatTimeLeft = (endDate: string) => {
+    const end = new Date(endDate);
+    const now = new Date();
+    
+    if (end < now) return "Ended";
+    
+    return formatDistanceToNow(end, { addSuffix: false }) + " left";
+  };
+
+  const getStatusDisplay = (status: Contest['status']) => {
+    switch (status) {
+      case 'active':
+        return { label: "🔴 Live Now", className: "bg-primary text-primary-foreground animate-pulse" };
+      case 'voting':
+        return { label: "🗳️ Voting", className: "bg-accent text-accent-foreground" };
+      case 'completed':
+        return { label: "Ended", className: "bg-muted text-muted-foreground" };
+      case 'draft':
+        return { label: "Coming Soon", className: "bg-muted text-muted-foreground" };
+      default:
+        return { label: status, className: "bg-muted text-muted-foreground" };
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-20 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   if (!contest) {
     return (
@@ -98,16 +113,43 @@ const ContestDetail = () => {
         <div className="container mx-auto px-4 py-20 text-center">
           <h1 className="text-2xl font-display font-bold text-foreground mb-4">Contest Not Found</h1>
           <p className="text-muted-foreground mb-6">The contest you're looking for doesn't exist.</p>
-          <Link to="/">
+          <Link to="/contests">
             <Button>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
+              Back to Contests
             </Button>
           </Link>
         </div>
       </div>
     );
   }
+
+  const statusDisplay = getStatusDisplay(contest.status);
+  const defaultImage = "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&auto=format&fit=crop";
+  const prizeFormatted = `${contest.prize_currency} ${contest.prize_amount.toLocaleString()}`;
+
+  // Default judging criteria if none provided
+  const judgingCriteria = contest.judging_criteria?.length 
+    ? contest.judging_criteria.map((criteria, i) => ({
+        name: criteria,
+        weight: Math.round(100 / (contest.judging_criteria?.length || 1))
+      }))
+    : [
+        { name: "Creativity", weight: 40 },
+        { name: "Authenticity", weight: 30 },
+        { name: "Visual Appeal", weight: 20 },
+        { name: "Relevance to Theme", weight: 10 },
+      ];
+
+  // Default rules if none provided
+  const rules = contest.rules?.length 
+    ? contest.rules 
+    : [
+        "One entry per person",
+        "Photo must be your own original work",
+        "No heavily edited or AI-generated images",
+        "Entries must be submitted before the deadline",
+      ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -117,7 +159,7 @@ const ContestDetail = () => {
       <section className="relative">
         <div className="absolute inset-0 h-80 md:h-96">
           <img 
-            src={contest.image} 
+            src={contest.cover_image_url || defaultImage} 
             alt={contest.title}
             className="w-full h-full object-cover"
           />
@@ -126,7 +168,7 @@ const ContestDetail = () => {
 
         <div className="relative container mx-auto px-4 pt-8">
           {/* Back button */}
-          <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
+          <Link to="/contests" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
             <ArrowLeft className="w-4 h-4" />
             Back to Contests
           </Link>
@@ -137,18 +179,12 @@ const ContestDetail = () => {
               <div className="flex-1">
                 {/* Status Badge */}
                 <div className="flex items-center gap-3 mb-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    contest.status === "live" 
-                      ? "bg-primary text-primary-foreground animate-pulse" 
-                      : contest.status === "soon"
-                      ? "bg-accent text-accent-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}>
-                    {contest.status === "live" ? "🔴 Live Now" : contest.status === "soon" ? "Coming Soon" : "Ended"}
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusDisplay.className}`}>
+                    {statusDisplay.label}
                   </span>
                   <span className="text-sm text-muted-foreground flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    Ends {contest.endDate}
+                    Ends {format(new Date(contest.end_date), "MMMM d, yyyy")}
                   </span>
                 </div>
 
@@ -157,17 +193,14 @@ const ContestDetail = () => {
                   {contest.title}
                 </h1>
 
-                {/* Brand */}
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 rounded-full overflow-hidden">
-                    <img src={contest.brandLogo} alt={contest.brand} className="w-full h-full object-cover" />
-                  </div>
-                  <span className="text-muted-foreground">by {contest.brand}</span>
-                </div>
+                {/* Theme */}
+                {contest.theme && (
+                  <p className="text-muted-foreground mb-2">Theme: {contest.theme}</p>
+                )}
 
                 {/* Description */}
                 <p className="text-muted-foreground mb-6 max-w-2xl">
-                  {contest.fullDescription}
+                  {contest.description || "Share your best photos and compete for amazing prizes!"}
                 </p>
 
                 {/* Stats */}
@@ -177,7 +210,7 @@ const ContestDetail = () => {
                       <Trophy className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-foreground font-bold">{contest.prize}</p>
+                      <p className="text-foreground font-bold">{prizeFormatted}</p>
                       <p className="text-xs text-muted-foreground">Prize</p>
                     </div>
                   </div>
@@ -186,7 +219,7 @@ const ContestDetail = () => {
                       <Users className="w-5 h-5 text-accent" />
                     </div>
                     <div>
-                      <p className="text-foreground font-bold">{contest.participants}</p>
+                      <p className="text-foreground font-bold">{participantCount}</p>
                       <p className="text-xs text-muted-foreground">Entries</p>
                     </div>
                   </div>
@@ -195,7 +228,7 @@ const ContestDetail = () => {
                       <Clock className="w-5 h-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="text-foreground font-bold">{contest.timeLeft}</p>
+                      <p className="text-foreground font-bold">{formatTimeLeft(contest.end_date)}</p>
                       <p className="text-xs text-muted-foreground">Time Left</p>
                     </div>
                   </div>
@@ -204,7 +237,7 @@ const ContestDetail = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-3 min-w-[200px]">
-                {contest.status === "live" && (
+                {contest.status === "active" && (
                   <Button size="lg" onClick={() => setIsSubmitModalOpen(true)}>
                     Submit Entry
                   </Button>
@@ -240,12 +273,18 @@ const ContestDetail = () => {
                 Prize Details
               </h2>
               <ul className="space-y-3">
-                {contest.prizeDetails.map((prize, i) => (
-                  <li key={i} className="flex items-center gap-3 text-muted-foreground">
-                    <CheckCircle className="w-5 h-5 text-success shrink-0" />
-                    {prize}
-                  </li>
-                ))}
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-success shrink-0" />
+                  {prizeFormatted} Cash Prize
+                </li>
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-success shrink-0" />
+                  Featured on GAAL Platform
+                </li>
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-success shrink-0" />
+                  Winner Badge on Profile
+                </li>
               </ul>
             </div>
 
@@ -255,7 +294,7 @@ const ContestDetail = () => {
                 Contest Rules
               </h2>
               <ol className="space-y-3">
-                {contest.rules.map((rule, i) => (
+                {rules.map((rule, i) => (
                   <li key={i} className="flex items-start gap-3 text-muted-foreground">
                     <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-foreground shrink-0">
                       {i + 1}
@@ -275,7 +314,7 @@ const ContestDetail = () => {
                 Judging Criteria
               </h2>
               <div className="space-y-4">
-                {contest.judgingCriteria.map((criteria, i) => (
+                {judgingCriteria.map((criteria, i) => (
                   <div key={i}>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-foreground">{criteria.name}</span>
@@ -293,7 +332,7 @@ const ContestDetail = () => {
             </div>
 
             {/* CTA Card */}
-            {contest.status === "live" && (
+            {contest.status === "active" && (
               <div className="bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30 rounded-2xl p-6 text-center">
                 <h3 className="font-display font-bold text-foreground mb-2">
                   Ready to Enter?
