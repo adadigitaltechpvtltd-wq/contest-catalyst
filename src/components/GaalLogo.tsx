@@ -27,23 +27,23 @@ const GaalLogo = ({ size = 'md', showText = true, className }: GaalLogoProps) =>
           className="w-full h-full"
         >
           <defs>
-            {/* Main background gradient - purple to pink to orange */}
+            {/* Main background gradient - vivid purple to magenta to orange */}
             <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#7C3AED" />
-              <stop offset="50%" stopColor="#EC4899" />
-              <stop offset="100%" stopColor="#F97316" />
+              <stop offset="0%" stopColor="#8B5CF6" />
+              <stop offset="40%" stopColor="#E11D48" />
+              <stop offset="100%" stopColor="#FB923C" />
             </linearGradient>
             
-            {/* Wave gradient - deeper purple to magenta */}
+            {/* Wave gradient - deep violet to hot pink */}
             <linearGradient id="waveGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#6D28D9" />
-              <stop offset="100%" stopColor="#DB2777" />
+              <stop offset="0%" stopColor="#7C3AED" />
+              <stop offset="100%" stopColor="#F43F5E" />
             </linearGradient>
             
-            {/* Second wave - magenta to coral */}
+            {/* Second wave - rose to orange */}
             <linearGradient id="waveGradient2" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#BE185D" />
-              <stop offset="100%" stopColor="#EA580C" />
+              <stop offset="0%" stopColor="#E11D48" />
+              <stop offset="100%" stopColor="#F97316" />
             </linearGradient>
             
             <mask id="centerHole">
@@ -55,23 +55,19 @@ const GaalLogo = ({ size = 'md', showText = true, className }: GaalLogoProps) =>
           {/* Base circle with gradient */}
           <circle cx="50" cy="50" r="46" fill="url(#bgGradient)" mask="url(#centerHole)" />
           
-          {/* First organic wave - top right flowing down */}
+          {/* First organic wave - flowing curve */}
           <path
-            d="M50 4 C75 4 96 25 96 50 C96 60 92 70 85 77 C78 70 68 65 55 65 C42 65 32 58 28 48 C24 38 28 25 38 15 C42 10 46 6 50 4"
+            d="M50 4 C78 4 96 22 96 50 C96 62 90 73 80 80 C72 70 60 64 48 66 C36 68 28 60 26 48 C24 36 30 22 42 12 C45 9 48 6 50 4"
             fill="url(#waveGradient1)"
             mask="url(#centerHole)"
           />
           
-          {/* Second wave - creates depth in lower section */}
+          {/* Second wave - adds depth */}
           <path
-            d="M70 20 C82 28 90 42 90 55 C90 62 87 68 82 73 C75 65 65 60 52 62 C42 64 35 58 33 50 C31 42 36 32 46 26 C54 21 62 18 70 20"
+            d="M75 15 C88 25 96 40 96 55 C96 65 90 74 82 80 C74 70 62 66 50 68 C40 70 34 64 32 54 C30 44 36 32 48 24 C58 17 68 14 75 15"
             fill="url(#waveGradient2)"
-            opacity="0.7"
             mask="url(#centerHole)"
           />
-          
-          {/* Highlight on inner edge */}
-          <circle cx="50" cy="50" r="20" stroke="white" strokeWidth="1" fill="none" opacity="0.2" mask="url(#centerHole)" />
         </svg>
       </div>
 
