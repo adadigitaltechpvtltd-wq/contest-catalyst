@@ -109,10 +109,16 @@ const SubmitPhoto = () => {
         return;
       }
 
-      // Wait for auth to load only if we still don't have a user
-      if (authLoading && !user) {
-        console.log('SubmitPhoto: Auth still loading (no user yet)...');
-        return;
+      // ProtectedRoute already ensures user exists, but check anyway
+      if (!user) {
+        console.log('SubmitPhoto: No user yet, waiting...');
+        // Don't return early without setting loading to false after a delay
+        const timeout = setTimeout(() => {
+          if (!user) {
+            setIsLoading(false);
+          }
+        }, 3000);
+        return () => clearTimeout(timeout);
       }
 
       console.log('SubmitPhoto: Fetching contest:', contestId, 'User:', user?.id);
@@ -150,27 +156,30 @@ const SubmitPhoto = () => {
         setTimeRemaining(calculateTimeRemaining(data.end_date));
 
         // Check if user already submitted
-        if (user) {
-          const { data: submission, error: subError } = await supabase
-            .from('submissions')
-            .select('id')
-            .eq('contest_id', contestId)
-            .eq('user_id', user.id)
-            .maybeSingle();
+        const { data: submission, error: subError } = await supabase
+          .from('submissions')
+          .select('id')
+          .eq('contest_id', contestId)
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-          if (!subError && submission) {
-            setHasSubmitted(true);
-          }
+        if (!subError && submission) {
+          setHasSubmitted(true);
         }
       } catch (err) {
         console.error('Exception in fetchContest:', err);
+        toast({
+          title: 'Error loading contest',
+          description: 'Please try again later.',
+          variant: 'destructive',
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchContest();
-  }, [contestId, user, authLoading, navigate, toast, calculateTimeRemaining]);
+  }, [contestId, user, navigate, toast, calculateTimeRemaining]);
 
   // Fetch previous submissions
   useEffect(() => {
@@ -335,7 +344,7 @@ const SubmitPhoto = () => {
     setIsSubmitting(false);
   };
 
-  if (isLoading || (authLoading && !user)) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

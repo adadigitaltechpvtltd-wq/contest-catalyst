@@ -136,19 +136,18 @@ const MySubmissions = () => {
   }, [toast]);
 
   useEffect(() => {
-    // Wait for auth to finish loading before fetching
-    if (!user && authLoading) {
-      console.log('Auth still loading (no user yet)...');
-      return;
-    }
-    
+    // ProtectedRoute ensures user exists, but add fallback
     if (!user) {
-      console.log('No user found');
-      setIsLoading(false);
-      return;
+      console.log('MySubmissions: No user yet');
+      const timeout = setTimeout(() => {
+        if (!user) {
+          setIsLoading(false);
+        }
+      }, 3000);
+      return () => clearTimeout(timeout);
     }
 
-    console.log('Fetching submissions for:', user.id);
+    console.log('MySubmissions: Fetching submissions for:', user.id);
     setIsLoading(true);
     fetchSubmissions(user.id);
 
@@ -190,7 +189,7 @@ const MySubmissions = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, authLoading, fetchSubmissions, toast]);
+  }, [user, fetchSubmissions, toast]);
 
   const handleDelete = async (submissionId: string, imageUrl: string) => {
     setDeletingId(submissionId);
