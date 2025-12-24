@@ -198,7 +198,7 @@ const AdminContests = () => {
                       </Link>
                     </Button>
                     <Button size="sm" asChild>
-                      <Link to={`/admin/contests/${contest.id}/submissions`}>
+                      <Link to="/admin/submissions">
                         Review ({contest.submission_count})
                       </Link>
                     </Button>
