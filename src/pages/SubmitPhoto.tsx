@@ -237,19 +237,23 @@ const SubmitPhoto = () => {
       return;
     }
 
-    // Validate file size (20MB max for raw, will be compressed)
-    if (file.size > 20 * 1024 * 1024) {
+    // Validate file size (8MB max)
+    if (file.size > 8 * 1024 * 1024) {
       toast({
         title: 'File too large',
-        description: 'Please upload an image smaller than 20MB.',
+        description: 'Please upload an image smaller than 8MB.',
         variant: 'destructive',
       });
       return;
     }
 
-    // Open cropper with the raw file
-    setRawPhotoFile(file);
-    setShowCropper(true);
+    // Set the file directly without forcing crop
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPhotoPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
     
     // Reset input so same file can be selected again
     e.target.value = '';
@@ -262,11 +266,12 @@ const SubmitPhoto = () => {
       setPhotoPreview(e.target?.result as string);
     };
     reader.readAsDataURL(croppedFile);
+    setShowCropper(false);
     setRawPhotoFile(null);
     
     toast({
-      title: 'Image optimized',
-      description: `Compressed to ${(croppedFile.size / 1024 / 1024).toFixed(2)} MB`,
+      title: 'Image cropped',
+      description: `Size: ${(croppedFile.size / 1024 / 1024).toFixed(2)} MB`,
     });
   }, [toast]);
 
@@ -455,8 +460,8 @@ const SubmitPhoto = () => {
                           type="button"
                           variant="secondary"
                           size="icon"
+                          title="Crop image"
                           onClick={() => {
-                            // Re-open cropper with current file
                             if (photoFile) {
                               setRawPhotoFile(photoFile);
                               setShowCropper(true);
@@ -488,7 +493,7 @@ const SubmitPhoto = () => {
                           <span className="font-semibold">Click to upload</span> or drag and drop
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          JPEG, PNG, or WebP (max 20MB) - Will be cropped &amp; compressed
+                          JPEG, PNG, or WebP (max 8MB)
                         </p>
                       </div>
                       <input
