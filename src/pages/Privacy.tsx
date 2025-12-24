@@ -79,10 +79,11 @@ const Privacy = () => {
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>You retain full ownership of your photographs</li>
-                  <li>You grant Gaal display rights only for contest purposes</li>
-                  <li>Approved photos may be displayed on our platform and promotional materials</li>
-                  <li>We will not sell or license your photos to third parties</li>
+                  <li>You grant Gaal display rights for contest and platform display purposes</li>
+                  <li>Approved photos may be displayed on our platform, search results, and promotional materials</li>
+                  <li>We do not sell user photographs. Licensing or brand usage, if introduced, will always be opt-in and clearly disclosed to creators</li>
                   <li>You can request removal of your photos by contacting us</li>
+                  <li>You can choose whether your content is contest-only, brand-licensable, or SEO-visible only</li>
                 </ul>
               </section>
 

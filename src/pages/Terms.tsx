@@ -24,7 +24,7 @@ const Terms = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">2. Nature of Service</h2>
                 <p className="text-muted-foreground mb-4">
-                  Gaal is a skill-based photography contest platform. Important clarifications:
+                  Gaal is a skill-based creative platform that hosts photography contests and other creator programs. Important clarifications:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>This is NOT gambling, lottery, or any form of chance-based gaming</li>
