@@ -29,6 +29,7 @@ import ReportAbuse from "./pages/ReportAbuse";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminContests from "./pages/admin/AdminContests";
 import CreateContest from "./pages/admin/CreateContest";
+import EditContest from "./pages/admin/EditContest";
 import AdminSubmissions from "./pages/admin/AdminSubmissions";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -71,6 +72,7 @@ const App = () => (
               <Route index element={<AdminDashboard />} />
               <Route path="contests" element={<AdminContests />} />
               <Route path="contests/new" element={<CreateContest />} />
+              <Route path="contests/:id/edit" element={<EditContest />} />
               <Route path="submissions" element={<AdminSubmissions />} />
               <Route path="payments" element={<AdminPayments />} />
               <Route path="users" element={<AdminUsers />} />
