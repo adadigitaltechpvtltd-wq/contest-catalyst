@@ -24,8 +24,14 @@ const ProtectedRoute = ({
     const verifyRole = async () => {
       console.log('ProtectedRoute: Verifying role, user:', user?.id, 'isLoading:', isLoading);
       
+      // Wait for auth to finish loading first
+      if (isLoading) {
+        console.log('ProtectedRoute: Still loading auth, waiting...');
+        return;
+      }
+      
       if (!user) {
-        console.log('ProtectedRoute: No user, setting unauthorized');
+        console.log('ProtectedRoute: No user after auth loaded, setting unauthorized');
         setVerifiedRole('unauthorized');
         return;
       }
@@ -73,9 +79,7 @@ const ProtectedRoute = ({
       }
     };
 
-    if (!isLoading) {
-      verifyRole();
-    }
+    verifyRole();
   }, [user, isLoading, requireAdmin, requireModerator]);
 
   // Add timeout to prevent infinite loading

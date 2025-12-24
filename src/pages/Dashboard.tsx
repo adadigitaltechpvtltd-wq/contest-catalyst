@@ -40,7 +40,7 @@ interface ActiveContest {
 }
 
 const Dashboard = () => {
-  const { user, profile, isAdmin } = useAuth();
+  const { user, profile, isAdmin, isLoading: authLoading } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalSubmissions: 0,
     approvedSubmissions: 0,
@@ -125,8 +125,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [user]);
+    if (!authLoading && user) {
+      fetchDashboardData();
+    }
+  }, [user, authLoading]);
 
   const formatTimeLeft = (endDate: string) => {
     const end = new Date(endDate);
