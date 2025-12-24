@@ -26,7 +26,7 @@ const Leaderboard = () => {
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
             Top <span className="text-gradient">Creators</span>
           </h2>
-          <p className="text-muted-foreground">Meet the legends who consistently bring their A-game</p>
+          <p className="text-muted-foreground">Creators compete in skill-based tiers to keep competitions fair for everyone</p>
         </div>
 
         <div className="max-w-2xl mx-auto">
