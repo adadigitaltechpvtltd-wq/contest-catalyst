@@ -66,9 +66,10 @@ const AdminDashboard = () => {
       }
 
       // Fetch recent submissions for review
-      const { data: recent } = await supabase
+      const { data: recent, error: recentError } = await supabase
         .from('submissions')
-        .select(`
+        .select(
+          `
           id,
           title,
           image_url,
@@ -76,11 +77,16 @@ const AdminDashboard = () => {
           risk_score,
           created_at,
           contest:contests(title),
-          profile:profiles(full_name)
-        `)
+          profile:profiles!submissions_user_id_profiles_fkey(full_name)
+        `
+        )
         .eq('status', 'pending')
         .order('risk_score', { ascending: false })
         .limit(5);
+
+      if (recentError) {
+        console.error('Error fetching recent submissions:', recentError);
+      }
 
       if (recent) {
         setRecentSubmissions(recent);
