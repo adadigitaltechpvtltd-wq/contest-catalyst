@@ -98,18 +98,19 @@ const MySubmissions = () => {
 
   useEffect(() => {
     // Wait for auth to finish loading before fetching
-    if (authLoading) {
-      console.log('Auth still loading...');
+    if (!user && authLoading) {
+      console.log('Auth still loading (no user yet)...');
       return;
     }
     
     if (!user) {
-      console.log('No user found after auth loaded');
+      console.log('No user found');
       setIsLoading(false);
       return;
     }
 
-    console.log('Auth loaded, fetching submissions for:', user.id);
+    console.log('Fetching submissions for:', user.id);
+    setIsLoading(true);
     fetchSubmissions(user.id);
 
     // Real-time subscription for user's submissions
