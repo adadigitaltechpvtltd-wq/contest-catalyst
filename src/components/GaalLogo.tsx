@@ -21,53 +21,57 @@ const GaalLogo = ({ size = 'md', showText = true, className }: GaalLogoProps) =>
       {/* Logo Icon - Flowing gradient circle with organic swirl */}
       <div className={cn('relative', icon)}>
         <svg
-          viewBox="0 0 48 48"
+          viewBox="0 0 100 100"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full"
         >
-          {/* Gradient definitions */}
           <defs>
-            <linearGradient id="gaalFlowGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#8B5CF6" />
-              <stop offset="35%" stopColor="#D946EF" />
-              <stop offset="70%" stopColor="#F97316" />
-              <stop offset="100%" stopColor="#FB923C" />
+            {/* Main background gradient - purple to pink to orange */}
+            <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#7C3AED" />
+              <stop offset="50%" stopColor="#EC4899" />
+              <stop offset="100%" stopColor="#F97316" />
             </linearGradient>
-            <linearGradient id="gaalFlowGradient2" x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#FB923C" />
-              <stop offset="50%" stopColor="#D946EF" />
-              <stop offset="100%" stopColor="#8B5CF6" />
+            
+            {/* Wave gradient - deeper purple to magenta */}
+            <linearGradient id="waveGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#6D28D9" />
+              <stop offset="100%" stopColor="#DB2777" />
             </linearGradient>
-            <mask id="gaalCenterMask">
-              <rect width="48" height="48" fill="white"/>
-              <circle cx="24" cy="24" r="8" fill="black"/>
+            
+            {/* Second wave - magenta to coral */}
+            <linearGradient id="waveGradient2" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#BE185D" />
+              <stop offset="100%" stopColor="#EA580C" />
+            </linearGradient>
+            
+            <mask id="centerHole">
+              <rect width="100" height="100" fill="white"/>
+              <circle cx="50" cy="50" r="18" fill="black"/>
             </mask>
           </defs>
           
-          {/* Main circular shape with gradient */}
-          <circle
-            cx="24"
-            cy="24"
-            r="21"
-            fill="url(#gaalFlowGradient)"
-            mask="url(#gaalCenterMask)"
+          {/* Base circle with gradient */}
+          <circle cx="50" cy="50" r="46" fill="url(#bgGradient)" mask="url(#centerHole)" />
+          
+          {/* First organic wave - top right flowing down */}
+          <path
+            d="M50 4 C75 4 96 25 96 50 C96 60 92 70 85 77 C78 70 68 65 55 65 C42 65 32 58 28 48 C24 38 28 25 38 15 C42 10 46 6 50 4"
+            fill="url(#waveGradient1)"
+            mask="url(#centerHole)"
           />
           
-          {/* Flowing organic curves */}
+          {/* Second wave - creates depth in lower section */}
           <path
-            d="M24 3 C35 3 45 13 45 24 C45 28 43 32 40 35 C36 30 30 28 24 28 C20 28 16 26 14 22 C12 18 14 12 18 8 C20 5 22 3 24 3"
-            fill="url(#gaalFlowGradient2)"
-            opacity="0.85"
-            mask="url(#gaalCenterMask)"
+            d="M70 20 C82 28 90 42 90 55 C90 62 87 68 82 73 C75 65 65 60 52 62 C42 64 35 58 33 50 C31 42 36 32 46 26 C54 21 62 18 70 20"
+            fill="url(#waveGradient2)"
+            opacity="0.7"
+            mask="url(#centerHole)"
           />
           
-          {/* Inner swirl accent */}
-          <path
-            d="M32 24 C32 28 28 32 24 32 C22 32 20 31 19 29 C21 30 23 30 25 29 C28 27 30 24 30 20 C30 18 29 16 27 15 C30 17 32 20 32 24"
-            fill="white"
-            opacity="0.3"
-          />
+          {/* Highlight on inner edge */}
+          <circle cx="50" cy="50" r="20" stroke="white" strokeWidth="1" fill="none" opacity="0.2" mask="url(#centerHole)" />
         </svg>
       </div>
 
