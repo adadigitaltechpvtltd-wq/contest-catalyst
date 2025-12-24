@@ -59,13 +59,9 @@ const MySubmissions = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
-  const fetchSubmissions = useCallback(async () => {
-    if (!user) {
-      setIsLoading(false);
-      return;
-    }
-
+  const fetchSubmissions = useCallback(async (userId: string) => {
     try {
+      console.log('Fetching submissions for user:', userId);
       const { data, error } = await supabase
         .from('submissions')
         .select(`
@@ -79,30 +75,44 @@ const MySubmissions = () => {
           created_at,
           contest:contests(id, title, prize_amount, status)
         `)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching submissions:', error);
+        toast({
+          title: 'Error loading submissions',
+          description: 'Please try refreshing the page.',
+          variant: 'destructive',
+        });
       } else {
-        console.log('Fetched submissions for user:', user.id, data);
+        console.log('Fetched submissions:', data);
         setSubmissions(data as unknown as Submission[]);
       }
     } catch (err) {
       console.error('Exception fetching submissions:', err);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, [user]);
+  }, [toast]);
 
   useEffect(() => {
     // Wait for auth to finish loading before fetching
-    if (authLoading) return;
+    if (authLoading) {
+      console.log('Auth still loading...');
+      return;
+    }
     
-    fetchSubmissions();
+    if (!user) {
+      console.log('No user found after auth loaded');
+      setIsLoading(false);
+      return;
+    }
+
+    console.log('Auth loaded, fetching submissions for:', user.id);
+    fetchSubmissions(user.id);
 
     // Real-time subscription for user's submissions
-    if (!user) return;
-
     const channel = supabase
       .channel('my-submissions')
       .on(
@@ -132,7 +142,7 @@ const MySubmissions = () => {
             }
           }
           
-          fetchSubmissions();
+          fetchSubmissions(user.id);
         }
       )
       .subscribe();
