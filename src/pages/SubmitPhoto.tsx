@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
@@ -370,7 +370,7 @@ const SubmitPhoto = () => {
                 You have already submitted a photo for this contest.
               </p>
               <Button asChild>
-                <a href="/submissions">View My Submissions</a>
+                <Link to="/submissions">View My Submissions</Link>
               </Button>
             </CardContent>
           </Card>
@@ -394,7 +394,7 @@ const SubmitPhoto = () => {
                 The deadline for this contest has passed.
               </p>
               <Button asChild>
-                <a href="/contests">Browse Other Contests</a>
+                <Link to="/contests">Browse Other Contests</Link>
               </Button>
             </CardContent>
           </Card>
@@ -624,11 +624,9 @@ const SubmitPhoto = () => {
                   ) : (
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                       {previousSubmissions.map((submission) => (
-                        <a
+                        <Link
                           key={submission.id}
-                          href={`/submissions/${submission.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          to={`/submission/${submission.id}`}
                           className="group relative aspect-square rounded-lg overflow-hidden bg-secondary"
                         >
                           <img
@@ -659,7 +657,7 @@ const SubmitPhoto = () => {
                           }`}>
                             {submission.status}
                           </div>
-                        </a>
+                        </Link>
                       ))}
                     </div>
                   )}

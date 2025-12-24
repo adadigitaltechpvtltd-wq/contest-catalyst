@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -807,13 +807,13 @@ const Auth = () => {
                       />
                       <Label htmlFor="terms" className="text-sm">
                         I accept the{' '}
-                        <a href="/terms" className="text-primary hover:underline">
+                        <Link to="/terms" className="text-primary hover:underline">
                           Terms & Conditions
-                        </a>{' '}
+                        </Link>{' '}
                         and{' '}
-                        <a href="/privacy" className="text-primary hover:underline">
+                        <Link to="/privacy" className="text-primary hover:underline">
                           Privacy Policy
-                        </a>
+                        </Link>
                       </Label>
                     </div>
                     <Button

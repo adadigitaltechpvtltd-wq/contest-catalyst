@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserFriendlyError } from '@/lib/errorMapping';
 import { AlertTriangle, Flag, Loader2, CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const ReportAbuse = () => {
   const { user } = useAuth();
@@ -82,7 +83,7 @@ const ReportAbuse = () => {
                 You may receive a follow-up if we need more information.
               </p>
               <Button asChild>
-                <a href="/">Return Home</a>
+                <Link to="/">Return Home</Link>
               </Button>
             </CardContent>
           </Card>
