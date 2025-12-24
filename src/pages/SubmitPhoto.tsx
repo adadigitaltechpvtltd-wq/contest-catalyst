@@ -109,9 +109,9 @@ const SubmitPhoto = () => {
         return;
       }
 
-      // Wait for auth to load before checking user
-      if (authLoading) {
-        console.log('SubmitPhoto: Auth still loading...');
+      // Wait for auth to load only if we still don't have a user
+      if (authLoading && !user) {
+        console.log('SubmitPhoto: Auth still loading (no user yet)...');
         return;
       }
 
@@ -175,7 +175,7 @@ const SubmitPhoto = () => {
   // Fetch previous submissions
   useEffect(() => {
     const fetchPreviousSubmissions = async () => {
-      if (authLoading || !user) return;
+      if (!user) return;
       
       setIsLoadingGallery(true);
       
@@ -335,7 +335,7 @@ const SubmitPhoto = () => {
     setIsSubmitting(false);
   };
 
-  if (isLoading || authLoading) {
+  if (isLoading || (authLoading && !user)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
