@@ -19,7 +19,7 @@ const ContestRules = () => {
                 <div>
                   <h3 className="font-semibold text-success mb-1">Skill-Based Contests Only</h3>
                   <p className="text-sm text-muted-foreground">
-                    All Contestify contests are skill-based photography competitions. Winners are determined 
+                    All Gaal contests are skill-based photography competitions. Winners are determined 
                     by the quality and creativity of their submissions, judged by human reviewers. 
                     There is NO element of chance or luck involved.
                   </p>
@@ -32,7 +32,7 @@ const ContestRules = () => {
                   <li>Open to all registered users aged 18 and above</li>
                   <li>One submission per user per contest</li>
                   <li>Users must have a verified email address</li>
-                  <li>Employees and immediate family of Contestify are not eligible</li>
+                  <li>Employees and immediate family of Gaal are not eligible</li>
                 </ul>
               </section>
 
@@ -167,7 +167,7 @@ const ContestRules = () => {
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>You retain full ownership of your photograph</li>
-                  <li>You grant Contestify non-exclusive display rights for contest purposes</li>
+                  <li>You grant Gaal non-exclusive display rights for contest purposes</li>
                   <li>Your photo may be featured on our platform and promotional materials</li>
                   <li>You can request removal of your photos by contacting support</li>
                 </ul>

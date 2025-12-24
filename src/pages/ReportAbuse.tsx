@@ -139,7 +139,7 @@ const ReportAbuse = () => {
                   <Input
                     id="submission-url"
                     type="url"
-                    placeholder="https://contestify.com/submission/..."
+                    placeholder="https://gaal.com/submission/..."
                     value={submissionUrl}
                     onChange={(e) => setSubmissionUrl(e.target.value)}
                   />

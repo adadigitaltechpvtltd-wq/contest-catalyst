@@ -16,11 +16,11 @@ const Copyright = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">1. Ownership of Submitted Content</h2>
                 <p className="text-muted-foreground mb-4">
-                  At Contestify, we respect the intellectual property rights of photographers and creators:
+                  At Gaal, we respect the intellectual property rights of photographers and creators:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li><strong>You retain full ownership</strong> of all photographs you submit</li>
-                  <li>Contestify does not claim ownership of user-submitted content</li>
+                  <li>Gaal does not claim ownership of user-submitted content</li>
                   <li>Your copyright remains with you at all times</li>
                   <li>We do not sell or license your photographs to third parties</li>
                 </ul>
@@ -29,7 +29,7 @@ const Copyright = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">2. License Granted to Contestify</h2>
                 <p className="text-muted-foreground mb-4">
-                  By submitting a photograph to our contests, you grant Contestify a limited license to:
+                  By submitting a photograph to our contests, you grant Gaal a limited license to:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>Display your photo on our platform for contest purposes</li>
@@ -92,8 +92,8 @@ const Copyright = () => {
                 </ul>
                 <p className="text-muted-foreground mt-4">
                   Send DMCA notices to:{' '}
-                  <a href="mailto:dmca@contestify.com" className="text-primary hover:underline">
-                    dmca@contestify.com
+                  <a href="mailto:dmca@gaal.com" className="text-primary hover:underline">
+                    dmca@gaal.com
                   </a>
                 </p>
               </section>
@@ -154,8 +154,8 @@ const Copyright = () => {
                 <h2 className="text-2xl font-semibold mb-4">10. Contact</h2>
                 <p className="text-muted-foreground">
                   For copyright-related inquiries, please contact:{' '}
-                  <a href="mailto:copyright@contestify.com" className="text-primary hover:underline">
-                    copyright@contestify.com
+                  <a href="mailto:copyright@gaal.com" className="text-primary hover:underline">
+                    copyright@gaal.com
                   </a>
                 </p>
               </section>

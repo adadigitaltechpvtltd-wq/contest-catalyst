@@ -363,7 +363,7 @@ const SubmitPhoto = () => {
                     onCheckedChange={(checked) => setOwnershipConfirmed(checked as boolean)}
                   />
                   <Label htmlFor="ownership" className="text-sm leading-relaxed">
-                    I own all rights to this photo and grant Contestify <strong>display rights only</strong> for contest purposes.
+                    I own all rights to this photo and grant Gaal <strong>display rights only</strong> for contest purposes.
                   </Label>
                 </div>
 

@@ -40,7 +40,7 @@ const AgePolicy = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">1. Age Requirements Overview</h2>
                 <p className="text-muted-foreground mb-4">
-                  Contestify has different age requirements for different activities:
+                  Gaal has different age requirements for different activities:
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -134,7 +134,7 @@ const AgePolicy = () => {
                 </p>
                 <ol className="list-decimal pl-6 text-muted-foreground space-y-2">
                   <li>Winner is notified of their prize</li>
-                  <li>Prize amount is added to the Contestify wallet</li>
+                  <li>Prize amount is added to the Gaal wallet</li>
                   <li>User submits payout request</li>
                   <li>User completes KYC verification</li>
                   <li>Payout is processed to verified account</li>
@@ -147,7 +147,7 @@ const AgePolicy = () => {
                   <AlertTriangle className="h-6 w-6 text-destructive flex-shrink-0 mt-1" />
                   <div>
                     <p className="text-muted-foreground">
-                      Contestify is <strong>NOT</strong> available to users under 18 years of age. 
+                      Gaal is <strong>NOT</strong> available to users under 18 years of age. 
                       We do not knowingly collect information from minors. If we become 
                       aware that we have collected personal information from someone under 18, we 
                       will delete that information immediately.
@@ -164,7 +164,7 @@ const AgePolicy = () => {
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>Winners are responsible for any applicable taxes</li>
                   <li>Consult a tax professional for guidance on reporting requirements</li>
-                  <li>Contestify may provide documentation for tax purposes upon request</li>
+                  <li>Gaal may provide documentation for tax purposes upon request</li>
                 </ul>
               </section>
 
@@ -172,8 +172,8 @@ const AgePolicy = () => {
                 <h2 className="text-2xl font-semibold mb-4">7. Contact Us</h2>
                 <p className="text-muted-foreground mb-4">
                   For any questions about our age policy, contact us at:{' '}
-                  <a href="mailto:support@contestify.com" className="text-primary hover:underline">
-                    support@contestify.com
+                  <a href="mailto:support@gaal.com" className="text-primary hover:underline">
+                    support@gaal.com
                   </a>
                 </p>
               </section>
