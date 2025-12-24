@@ -21,8 +21,10 @@ import {
   CheckCircle,
   X,
   Image as ImageIcon,
-  Clock
+  Clock,
+  Crop
 } from 'lucide-react';
+import ImageCropper from '@/components/ImageCropper';
 
 interface Contest {
   id: string;
@@ -49,6 +51,8 @@ const SubmitPhoto = () => {
   const [description, setDescription] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [rawPhotoFile, setRawPhotoFile] = useState<File | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
   const [originalityConfirmed, setOriginalityConfirmed] = useState(false);
   const [noAiConfirmed, setNoAiConfirmed] = useState(false);
   const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
@@ -150,23 +154,43 @@ const SubmitPhoto = () => {
       return;
     }
 
-    // Validate file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
+    // Validate file size (20MB max for raw, will be compressed)
+    if (file.size > 20 * 1024 * 1024) {
       toast({
         title: 'File too large',
-        description: 'Please upload an image smaller than 10MB.',
+        description: 'Please upload an image smaller than 20MB.',
         variant: 'destructive',
       });
       return;
     }
 
-    setPhotoFile(file);
+    // Open cropper with the raw file
+    setRawPhotoFile(file);
+    setShowCropper(true);
+    
+    // Reset input so same file can be selected again
+    e.target.value = '';
+  }, [toast]);
+
+  const handleCropComplete = useCallback((croppedFile: File) => {
+    setPhotoFile(croppedFile);
     const reader = new FileReader();
     reader.onload = (e) => {
       setPhotoPreview(e.target?.result as string);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(croppedFile);
+    setRawPhotoFile(null);
+    
+    toast({
+      title: 'Image optimized',
+      description: `Compressed to ${(croppedFile.size / 1024 / 1024).toFixed(2)} MB`,
+    });
   }, [toast]);
+
+  const handleCropCancel = useCallback(() => {
+    setShowCropper(false);
+    setRawPhotoFile(null);
+  }, []);
 
   const handleRemovePhoto = () => {
     setPhotoFile(null);
@@ -343,15 +367,35 @@ const SubmitPhoto = () => {
                         alt="Preview"
                         className="w-full rounded-lg max-h-96 object-contain bg-secondary"
                       />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2"
-                        onClick={handleRemovePhoto}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          onClick={() => {
+                            // Re-open cropper with current file
+                            if (photoFile) {
+                              setRawPhotoFile(photoFile);
+                              setShowCropper(true);
+                            }
+                          }}
+                        >
+                          <Crop className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={handleRemovePhoto}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {photoFile && (
+                        <div className="absolute bottom-2 left-2 bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs">
+                          {(photoFile.size / 1024 / 1024).toFixed(2)} MB
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-secondary/30">
@@ -361,7 +405,7 @@ const SubmitPhoto = () => {
                           <span className="font-semibold">Click to upload</span> or drag and drop
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          JPEG, PNG, or WebP (max 10MB)
+                          JPEG, PNG, or WebP (max 20MB) - Will be cropped &amp; compressed
                         </p>
                       </div>
                       <input
@@ -493,6 +537,19 @@ const SubmitPhoto = () => {
         </div>
       </main>
       <Footer />
+      
+      {/* Image Cropper Modal */}
+      {rawPhotoFile && (
+        <ImageCropper
+          file={rawPhotoFile}
+          isOpen={showCropper}
+          onClose={handleCropCancel}
+          onCropComplete={handleCropComplete}
+          maxWidth={1920}
+          maxHeight={1920}
+          quality={0.85}
+        />
+      )}
     </div>
   );
 };
