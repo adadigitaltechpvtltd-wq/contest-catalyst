@@ -6,6 +6,7 @@ import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
+import ErrorState from '@/components/ErrorState';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,8 +18,10 @@ import {
   Bell, 
   Clock,
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  Loader2
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface DashboardStats {
   totalSubmissions: number;
@@ -47,17 +50,23 @@ const Dashboard = () => {
   });
   const [activeContests, setActiveContests] = useState<ActiveContest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { unreadCount: notifications } = useRealtimeNotifications();
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user) return;
+  const fetchDashboardData = async () => {
+    if (!user) return;
 
+    setIsLoading(true);
+    setError(null);
+
+    try {
       // Fetch submissions stats
-      const { data: submissions } = await supabase
+      const { data: submissions, error: submissionsError } = await supabase
         .from('submissions')
         .select('status')
         .eq('user_id', user.id);
+
+      if (submissionsError) throw submissionsError;
 
       if (submissions) {
         setStats((prev) => ({
@@ -70,21 +79,25 @@ const Dashboard = () => {
       }
 
       // Fetch wallet balance
-      const { data: balance } = await supabase.rpc('get_wallet_balance', {
+      const { data: balance, error: balanceError } = await supabase.rpc('get_wallet_balance', {
         _user_id: user.id,
       });
+
+      if (balanceError) throw balanceError;
 
       if (balance !== null) {
         setStats((prev) => ({ ...prev, walletBalance: balance }));
       }
 
       // Fetch active contests
-      const { data: contests } = await supabase
+      const { data: contests, error: contestsError } = await supabase
         .from('contests')
         .select('id, title, prize_amount, end_date')
         .eq('status', 'active')
         .order('end_date', { ascending: true })
         .limit(5);
+
+      if (contestsError) throw contestsError;
 
       if (contests) {
         // Check which contests user has already submitted to
@@ -102,10 +115,16 @@ const Dashboard = () => {
           }))
         );
       }
-
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data');
+      toast.error('Failed to load dashboard data. Please try again.');
+    } finally {
       setIsLoading(false);
-    };
+    }
+  };
 
+  useEffect(() => {
     fetchDashboardData();
   }, [user]);
 
@@ -132,6 +151,18 @@ const Dashboard = () => {
           <EmailVerificationBanner />
         </div>
 
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : error ? (
+          <ErrorState
+            title="Failed to Load Dashboard"
+            message={error}
+            onRetry={fetchDashboardData}
+          />
+        ) : (
+          <>
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
@@ -331,6 +362,8 @@ const Dashboard = () => {
             </Card>
           </div>
         </div>
+          </>
+        )}
       </main>
       <Footer />
     </div>
