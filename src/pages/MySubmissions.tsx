@@ -101,8 +101,7 @@ const MySubmissions = () => {
 
       let contestsById = new Map<string, Submission['contest']>();
 
-      if (contestIds.length 
-0) {
+      if (contestIds.length > 0) {
         const { data: contests, error: contestError } = await supabase
           .from('contests')
           .select('id, title, prize_amount, status')
