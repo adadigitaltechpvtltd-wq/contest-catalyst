@@ -15,6 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import Contests from "./pages/Contests";
 import SubmitPhoto from "./pages/SubmitPhoto";
 import MySubmissions from "./pages/MySubmissions";
+import SubmissionDetail from "./pages/SubmissionDetail";
 import Wallet from "./pages/Wallet";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/submit/:contestId" element={<ProtectedRoute><SubmitPhoto /></ProtectedRoute>} />
             <Route path="/submissions" element={<ProtectedRoute><MySubmissions /></ProtectedRoute>} />
+            <Route path="/submission/:id" element={<ProtectedRoute><SubmissionDetail /></ProtectedRoute>} />
             <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />

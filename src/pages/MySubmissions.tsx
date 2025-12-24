@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Image as ImageIcon, 
   Clock, 
@@ -40,40 +41,82 @@ interface Submission {
 
 const MySubmissions = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
-  useEffect(() => {
-    const fetchSubmissions = async () => {
-      if (!user) return;
+  const fetchSubmissions = useCallback(async () => {
+    if (!user) return;
 
-      const { data, error } = await supabase
-        .from('submissions')
-        .select(`
-          id,
-          title,
-          description,
-          image_url,
-          status,
-          admin_score,
-          rejection_reason,
-          created_at,
-          contest:contests(id, title, prize_amount, status)
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('submissions')
+      .select(`
+        id,
+        title,
+        description,
+        image_url,
+        status,
+        admin_score,
+        rejection_reason,
+        created_at,
+        contest:contests(id, title, prize_amount, status)
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching submissions:', error);
-      } else {
-        setSubmissions(data as unknown as Submission[]);
-      }
-      setIsLoading(false);
-    };
-
-    fetchSubmissions();
+    if (error) {
+      console.error('Error fetching submissions:', error);
+    } else {
+      setSubmissions(data as unknown as Submission[]);
+    }
+    setIsLoading(false);
   }, [user]);
+
+  useEffect(() => {
+    fetchSubmissions();
+
+    // Real-time subscription for user's submissions
+    if (!user) return;
+
+    const channel = supabase
+      .channel('my-submissions')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'submissions',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Submission change:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: 'New submission added',
+              description: 'Your submission has been recorded.',
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            const newStatus = (payload.new as any).status;
+            const oldStatus = (payload.old as any).status;
+            if (newStatus !== oldStatus) {
+              toast({
+                title: 'Submission status updated',
+                description: `Your submission status changed to ${newStatus}.`,
+              });
+            }
+          }
+          
+          fetchSubmissions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchSubmissions, toast]);
 
   const getStatusBadge = (status: SubmissionStatus) => {
     switch (status) {
@@ -188,9 +231,9 @@ const MySubmissions = () => {
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>{new Date(submission.created_at).toLocaleDateString()}</span>
                       <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/contest/${submission.contest.id}`}>
+                        <Link to={`/submission/${submission.id}`}>
                           <Eye className="h-4 w-4 mr-1" />
-                          View Contest
+                          View Details
                         </Link>
                       </Button>
                     </div>
