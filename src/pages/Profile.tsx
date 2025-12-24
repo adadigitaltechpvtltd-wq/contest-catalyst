@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import ProfileSkeleton from '@/components/skeletons/ProfileSkeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,8 +17,6 @@ import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorMapping';
 import { 
   User, 
-  Mail, 
-  Phone, 
   Calendar, 
   CreditCard, 
   Loader2,
@@ -27,7 +28,7 @@ import {
 const Profile = () => {
   const { user, profile, paymentDetails, refreshProfile } = useAuth();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   // Form state
@@ -43,6 +44,7 @@ const Profile = () => {
       setFullName(profile.full_name || '');
       setBio(profile.bio || '');
       setPhone(profile.phone || '');
+      setIsLoading(false);
     }
   }, [profile]);
 
@@ -127,13 +129,25 @@ const Profile = () => {
       .slice(0, 2);
   };
 
+  const handleRefresh = useCallback(async () => {
+    await refreshProfile();
+  }, [refreshProfile]);
+
+  const { pullDistance, isRefreshing, containerProps } = usePullToRefresh({
+    onRefresh: handleRefresh,
+  });
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col" {...containerProps}>
       <Navbar />
+      <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       <main className="flex-1 container mx-auto px-4 py-8 pt-24">
         <h1 className="text-3xl font-display font-bold mb-8">My Profile</h1>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        {isLoading ? (
+          <ProfileSkeleton />
+        ) : (
+          <div className="grid lg:grid-cols-3 gap-8">
           {/* Profile Overview */}
           <Card className="glass-card lg:col-span-1">
             <CardContent className="p-6 text-center">
@@ -328,7 +342,8 @@ const Profile = () => {
               </CardContent>
             </Card>
           </div>
-        </div>
+          </div>
+        )}
       </main>
       <Footer />
     </div>
