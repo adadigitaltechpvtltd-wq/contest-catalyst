@@ -55,7 +55,7 @@ const HeroSection = () => {
 
           {/* Subheadline */}
           <p className="mt-6 mx-auto max-w-3xl text-lg md:text-xl text-muted-foreground">
-            Turn everyday moments into opportunities. Contestify is a skill-based photo contest platform where creators compete in short challenges and earn cash, products, and brand recognition — all for free.
+            Turn everyday moments into opportunities. Gaal is a skill-based photo contest platform where creators compete in short challenges and earn cash, products, and brand recognition — all for free.
           </p>
 
           {/* Featured Contest Card */}

@@ -19,7 +19,7 @@ const Footer = () => {
               <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
                 <Trophy className="w-4 h-4 text-primary-foreground" />
               </div>
-              <span className="font-display font-bold text-foreground">Contestify</span>
+              <span className="font-display font-bold text-foreground">Gaal</span>
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
               Skill-based photography contests where creativity meets rewards. Free to enter, win real prizes.
@@ -53,7 +53,7 @@ const Footer = () => {
             <h4 className="font-display font-semibold text-foreground mb-4">Support</h4>
             <ul className="space-y-2">
               <li><Link to="/report" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Report Abuse</Link></li>
-              <li><a href="mailto:support@contestify.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact Us</a></li>
+              <li><a href="mailto:support@gaal.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact Us</a></li>
             </ul>
           </div>
 
@@ -77,7 +77,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-border">
           <p className="text-sm text-muted-foreground">
-            © 2024 Contestify. All rights reserved.
+            © 2024 Gaal. All rights reserved.
           </p>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>

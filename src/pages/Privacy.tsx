@@ -16,7 +16,7 @@ const Privacy = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
                 <p className="text-muted-foreground mb-4">
-                  At Contestify, we take your privacy seriously. This Privacy Policy explains how we collect, 
+                  At Gaal, we take your privacy seriously. This Privacy Policy explains how we collect, 
                   use, disclose, and safeguard your information when you use our photography contest platform.
                 </p>
               </section>
@@ -79,7 +79,7 @@ const Privacy = () => {
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>You retain full ownership of your photographs</li>
-                  <li>You grant Contestify display rights only for contest purposes</li>
+                  <li>You grant Gaal display rights only for contest purposes</li>
                   <li>Approved photos may be displayed on our platform and promotional materials</li>
                   <li>We will not sell or license your photos to third parties</li>
                   <li>You can request removal of your photos by contacting us</li>
@@ -171,8 +171,8 @@ const Privacy = () => {
                 <h2 className="text-2xl font-semibold mb-4">12. Contact Us</h2>
                 <p className="text-muted-foreground">
                   For privacy-related inquiries, please contact us at{' '}
-                  <a href="mailto:privacy@contestify.com" className="text-primary hover:underline">
-                    privacy@contestify.com
+                  <a href="mailto:privacy@gaal.com" className="text-primary hover:underline">
+                    privacy@gaal.com
                   </a>
                 </p>
               </section>

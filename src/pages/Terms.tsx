@@ -16,7 +16,7 @@ const Terms = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">1. Acceptance of Terms</h2>
                 <p className="text-muted-foreground mb-4">
-                  By accessing or using Contestify, you agree to be bound by these Terms and Conditions. 
+                  By accessing or using Gaal, you agree to be bound by these Terms and Conditions. 
                   If you do not agree to these terms, please do not use our platform.
                 </p>
               </section>
@@ -24,7 +24,7 @@ const Terms = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">2. Nature of Service</h2>
                 <p className="text-muted-foreground mb-4">
-                  Contestify is a skill-based photography contest platform. Important clarifications:
+                  Gaal is a skill-based photography contest platform. Important clarifications:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>This is NOT gambling, lottery, or any form of chance-based gaming</li>
@@ -37,7 +37,7 @@ const Terms = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">3. Eligibility</h2>
                 <p className="text-muted-foreground mb-4">
-                  To use Contestify, you must:
+                  To use Gaal, you must:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>Be at least 18 years of age</li>
@@ -136,7 +136,7 @@ const Terms = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">10. Limitation of Liability</h2>
                 <p className="text-muted-foreground mb-4">
-                  Contestify is provided "as is" without warranties of any kind. We are not liable for:
+                  Gaal is provided "as is" without warranties of any kind. We are not liable for:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>Technical issues or service interruptions</li>
@@ -159,8 +159,8 @@ const Terms = () => {
                 <h2 className="text-2xl font-semibold mb-4">12. Contact Us</h2>
                 <p className="text-muted-foreground">
                   If you have any questions about these Terms & Conditions, please contact us at{' '}
-                  <a href="mailto:legal@contestify.com" className="text-primary hover:underline">
-                    legal@contestify.com
+                  <a href="mailto:legal@gaal.com" className="text-primary hover:underline">
+                    legal@gaal.com
                   </a>
                 </p>
               </section>

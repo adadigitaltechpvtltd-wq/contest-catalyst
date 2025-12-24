@@ -165,7 +165,7 @@ const ResetPassword = () => {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Camera className="h-10 w-10 text-primary" />
-              <span className="text-3xl font-display font-bold text-gradient">Contestify</span>
+              <span className="text-3xl font-display font-bold text-gradient">Gaal</span>
             </div>
             <p className="text-muted-foreground">
               Create a new password for your account
