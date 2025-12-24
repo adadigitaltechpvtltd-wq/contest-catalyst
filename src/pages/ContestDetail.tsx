@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Clock, Users, Trophy, CheckCircle, Share2, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check } from "lucide-react";
+import ContestDetailSkeleton from "@/components/skeletons/ContestDetailSkeleton";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -240,9 +241,11 @@ const ContestDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 py-20 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="relative">
+          <div className="absolute inset-0 h-80 md:h-96 bg-muted animate-pulse" />
+          <ContestDetailSkeleton />
         </div>
+        <Footer />
       </div>
     );
   }
