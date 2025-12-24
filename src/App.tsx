@@ -22,6 +22,7 @@ import Privacy from "./pages/Privacy";
 import ContestRules from "./pages/ContestRules";
 import Copyright from "./pages/Copyright";
 import AgePolicy from "./pages/AgePolicy";
+import HowGaalWorks from "./pages/HowGaalWorks";
 import ReportAbuse from "./pages/ReportAbuse";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminContests from "./pages/admin/AdminContests";
@@ -79,6 +80,7 @@ const App = () => (
             <Route path="/contest-rules" element={<ContestRules />} />
             <Route path="/copyright" element={<Copyright />} />
             <Route path="/age-policy" element={<AgePolicy />} />
+            <Route path="/how-gaal-works" element={<HowGaalWorks />} />
             <Route path="/report" element={<ReportAbuse />} />
             
             <Route path="*" element={<NotFound />} />
