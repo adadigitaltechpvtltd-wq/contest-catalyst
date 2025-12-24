@@ -21,6 +21,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           end_date: string
+          featured_in_hero: boolean
           id: string
           judging_criteria: string[] | null
           max_participants: number | null
@@ -43,6 +44,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           end_date: string
+          featured_in_hero?: boolean
           id?: string
           judging_criteria?: string[] | null
           max_participants?: number | null
@@ -65,6 +67,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           end_date?: string
+          featured_in_hero?: boolean
           id?: string
           judging_criteria?: string[] | null
           max_participants?: number | null
