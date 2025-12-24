@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Clock, Users, Trophy, CheckCircle, Share2, Heart, Calendar, Loader2, Eye } from "lucide-react";
+import { ArrowLeft, Clock, Users, Trophy, CheckCircle, Share2, Heart, Calendar, Loader2, Eye, Image as ImageIcon, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -8,6 +8,7 @@ import SubmissionModal from "@/components/SubmissionModal";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface Contest {
   id: string;
@@ -27,6 +28,19 @@ interface Contest {
   max_participants: number | null;
 }
 
+interface Submission {
+  id: string;
+  title: string;
+  image_url: string;
+  user_id: string;
+  status: 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
+  created_at: string;
+  profiles?: {
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+}
+
 const ContestDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -36,6 +50,8 @@ const ContestDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [participantCount, setParticipantCount] = useState(0);
   const [userSubmission, setUserSubmission] = useState<{ id: string; title: string } | null>(null);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [selectedImage, setSelectedImage] = useState<Submission | null>(null);
 
   useEffect(() => {
     const fetchContest = async () => {
@@ -79,6 +95,30 @@ const ContestDetail = () => {
           if (submission) {
             setUserSubmission(submission);
           }
+        }
+
+        // Fetch approved submissions for gallery
+        const { data: approvedSubmissions } = await supabase
+          .from("submissions")
+          .select(`
+            id,
+            title,
+            image_url,
+            user_id,
+            status,
+            created_at,
+            profiles:user_id (
+              full_name,
+              avatar_url
+            )
+          `)
+          .eq("contest_id", id)
+          .in("status", ["approved", "winner"])
+          .order("created_at", { ascending: false })
+          .limit(12);
+
+        if (approvedSubmissions) {
+          setSubmissions(approvedSubmissions as unknown as Submission[]);
         }
       }
 
@@ -375,7 +415,111 @@ const ContestDetail = () => {
         </div>
       </section>
 
+      {/* Submissions Gallery */}
+      {submissions.length > 0 && (
+        <section className="container mx-auto px-4 py-12 border-t border-border">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
+                <ImageIcon className="w-6 h-6 text-primary" />
+                Submissions Gallery
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                {submissions.length} approved {submissions.length === 1 ? 'entry' : 'entries'}
+              </p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {submissions.map((submission) => (
+              <div 
+                key={submission.id}
+                className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer border border-border hover:border-primary/50 transition-all"
+                onClick={() => setSelectedImage(submission)}
+              >
+                <img 
+                  src={submission.image_url} 
+                  alt={submission.title}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-sm font-medium text-foreground truncate">{submission.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      {submission.profiles?.avatar_url ? (
+                        <img 
+                          src={submission.profiles.avatar_url} 
+                          alt="" 
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
+                          <User className="w-3 h-3 text-muted-foreground" />
+                        </div>
+                      )}
+                      <span className="text-xs text-muted-foreground truncate">
+                        {submission.profiles?.full_name || 'Anonymous'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {submission.status === 'winner' && (
+                  <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center gap-1">
+                    <Trophy className="w-3 h-3" />
+                    Winner
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <Footer />
+
+      {/* Image Lightbox */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-background/95 backdrop-blur-sm">
+          {selectedImage && (
+            <div className="flex flex-col">
+              <div className="relative aspect-[4/3] md:aspect-[16/10]">
+                <img 
+                  src={selectedImage.image_url} 
+                  alt={selectedImage.title}
+                  className="w-full h-full object-contain bg-black/50"
+                />
+                {selectedImage.status === 'winner' && (
+                  <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5">
+                    <Trophy className="w-4 h-4" />
+                    Winner
+                  </div>
+                )}
+              </div>
+              <div className="p-4 border-t border-border">
+                <h3 className="font-display text-lg font-bold text-foreground">
+                  {selectedImage.title}
+                </h3>
+                <div className="flex items-center gap-2 mt-2">
+                  {selectedImage.profiles?.avatar_url ? (
+                    <img 
+                      src={selectedImage.profiles.avatar_url} 
+                      alt="" 
+                      className="w-6 h-6 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  )}
+                  <span className="text-sm text-muted-foreground">
+                    {selectedImage.profiles?.full_name || 'Anonymous'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Submission Modal */}
       <SubmissionModal 
