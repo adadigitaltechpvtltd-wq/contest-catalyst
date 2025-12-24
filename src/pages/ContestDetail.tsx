@@ -590,7 +590,17 @@ const ContestDetail = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Submit your photo and compete for amazing prizes!
                 </p>
-                <Button className="w-full" onClick={() => setIsSubmitModalOpen(true)}>
+                <Button 
+                  className="w-full" 
+                  onClick={() => {
+                    if (!user) {
+                      toast.info("Please log in to submit your entry");
+                      navigate("/auth");
+                      return;
+                    }
+                    navigate(`/submit/${contest.id}`);
+                  }}
+                >
                   Submit Your Entry
                 </Button>
               </div>
