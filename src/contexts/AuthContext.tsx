@@ -103,29 +103,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        Promise.all([
-          fetchProfile(session.user.id),
-          fetchPaymentDetails(session.user.id),
-          fetchRoles(session.user.id),
-        ]).then(([profileData, paymentData, rolesData]) => {
-          setProfile(profileData);
-          setPaymentDetails(paymentData);
-          setRoles(rolesData);
-          setIsLoading(false);
-        });
-      } else {
+    const init = async () => {
+      try {
+        // Get initial session
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          const [profileRes, paymentRes, rolesRes] = await Promise.allSettled([
+            fetchProfile(session.user.id),
+            fetchPaymentDetails(session.user.id),
+            fetchRoles(session.user.id),
+          ]);
+
+          setProfile(profileRes.status === 'fulfilled' ? profileRes.value : null);
+          setPaymentDetails(paymentRes.status === 'fulfilled' ? paymentRes.value : null);
+          setRoles(rolesRes.status === 'fulfilled' ? rolesRes.value : []);
+        } else {
+          setProfile(null);
+          setPaymentDetails(null);
+          setRoles([]);
+        }
+      } catch (err) {
+        console.error('Auth init failed:', err);
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setPaymentDetails(null);
+        setRoles([]);
+      } finally {
         setIsLoading(false);
       }
-    });
+    };
+
+    init();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      try {
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -143,9 +164,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setPaymentDetails(null);
           setRoles([]);
         }
+      } catch (err) {
+        console.error('Auth state change handler failed:', err);
+      } finally {
         setIsLoading(false);
       }
-    );
+    });
 
     return () => {
       subscription.unsubscribe();

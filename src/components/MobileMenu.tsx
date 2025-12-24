@@ -100,25 +100,14 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
         {/* Navigation Links */}
         <nav className="p-4 space-y-1">
           {navLinks.map((link, i) => (
-            link.isLink ? (
-              <Link
-                key={i}
-                to={link.href}
-                onClick={onClose}
-                className="block px-4 py-3 rounded-lg text-foreground hover:bg-muted transition-colors font-medium"
-              >
-                {link.label}
-              </Link>
-            ) : (
-              <a
-                key={i}
-                href={link.href}
-                onClick={onClose}
-                className="block px-4 py-3 rounded-lg text-foreground hover:bg-muted transition-colors font-medium"
-              >
-                {link.label}
-              </a>
-            )
+            <Link
+              key={i}
+              to={link.href}
+              onClick={onClose}
+              className="block px-4 py-3 rounded-lg text-foreground hover:bg-muted transition-colors font-medium"
+            >
+              {link.label}
+            </Link>
           ))}
         </nav>
 
