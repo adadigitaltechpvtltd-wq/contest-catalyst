@@ -1,4 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
+import GaalLogo from './GaalLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   SidebarProvider,
@@ -112,6 +113,7 @@ const AdminLayout = () => {
           <header className="h-16 border-b border-border flex items-center justify-between px-6">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="md:hidden" />
+              <GaalLogo size="sm" showText={false} />
               <h2 className="font-display font-semibold">Gaal Admin</h2>
             </div>
             <div className="flex items-center gap-4">

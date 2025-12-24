@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Trophy, Menu, User, LogOut, Settings, Image, Wallet } from "lucide-react";
+import { Menu, User, LogOut, Settings, Image, Wallet } from "lucide-react";
+import GaalLogo from "./GaalLogo";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,11 +35,8 @@ const Navbar = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                <Trophy className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <span className="font-display font-bold text-lg text-foreground">Gaal</span>
+            <Link to="/" className="flex items-center">
+              <GaalLogo size="md" />
             </Link>
 
             {/* Center nav - Desktop */}
