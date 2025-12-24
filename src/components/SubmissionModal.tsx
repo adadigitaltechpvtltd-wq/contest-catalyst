@@ -47,11 +47,8 @@ const SubmissionModal = ({ isOpen, onClose, contestTitle }: SubmissionModalProps
       newErrors.title = "Title must be less than 100 characters";
     }
 
-    if (!formData.description.trim()) {
-      newErrors.description = "Description is required";
-    } else if (formData.description.length < 10) {
-      newErrors.description = "Description must be at least 10 characters";
-    } else if (formData.description.length > 500) {
+    // Description is optional - only validate length if provided
+    if (formData.description.trim() && formData.description.length > 500) {
       newErrors.description = "Description must be less than 500 characters";
     }
 
@@ -240,7 +237,7 @@ const SubmissionModal = ({ isOpen, onClose, contestTitle }: SubmissionModalProps
           {/* Description */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
-              Description <span className="text-primary">*</span>
+              Description <span className="text-muted-foreground text-xs">(Optional)</span>
             </label>
             <Textarea
               value={formData.description}
