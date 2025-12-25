@@ -16,6 +16,7 @@ interface Profile {
   kyc_verified: boolean;
   username: string | null;
   is_deleted: boolean | null;
+  scheduled_deletion_at: string | null;
 }
 
 interface PaymentDetails {
@@ -53,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, email, full_name, avatar_url, bio, date_of_birth, is_adult, phone, kyc_verified, username, is_deleted')
+      .select('id, email, full_name, avatar_url, bio, date_of_birth, is_adult, phone, kyc_verified, username, is_deleted, scheduled_deletion_at')
       .eq('id', userId)
       .maybeSingle();
 
