@@ -84,7 +84,7 @@ const AdminPayments = () => {
         notes,
         created_at,
         user_id,
-        profile:profiles!inner(id, full_name, email),
+        profile:profiles!wallet_transactions_user_id_profiles_fkey(id, full_name, email),
         contest:contests(title)
       `)
       .order('created_at', { ascending: false });
