@@ -34,21 +34,32 @@ const Leaderboard = () => {
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      const { data, error } = await supabase
-        .from("leaderboard_stats")
-        .select("user_id, full_name, avatar_url, wins, total_submissions, contests_entered")
-        .order("wins", { ascending: false })
-        .order("total_submissions", { ascending: false })
-        .limit(5);
+      try {
+        const { data, error } = await supabase
+          .from("leaderboard_stats")
+          .select("user_id, full_name, avatar_url, wins, total_submissions, contests_entered")
+          .order("wins", { ascending: false })
+          .order("total_submissions", { ascending: false })
+          .limit(5);
 
-      if (!error && data) {
-        // Show users who have at least participated (have submissions or contests entered)
-        const activeUsers = data.filter(
-          (user) => (user.total_submissions ?? 0) > 0 || (user.contests_entered ?? 0) > 0
-        );
-        setLeaders(activeUsers as LeaderboardEntry[]);
+        if (error) {
+          console.error("Error fetching leaderboard:", error);
+          setLoading(false);
+          return;
+        }
+
+        if (data) {
+          // Show users who have at least participated (have submissions or contests entered)
+          const activeUsers = data.filter(
+            (user) => (user.total_submissions ?? 0) > 0 || (user.contests_entered ?? 0) > 0
+          );
+          setLeaders(activeUsers as LeaderboardEntry[]);
+        }
+      } catch (err) {
+        console.error("Error fetching leaderboard:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchLeaderboard();
