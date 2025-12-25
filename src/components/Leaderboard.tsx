@@ -38,10 +38,15 @@ const Leaderboard = () => {
         .from("leaderboard_stats")
         .select("user_id, full_name, avatar_url, wins, total_submissions, contests_entered")
         .order("wins", { ascending: false })
+        .order("total_submissions", { ascending: false })
         .limit(5);
 
       if (!error && data) {
-        setLeaders(data as LeaderboardEntry[]);
+        // Show users who have at least participated (have submissions or contests entered)
+        const activeUsers = data.filter(
+          (user) => (user.total_submissions ?? 0) > 0 || (user.contests_entered ?? 0) > 0
+        );
+        setLeaders(activeUsers as LeaderboardEntry[]);
       }
       setLoading(false);
     };
