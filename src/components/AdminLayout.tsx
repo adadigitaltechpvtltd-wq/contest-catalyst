@@ -22,6 +22,7 @@ import {
   Users, 
   Flag, 
   BarChart3,
+  Search,
   Home,
   LogOut
 } from 'lucide-react';
@@ -36,6 +37,7 @@ const adminNavItems = [
   { title: 'Users', url: '/admin/users', icon: Users },
   { title: 'Reports', url: '/admin/reports', icon: Flag },
   { title: 'Analytics', url: '/admin/analytics', icon: BarChart3 },
+  { title: 'SEO Health', url: '/admin/seo', icon: Search },
 ];
 
 const AdminSidebar = () => {
