@@ -50,7 +50,7 @@ interface PreviousSubmission {
 }
 
 const SubmitPhoto = () => {
-  const { contestId } = useParams<{ contestId: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -104,7 +104,7 @@ const SubmitPhoto = () => {
 
   useEffect(() => {
     const fetchContest = async () => {
-      if (!contestId) {
+      if (!slug) {
         setIsLoading(false);
         return;
       }
@@ -121,13 +121,16 @@ const SubmitPhoto = () => {
         return () => clearTimeout(timeout);
       }
 
-      console.log('SubmitPhoto: Fetching contest:', contestId, 'User:', user?.id);
+      console.log('SubmitPhoto: Fetching contest:', slug, 'User:', user?.id);
+
+      // Support both slug and UUID for backward compatibility
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
 
       try {
         const { data, error } = await supabase
           .from('contests')
           .select('id, title, description, theme, prize_amount, rules, end_date')
-          .eq('id', contestId)
+          .eq(isUUID ? 'id' : 'slug', slug)
           .eq('status', 'active')
           .maybeSingle();
 
@@ -159,7 +162,7 @@ const SubmitPhoto = () => {
         const { data: submission, error: subError } = await supabase
           .from('submissions')
           .select('id')
-          .eq('contest_id', contestId)
+          .eq('contest_id', data.id)
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -179,7 +182,7 @@ const SubmitPhoto = () => {
     };
 
     fetchContest();
-  }, [contestId, user, navigate, toast, calculateTimeRemaining]);
+  }, [slug, user, navigate, toast, calculateTimeRemaining]);
 
   // Fetch previous submissions
   useEffect(() => {

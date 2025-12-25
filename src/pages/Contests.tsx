@@ -15,6 +15,7 @@ type ContestStatus = 'active' | 'voting' | 'completed';
 
 interface Contest {
   id: string;
+  slug: string | null;
   title: string;
   description: string | null;
   theme: string | null;
@@ -183,7 +184,7 @@ const Contests = () => {
 
           {/* Action */}
           {status === "live" ? (
-            <Link to={`/contest/${contest.id}`}>
+            <Link to={`/contest/${contest.slug || contest.id}`}>
               <Button className="w-full">
                 Enter Contest <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
@@ -193,7 +194,7 @@ const Contests = () => {
               Notify Me <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           ) : (
-            <Link to={`/contest/${contest.id}`}>
+            <Link to={`/contest/${contest.slug || contest.id}`}>
               <Button variant="ghost" className="w-full text-muted-foreground">
                 View Results <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
