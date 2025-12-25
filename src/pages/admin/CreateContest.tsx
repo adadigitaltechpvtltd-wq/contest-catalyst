@@ -179,7 +179,7 @@ const CreateContest = () => {
                 <Input
                   id="prize"
                   type="number"
-                  min="100"
+                  min="0"
                   value={prizeAmount}
                   onChange={(e) => setPrizeAmount(e.target.value)}
                   required
