@@ -63,14 +63,14 @@ const App = () => (
               <Route path="/signup" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/contests" element={<Contests />} />
-              <Route path="/contest/:id" element={<ContestDetail />} />
+              <Route path="/contest/:slug" element={<ContestDetail />} />
               <Route path="/photo/:contestSlug/:photoSlug" element={<PhotoDetail />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/user/:username" element={<UserProfilePage />} />
             
             {/* Protected User Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/submit/:contestId" element={<ProtectedRoute><SubmitPhoto /></ProtectedRoute>} />
+            <Route path="/submit/:slug" element={<ProtectedRoute><SubmitPhoto /></ProtectedRoute>} />
             <Route path="/submissions" element={<ProtectedRoute><MySubmissions /></ProtectedRoute>} />
             <Route path="/submission/:id" element={<ProtectedRoute><SubmissionDetail /></ProtectedRoute>} />
             <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />

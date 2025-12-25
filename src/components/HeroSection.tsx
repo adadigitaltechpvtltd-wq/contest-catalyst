@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface FeaturedContest {
   id: string;
+  slug: string | null;
   title: string;
   description: string | null;
   prize_amount: number;
@@ -26,7 +27,7 @@ const HeroSection = () => {
       try {
         const { data, error } = await supabase
           .from("contests")
-          .select("id, title, description, prize_amount, prize_currency, end_date, theme")
+          .select("id, slug, title, description, prize_amount, prize_currency, end_date, theme")
           .eq("featured_in_hero", true)
           .eq("status", "active")
           .order("created_at", { ascending: false })
@@ -226,7 +227,7 @@ const HeroSection = () => {
                     </div>
                   </div>
 
-                  <Link to={`/contest/${contest.id}`}>
+                  <Link to={`/contest/${contest.slug || contest.id}`}>
                     <Button size="lg" className="rounded-2xl px-10">
                       Enter Now
                     </Button>

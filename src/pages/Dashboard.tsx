@@ -33,6 +33,7 @@ interface DashboardStats {
 
 interface ActiveContest {
   id: string;
+  slug: string | null;
   title: string;
   prize_amount: number;
   end_date: string;
@@ -92,7 +93,7 @@ const Dashboard = () => {
       // Fetch active contests
       const { data: contests, error: contestsError } = await supabase
         .from('contests')
-        .select('id, title, prize_amount, end_date')
+        .select('id, slug, title, prize_amount, end_date')
         .eq('status', 'active')
         .order('end_date', { ascending: true })
         .limit(5);
@@ -289,7 +290,7 @@ const Dashboard = () => {
                           <Badge variant="secondary">Submitted</Badge>
                         ) : (
                           <Button asChild size="sm">
-                            <Link to={`/submit/${contest.id}`}>
+                            <Link to={`/submit/${contest.slug || contest.id}`}>
                               Enter
                               <ArrowRight className="h-4 w-4 ml-1" />
                             </Link>

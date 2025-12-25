@@ -20,6 +20,7 @@ type ContestStatus = 'draft' | 'active' | 'voting' | 'completed' | 'cancelled';
 
 interface Contest {
   id: string;
+  slug: string | null;
   title: string;
   theme: string | null;
   prize_amount: number;
@@ -47,6 +48,7 @@ const AdminContests = () => {
           .select(
             `
             id,
+            slug,
             title,
             theme,
             prize_amount,
@@ -204,7 +206,7 @@ const AdminContests = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/contest/${contest.id}`}>
+                        <Link to={`/contest/${contest.slug || contest.id}`}>
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Link>

@@ -8,6 +8,7 @@ import { formatDistanceToNow, isPast, isFuture } from "date-fns";
 
 interface Contest {
   id: string;
+  slug: string | null;
   title: string;
   description: string | null;
   prize_amount: number;
@@ -62,7 +63,7 @@ const ActiveContests = () => {
       try {
         const { data, error } = await supabase
           .from("contests")
-          .select("id, title, description, prize_amount, prize_currency, start_date, end_date, status, theme, cover_image_url")
+          .select("id, slug, title, description, prize_amount, prize_currency, start_date, end_date, status, theme, cover_image_url")
           .in("status", ["active", "voting", "completed"])
           .eq("featured_in_hero", false)
           .order("start_date", { ascending: false })
@@ -239,7 +240,7 @@ const ActiveContests = () => {
 
                     {/* Action */}
                     {status === "live" ? (
-                      <Link to={`/contest/${contest.id}`}>
+                      <Link to={`/contest/${contest.slug || contest.id}`}>
                         <Button className="w-full">
                           Enter Contest <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
@@ -249,7 +250,7 @@ const ActiveContests = () => {
                         Notify Me <ArrowRight className="w-4 h-4 ml-1" />
                       </Button>
                     ) : (
-                      <Link to={`/contest/${contest.id}`}>
+                      <Link to={`/contest/${contest.slug || contest.id}`}>
                         <Button variant="ghost" className="w-full text-muted-foreground">
                           View Winners <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>

@@ -15,6 +15,7 @@ import { toast } from "sonner";
 
 interface Contest {
   id: string;
+  slug: string | null;
   title: string;
   description: string | null;
   theme: string | null;
@@ -48,7 +49,7 @@ interface Submission {
 }
 
 const ContestDetail = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
@@ -121,7 +122,7 @@ const ContestDetail = () => {
   };
 
   const handleImageShare = (submission: Submission, platform: string) => {
-    const imageShareUrl = `${window.location.origin}/contest/${id}#submission-${submission.id}`;
+    const imageShareUrl = `${window.location.origin}/contest/${contest?.slug || slug}#submission-${submission.id}`;
     const imageShareText = `Check out "${submission.title}" on GAAL!`;
     const encodedUrl = encodeURIComponent(imageShareUrl);
     const encodedText = encodeURIComponent(imageShareText);
@@ -278,14 +279,17 @@ const ContestDetail = () => {
   const SUBMISSIONS_PER_PAGE = 12;
 
   const fetchContest = async () => {
-    if (!id) return;
+    if (!slug) return;
 
     setIsLoading(true);
+    
+    // Support both slug and UUID for backward compatibility
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
     
     const { data: contestData, error: contestError } = await supabase
       .from("contests")
       .select("*")
-      .eq("id", id)
+      .eq(isUUID ? "id" : "slug", slug)
       .maybeSingle();
 
     if (contestError) {
@@ -301,7 +305,7 @@ const ContestDetail = () => {
       const { count } = await supabase
         .from("submissions")
         .select("*", { count: "exact", head: true })
-        .eq("contest_id", id);
+        .eq("contest_id", contestData.id);
       
       setParticipantCount(count || 0);
 
@@ -309,7 +313,7 @@ const ContestDetail = () => {
         const { data: submission } = await supabase
           .from("submissions")
           .select("id, title")
-          .eq("contest_id", id)
+          .eq("contest_id", contestData.id)
           .eq("user_id", user.id)
           .maybeSingle();
         
@@ -321,7 +325,7 @@ const ContestDetail = () => {
       const { count: approvedCount } = await supabase
         .from("submissions")
         .select("*", { count: "exact", head: true })
-        .eq("contest_id", id)
+        .eq("contest_id", contestData.id)
         .in("status", ["approved", "winner"]);
 
       setTotalApproved(approvedCount || 0);
@@ -343,7 +347,7 @@ const ContestDetail = () => {
             avatar_url
           )
         `)
-        .eq("contest_id", id)
+        .eq("contest_id", contestData.id)
         .in("status", ["approved", "winner"])
         .order("created_at", { ascending: false })
         .limit(SUBMISSIONS_PER_PAGE);
@@ -359,10 +363,10 @@ const ContestDetail = () => {
 
   useEffect(() => {
     fetchContest();
-  }, [id, user]);
+  }, [slug, user]);
 
   const loadMoreSubmissions = async () => {
-    if (!id || isLoadingMore) return;
+    if (!contest?.id || isLoadingMore) return;
 
     setIsLoadingMore(true);
 
@@ -383,7 +387,7 @@ const ContestDetail = () => {
           avatar_url
         )
       `)
-      .eq("contest_id", id)
+      .eq("contest_id", contest.id)
       .in("status", ["approved", "winner"])
       .order("created_at", { ascending: false })
       .range(submissions.length, submissions.length + SUBMISSIONS_PER_PAGE - 1);
@@ -638,7 +642,7 @@ const ContestDetail = () => {
                         navigate("/auth");
                         return;
                       }
-                      navigate(`/submit/${contest.id}`);
+                      navigate(`/submit/${contest.slug || contest.id}`);
                     }}
                   >
                     Submit Entry
@@ -892,7 +896,7 @@ const ContestDetail = () => {
             <h3 className="font-display text-xl font-bold text-foreground mb-2">No submissions yet</h3>
             <p className="text-muted-foreground mb-6">Be the first to submit your photo!</p>
             {contest.status === "active" && (
-              <Button onClick={() => navigate(`/submit/${contest.id}`)}>
+              <Button onClick={() => navigate(`/submit/${contest.slug || contest.id}`)}>
                 Submit Entry
               </Button>
             )}

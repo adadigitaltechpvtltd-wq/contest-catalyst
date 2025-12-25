@@ -69,6 +69,7 @@ interface Submission {
   reviewed_at: string | null;
   contest: {
     id: string;
+    slug: string | null;
     title: string;
     prize_amount: number;
     prize_currency: string;
@@ -114,7 +115,7 @@ const SubmissionDetail = () => {
           created_at,
           updated_at,
           reviewed_at,
-          contest:contests(id, title, prize_amount, prize_currency, status, end_date)
+          contest:contests(id, slug, title, prize_amount, prize_currency, status, end_date)
         `)
         .eq('id', id)
         .eq('user_id', user.id)
@@ -733,7 +734,7 @@ const SubmissionDetail = () => {
                 </div>
                 <Separator />
                 <Button asChild variant="outline" className="w-full">
-                  <Link to={`/contest/${submission.contest.id}`}>
+                  <Link to={`/contest/${submission.contest.slug || submission.contest.id}`}>
                     <Eye className="h-4 w-4 mr-2" />
                     View Contest
                   </Link>
