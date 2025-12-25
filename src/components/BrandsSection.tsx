@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Check, TrendingUp, Users, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -28,9 +29,9 @@ const brandIcons = [
   { icon: "🎨", bg: "bg-cyan-500/20" },
 ];
 
-const BrandsSection = () => {
+const BrandsSection = forwardRef<HTMLElement>((_, ref) => {
   return (
-    <section id="brands" className="py-20 relative overflow-hidden">
+    <section ref={ref} id="brands" className="py-20 relative overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background" />
       
@@ -110,6 +111,8 @@ const BrandsSection = () => {
       </div>
     </section>
   );
-};
+});
+
+BrandsSection.displayName = "BrandsSection";
 
 export default BrandsSection;
