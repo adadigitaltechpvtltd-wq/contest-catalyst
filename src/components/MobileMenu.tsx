@@ -46,7 +46,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   ];
 
   const userLinks = user ? [
-    { label: "View Public Profile", href: `/user/${user.id}`, icon: UserCircle },
+    { label: "View Public Profile", href: `/user/${profile?.username || user.id}`, icon: UserCircle },
     { label: "Dashboard", href: "/dashboard", icon: User },
     { label: "My Submissions", href: "/submissions", icon: Image },
     { label: "Wallet", href: "/wallet", icon: Wallet },

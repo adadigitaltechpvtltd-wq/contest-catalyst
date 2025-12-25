@@ -682,6 +682,7 @@ export type Database = {
           total_points: number | null
           total_submissions: number | null
           user_id: string | null
+          username: string | null
           wins: number | null
         }
         Insert: {
@@ -692,6 +693,7 @@ export type Database = {
           total_points?: never
           total_submissions?: never
           user_id?: string | null
+          username?: string | null
           wins?: never
         }
         Update: {
@@ -702,6 +704,7 @@ export type Database = {
           total_points?: never
           total_submissions?: never
           user_id?: string | null
+          username?: string | null
           wins?: never
         }
         Relationships: []

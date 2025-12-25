@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Camera, RefreshCw, ExternalLink, Eye } from "lucide-react";
+import { Camera, RefreshCw, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { LeaderboardEntry } from "@/hooks/useLeaderboard";
@@ -34,6 +34,10 @@ const LeaderboardTable = ({
   title = "Leaderboard",
 }: LeaderboardTableProps) => {
   const displayedLeaders = maxRows ? leaders?.slice(0, maxRows) : leaders;
+
+  const getUserProfileUrl = (leader: LeaderboardEntry) => {
+    return leader.username ? `/user/${leader.username}` : `/user/${leader.user_id}`;
+  };
 
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -94,6 +98,7 @@ const LeaderboardTable = ({
           {displayedLeaders.map((leader, index) => {
             const rank = index + 1;
             const badge = getBadge(rank);
+            const profileUrl = getUserProfileUrl(leader);
 
             return (
               <div
@@ -118,7 +123,7 @@ const LeaderboardTable = ({
                 {/* Name & Avatar */}
                 <div className="col-span-3 md:col-span-2 flex items-center gap-2 min-w-0">
                   <Link
-                    to={`/user/${leader.user_id}`}
+                    to={profileUrl}
                     className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden ring-2 ring-border bg-muted flex-shrink-0 hover:ring-primary transition-all"
                   >
                     {leader.avatar_url ? (
@@ -137,7 +142,7 @@ const LeaderboardTable = ({
                   <div className="min-w-0">
                     <div className="flex items-center gap-1">
                       <Link
-                        to={`/user/${leader.user_id}`}
+                        to={profileUrl}
                         className="font-medium text-foreground truncate hover:text-primary transition-colors text-sm"
                       >
                         {leader.full_name || "Anonymous"}
@@ -175,7 +180,7 @@ const LeaderboardTable = ({
 
                 {/* View Profile Button */}
                 <div className="col-span-5 md:col-span-1 text-right hidden sm:flex justify-end">
-                  <Link to={`/user/${leader.user_id}`}>
+                  <Link to={profileUrl}>
                     <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
                       <Eye className="w-3.5 h-3.5 mr-1" />
                       View
