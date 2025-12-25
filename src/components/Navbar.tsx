@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, User, LogOut, Settings, Image, Wallet } from "lucide-react";
+import { Menu, User, LogOut, Settings, Image, Wallet, UserCircle } from "lucide-react";
 import GaalLogo from "./GaalLogo";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -81,6 +81,12 @@ const Navbar = () => {
                         </div>
                       </div>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to={`/user/${user.id}`} className="cursor-pointer">
+                          <UserCircle className="mr-2 h-4 w-4" />
+                          View Public Profile
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link to="/dashboard" className="cursor-pointer">
                           <User className="mr-2 h-4 w-4" />
