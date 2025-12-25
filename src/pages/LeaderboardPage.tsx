@@ -57,6 +57,9 @@ const LeaderboardPage = () => {
     }
   };
 
+  const listStartIndex = leaders && leaders.length >= 3 ? 3 : 0;
+  const listLeaders = leaders?.slice(listStartIndex) ?? [];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -183,18 +186,18 @@ const LeaderboardPage = () => {
                     </div>
                   ))}
                 </div>
-              ) : leaders?.length === 0 ? (
+              ) : !leaders || leaders.length === 0 ? (
                 <div className="p-12 text-center text-muted-foreground">
                   <Camera className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No photographers ranked yet. Be the first to win a contest!</p>
                 </div>
               ) : (
                 <div className="divide-y divide-border">
-                  {leaders?.slice(3).map((leader, index) => {
-                    const rank = index + 4;
+                  {listLeaders.map((leader, index) => {
+                    const rank = index + 1 + listStartIndex;
                     return (
                       <div
-                        key={leader.user_id}
+                        key={leader.user_id ?? `${rank}-${leader.full_name ?? "unknown"}`}
                         className="flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors"
                       >
                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground">
@@ -203,7 +206,11 @@ const LeaderboardPage = () => {
 
                         <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-border">
                           {leader.avatar_url ? (
-                            <img src={leader.avatar_url} alt="" className="w-full h-full object-cover" />
+                            <img
+                              src={leader.avatar_url}
+                              alt={leader.full_name ? `${leader.full_name} avatar` : "Photographer avatar"}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <div className="w-full h-full bg-muted flex items-center justify-center text-lg">
                               {leader.full_name?.[0]?.toUpperCase() || "?"}
