@@ -318,7 +318,7 @@ const SubmitPhoto = () => {
         .getPublicUrl(fileName);
 
       // Create submission
-      const { error: submissionError } = await supabase
+      const { data: submissionData, error: submissionError } = await supabase
         .from('submissions')
         .insert({
           contest_id: contest.id,
@@ -327,7 +327,9 @@ const SubmitPhoto = () => {
           description,
           image_url: publicUrl,
           originality_confirmed: true,
-        });
+        })
+        .select('id')
+        .single();
 
       if (submissionError) throw submissionError;
 
@@ -335,6 +337,15 @@ const SubmitPhoto = () => {
         title: 'Submission successful!',
         description: 'Your photo has been submitted for review.',
       });
+
+      // Trigger background analysis (fire and forget)
+      if (submissionData?.id) {
+        supabase.functions.invoke('analyze-submission', {
+          body: { submission_id: submissionData.id }
+        }).catch(err => {
+          console.warn('Background analysis trigger failed:', err);
+        });
+      }
 
       navigate('/submissions');
     } catch (error: unknown) {

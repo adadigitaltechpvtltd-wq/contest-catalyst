@@ -303,9 +303,12 @@ export type Database = {
           ai_detection_provider: string | null
           ai_detection_raw_response: Json | null
           ai_probability_score: number | null
+          analysis_completed_at: string | null
+          combined_score: number | null
           contest_id: string
           created_at: string
           description: string | null
+          duplicate_similarity_score: number | null
           exif_anomaly_reasons: string[] | null
           exif_camera_make: string | null
           exif_camera_model: string | null
@@ -315,6 +318,7 @@ export type Database = {
           exif_has_anomalies: boolean | null
           exif_software: string | null
           id: string
+          image_quality_score: number | null
           image_url: string
           originality_confirmed: boolean
           rejection_reason: string | null
@@ -323,6 +327,7 @@ export type Database = {
           reviewed_by: string | null
           risk_score: number | null
           status: Database["public"]["Enums"]["submission_status"]
+          system_score: number | null
           thumbnail_url: string | null
           title: string
           updated_at: string
@@ -336,9 +341,12 @@ export type Database = {
           ai_detection_provider?: string | null
           ai_detection_raw_response?: Json | null
           ai_probability_score?: number | null
+          analysis_completed_at?: string | null
+          combined_score?: number | null
           contest_id: string
           created_at?: string
           description?: string | null
+          duplicate_similarity_score?: number | null
           exif_anomaly_reasons?: string[] | null
           exif_camera_make?: string | null
           exif_camera_model?: string | null
@@ -348,6 +356,7 @@ export type Database = {
           exif_has_anomalies?: boolean | null
           exif_software?: string | null
           id?: string
+          image_quality_score?: number | null
           image_url: string
           originality_confirmed?: boolean
           rejection_reason?: string | null
@@ -356,6 +365,7 @@ export type Database = {
           reviewed_by?: string | null
           risk_score?: number | null
           status?: Database["public"]["Enums"]["submission_status"]
+          system_score?: number | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string
@@ -369,9 +379,12 @@ export type Database = {
           ai_detection_provider?: string | null
           ai_detection_raw_response?: Json | null
           ai_probability_score?: number | null
+          analysis_completed_at?: string | null
+          combined_score?: number | null
           contest_id?: string
           created_at?: string
           description?: string | null
+          duplicate_similarity_score?: number | null
           exif_anomaly_reasons?: string[] | null
           exif_camera_make?: string | null
           exif_camera_model?: string | null
@@ -381,6 +394,7 @@ export type Database = {
           exif_has_anomalies?: boolean | null
           exif_software?: string | null
           id?: string
+          image_quality_score?: number | null
           image_url?: string
           originality_confirmed?: boolean
           rejection_reason?: string | null
@@ -389,6 +403,7 @@ export type Database = {
           reviewed_by?: string | null
           risk_score?: number | null
           status?: Database["public"]["Enums"]["submission_status"]
+          system_score?: number | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string
