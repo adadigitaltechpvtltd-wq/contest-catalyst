@@ -107,10 +107,15 @@ const Contests = () => {
         <div className="absolute top-3 left-3">
           {getStatusBadge(contest.status)}
         </div>
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-3 right-3 flex gap-2">
+          {contest.prize_amount === 0 && (
+            <Badge className="bg-emerald-500 text-white border-0">
+              🎉 FREE
+            </Badge>
+          )}
           <Badge variant="secondary" className="bg-background/80 backdrop-blur">
             <Trophy className="h-3 w-3 mr-1" />
-            ${contest.prize_amount}
+            {contest.prize_amount === 0 ? 'Free' : `$${contest.prize_amount}`}
           </Badge>
         </div>
       </div>

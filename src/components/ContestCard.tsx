@@ -5,13 +5,16 @@ interface ContestCardProps {
   theme: string;
   brand: string;
   prize: string;
+  prizeAmount?: number;
   timeLeft: string;
   participants: number;
   image: string;
   featured?: boolean;
 }
 
-const ContestCard = ({ theme, brand, prize, timeLeft, participants, image, featured }: ContestCardProps) => {
+const ContestCard = ({ theme, brand, prize, prizeAmount, timeLeft, participants, image, featured }: ContestCardProps) => {
+  const isFreeContest = prizeAmount === 0;
+  
   return (
     <div 
       className={`group relative overflow-hidden rounded-2xl bg-card shadow-card transition-all duration-500 hover:shadow-glow hover:scale-[1.02] ${
@@ -31,6 +34,13 @@ const ContestCard = ({ theme, brand, prize, timeLeft, participants, image, featu
         <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-card/90 backdrop-blur-sm text-xs font-semibold text-foreground">
           Sponsored by {brand}
         </div>
+        
+        {/* Free contest badge */}
+        {isFreeContest && (
+          <div className="absolute top-14 left-4 px-3 py-1.5 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg">
+            🎉 FREE
+          </div>
+        )}
         
         {/* Time badge */}
         <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1.5">

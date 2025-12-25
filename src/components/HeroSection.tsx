@@ -207,7 +207,11 @@ const HeroSection = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Trophy className="w-4 h-4" />
-                      <span>Up to {formatPrize(contest.prize_amount, contest.prize_currency)} in rewards</span>
+                      {contest.prize_amount === 0 ? (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold">🎉 FREE CONTEST</span>
+                      ) : (
+                        <span>Up to {formatPrize(contest.prize_amount, contest.prize_currency)} in rewards</span>
+                      )}
                     </div>
                   </div>
 

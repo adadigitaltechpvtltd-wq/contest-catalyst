@@ -201,11 +201,16 @@ const ActiveContests = () => {
                       {contest.description || "Join this exciting photography challenge!"}
                     </p>
 
-                    {/* Stats */}
                     <div className="flex items-center gap-4 mb-4 text-sm">
                       <span className="flex items-center gap-1.5 text-foreground">
-                        <span className="text-primary">🏆</span>
-                        {formatPrize(contest.prize_amount, contest.prize_currency)}
+                        {contest.prize_amount === 0 ? (
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold">🎉 FREE</span>
+                        ) : (
+                          <>
+                            <span className="text-primary">🏆</span>
+                            {formatPrize(contest.prize_amount, contest.prize_currency)}
+                          </>
+                        )}
                       </span>
                       <span className="flex items-center gap-1.5 text-muted-foreground">
                         <Users className="w-4 h-4" />
