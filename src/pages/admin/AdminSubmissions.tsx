@@ -302,7 +302,7 @@ const AdminSubmissions = () => {
       const submissionIds = pendingSubmissions.map(s => s.id);
       
       const { data, error } = await supabase.functions.invoke('analyze-submission', {
-        body: { submission_ids: submissionIds }
+        body: { batch_ids: submissionIds }
       });
 
       if (error) {
