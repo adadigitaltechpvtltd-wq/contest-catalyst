@@ -17,6 +17,8 @@ import { TimePicker } from '@/components/ui/time-picker';
 import { format, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 
+import { validateSEOTitle, validateSEODescription, isTitleGeneric } from '@/lib/seoUtils';
+
 const CreateContest = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -38,6 +40,11 @@ const CreateContest = () => {
   const [featuredInHero, setFeaturedInHero] = useState(false);
   const [rules, setRules] = useState<string[]>(['']);
   const [judgingCriteria, setJudgingCriteria] = useState<string[]>(['']);
+  
+  // SEO fields
+  const [seoTitle, setSeoTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
+  const [keywords, setKeywords] = useState('');
 
   const addRule = () => setRules([...rules, '']);
   const removeRule = (index: number) => setRules(rules.filter((_, i) => i !== index));
@@ -57,6 +64,26 @@ const CreateContest = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate SEO title
+    const titleValidation = validateSEOTitle(title);
+    if (!titleValidation.valid) {
+      toast({
+        title: 'SEO Warning',
+        description: titleValidation.message,
+        variant: 'destructive',
+      });
+    }
+
+    // Validate description for SEO
+    if (description.length < 100) {
+      toast({
+        title: 'Description too short',
+        description: 'For better SEO, contest description should be at least 100 characters.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     if (!startDate || !endDate) {
       toast({
@@ -88,6 +115,12 @@ const CreateContest = () => {
 
     setIsSubmitting(true);
 
+    // Parse keywords
+    const keywordsArray = keywords
+      .split(',')
+      .map(k => k.trim())
+      .filter(k => k.length > 0);
+
     const { error } = await supabase.from('contests').insert({
       title,
       description,
@@ -103,6 +136,9 @@ const CreateContest = () => {
       rules: rules.filter((r) => r.trim() !== ''),
       judging_criteria: judgingCriteria.filter((c) => c.trim() !== ''),
       created_by: user?.id,
+      seo_title: seoTitle || null,
+      meta_description: metaDescription || null,
+      keywords: keywordsArray.length > 0 ? keywordsArray : null,
     });
 
     if (error) {
@@ -156,14 +192,67 @@ const CreateContest = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Description * (min 100 characters for SEO)</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the contest, what you are looking for, and any inspiration..."
-                rows={4}
+                placeholder="Describe the contest, what you are looking for, and any inspiration... (300-800 words recommended for SEO)"
+                rows={6}
+                required
               />
+              <p className={`text-xs ${description.length < 100 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                {description.length}/100 minimum ({description.length < 100 ? `${100 - description.length} more needed` : 'Good length'})
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* SEO Settings Card */}
+        <Card className="glass-card mb-6">
+          <CardHeader>
+            <CardTitle>SEO Settings</CardTitle>
+            <CardDescription>Optimize this contest for search engines</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="seoTitle">SEO Title (optional, uses contest title if empty)</Label>
+              <Input
+                id="seoTitle"
+                value={seoTitle}
+                onChange={(e) => setSeoTitle(e.target.value)}
+                placeholder="e.g., Urban Street Photography Contest 2025 | Win $500"
+                maxLength={60}
+              />
+              <p className="text-xs text-muted-foreground">
+                {seoTitle.length}/60 characters
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="metaDescription">Meta Description (max 160 characters)</Label>
+              <Textarea
+                id="metaDescription"
+                value={metaDescription}
+                onChange={(e) => setMetaDescription(e.target.value)}
+                placeholder="A compelling description that appears in search results..."
+                maxLength={160}
+                rows={2}
+              />
+              <p className="text-xs text-muted-foreground">
+                {metaDescription.length}/160 characters
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="keywords">Keywords (comma-separated)</Label>
+              <Input
+                id="keywords"
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                placeholder="street photography, urban, contest, photography competition"
+              />
+              <p className="text-xs text-muted-foreground">
+                Add relevant keywords for search visibility
+              </p>
             </div>
           </CardContent>
         </Card>

@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorMapping';
+import { isTitleGeneric } from '@/lib/seoUtils';
 import { differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds } from 'date-fns';
 import { 
   Upload, 
@@ -289,6 +290,35 @@ const SubmitPhoto = () => {
     e.preventDefault();
 
     if (!user || !contest || !photoFile) return;
+
+    // Validate title for SEO
+    if (title.trim().length < 10) {
+      toast({
+        title: 'Title too short',
+        description: 'Please use a descriptive title (at least 10 characters) for better visibility.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (isTitleGeneric(title)) {
+      toast({
+        title: 'Generic title detected',
+        description: 'Please use a more descriptive title (avoid "My Photo", "Image 1", etc.)',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate description for SEO
+    if (description.trim().length < 100) {
+      toast({
+        title: 'Description too short',
+        description: 'Please add a description of at least 100 characters for better search visibility.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     if (!originalityConfirmed || !noAiConfirmed || !ownershipConfirmed) {
       toast({
