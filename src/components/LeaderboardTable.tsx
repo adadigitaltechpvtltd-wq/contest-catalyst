@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Camera, RefreshCw } from "lucide-react";
+import { Camera, RefreshCw, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { LeaderboardEntry } from "@/hooks/useLeaderboard";
@@ -116,7 +116,10 @@ const LeaderboardTable = ({
 
                 {/* Name & Avatar */}
                 <div className="col-span-4 md:col-span-3 flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-border bg-muted flex-shrink-0">
+                  <Link
+                    to={`/user/${leader.user_id}`}
+                    className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-border bg-muted flex-shrink-0 hover:ring-primary transition-all"
+                  >
                     {leader.avatar_url ? (
                       <img
                         src={leader.avatar_url}
@@ -129,12 +132,15 @@ const LeaderboardTable = ({
                         {(leader.full_name || "U")[0].toUpperCase()}
                       </div>
                     )}
-                  </div>
+                  </Link>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-medium text-foreground truncate">
+                      <Link
+                        to={`/user/${leader.user_id}`}
+                        className="font-medium text-foreground truncate hover:text-primary transition-colors"
+                      >
                         {leader.full_name || "Anonymous Creator"}
-                      </span>
+                      </Link>
                       {badge && <span>{badge}</span>}
                     </div>
                     <span className="text-xs text-muted-foreground md:hidden">
