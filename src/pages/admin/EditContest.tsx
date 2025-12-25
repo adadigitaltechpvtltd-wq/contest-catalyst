@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Loader2, Plus, X } from 'lucide-react';
+import { TimePicker } from '@/components/ui/time-picker';
 import { format, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -300,11 +301,9 @@ const EditContest = () => {
               </div>
               <div className="space-y-2">
                 <Label>Start Time *</Label>
-                <Input
-                  type="time"
+                <TimePicker
                   value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full"
+                  onChange={setStartTime}
                 />
               </div>
             </div>
@@ -338,11 +337,9 @@ const EditContest = () => {
               </div>
               <div className="space-y-2">
                 <Label>End Time *</Label>
-                <Input
-                  type="time"
+                <TimePicker
                   value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full"
+                  onChange={setEndTime}
                 />
               </div>
             </div>
