@@ -384,9 +384,6 @@ export type Database = {
         Row: {
           admin_notes: string | null
           admin_score: number | null
-          ai_detection_provider: string | null
-          ai_detection_raw_response: Json | null
-          ai_probability_score: number | null
           analysis_completed_at: string | null
           analysis_method: string | null
           blur_score: number | null
@@ -435,9 +432,6 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           admin_score?: number | null
-          ai_detection_provider?: string | null
-          ai_detection_raw_response?: Json | null
-          ai_probability_score?: number | null
           analysis_completed_at?: string | null
           analysis_method?: string | null
           blur_score?: number | null
@@ -486,9 +480,6 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           admin_score?: number | null
-          ai_detection_provider?: string | null
-          ai_detection_raw_response?: Json | null
-          ai_probability_score?: number | null
           analysis_completed_at?: string | null
           analysis_method?: string | null
           blur_score?: number | null
