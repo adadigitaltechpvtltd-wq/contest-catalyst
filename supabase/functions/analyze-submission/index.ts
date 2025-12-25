@@ -11,6 +11,35 @@ const corsHeaders = {
 // No external AI APIs - all analysis done locally
 // ============================================================================
 
+// Progress broadcast helper for real-time updates
+async function broadcastProgress(
+  supabase: any,
+  submissionId: string,
+  module: string,
+  progress: number,
+  status: 'running' | 'completed' | 'error',
+  details?: string
+) {
+  try {
+    const channel = supabase.channel('analysis-progress');
+    await channel.send({
+      type: 'broadcast',
+      event: 'progress',
+      payload: {
+        submission_id: submissionId,
+        module,
+        progress,
+        status,
+        details,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (e) {
+    // Non-critical - don't fail analysis if broadcast fails
+    console.log('[Broadcast] Error (non-critical):', e);
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -21,154 +50,55 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { submission_id } = await req.json();
+    const body = await req.json();
+    const { submission_id, batch_ids } = body;
     
+    // Handle batch analysis
+    if (batch_ids && Array.isArray(batch_ids) && batch_ids.length > 0) {
+      console.log(`[CPU-Analysis] Starting batch analysis for ${batch_ids.length} submissions`);
+      
+      const results: any[] = [];
+      for (let i = 0; i < batch_ids.length; i++) {
+        const id = batch_ids[i];
+        try {
+          await broadcastProgress(supabase, id, 'batch', Math.round((i / batch_ids.length) * 100), 'running', `Processing ${i + 1}/${batch_ids.length}`);
+          const result = await analyzeSubmission(supabase, id);
+          results.push({ id, success: true, scores: result.scores });
+        } catch (error: any) {
+          console.error(`[Batch] Error analyzing ${id}:`, error);
+          results.push({ id, success: false, error: error.message });
+          await broadcastProgress(supabase, id, 'error', 0, 'error', error.message);
+        }
+      }
+      
+      await broadcastProgress(supabase, 'batch-complete', 'batch', 100, 'completed', `Completed ${results.filter(r => r.success).length}/${batch_ids.length}`);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          batch: true,
+          total: batch_ids.length,
+          successful: results.filter(r => r.success).length,
+          failed: results.filter(r => !r.success).length,
+          results 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Single submission analysis
     if (!submission_id) {
       console.error('No submission_id provided');
       return new Response(
-        JSON.stringify({ error: 'submission_id is required' }),
+        JSON.stringify({ error: 'submission_id or batch_ids is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[CPU-Analysis] Starting analysis for submission: ${submission_id}`);
-
-    // Fetch the submission
-    const { data: submission, error: fetchError } = await supabase
-      .from('submissions')
-      .select('id, image_url, contest_id, user_id, title, description')
-      .eq('id', submission_id)
-      .single();
-
-    if (fetchError || !submission) {
-      console.error('Error fetching submission:', fetchError);
-      return new Response(
-        JSON.stringify({ error: 'Submission not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log(`[CPU-Analysis] Fetching image for: ${submission.title}`);
-
-    // Fetch the image
-    const imageResponse = await fetch(submission.image_url);
-    if (!imageResponse.ok) {
-      throw new Error(`Failed to fetch image: ${imageResponse.status}`);
-    }
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const imageBytes = new Uint8Array(imageBuffer);
-
-    console.log(`[CPU-Analysis] Image size: ${imageBytes.length} bytes`);
-
-    // Run all analysis modules in parallel
-    const [exifAnalysis, imageStats, duplicateScore] = await Promise.all([
-      analyzeExifMetadata(imageBytes),
-      analyzeImageStatistics(imageBytes),
-      checkDuplicateSimilarity(supabase, submission.id, submission.contest_id, imageBytes),
-    ]);
-
-    console.log('[CPU-Analysis] EXIF:', exifAnalysis);
-    console.log('[CPU-Analysis] Image Stats:', imageStats);
-    console.log('[CPU-Analysis] Duplicate Score:', duplicateScore);
-
-    // MODULE 1: AI/Fake Probability (0-100)
-    // Based on EXIF metadata presence, software tags, and image characteristics
-    const aiProbability = calculateAIProbability(exifAnalysis, imageStats);
-
-    // MODULE 2: Visual Anomaly Detection (0-100)
-    const visualAnomaly = calculateVisualAnomaly(imageStats, exifAnalysis);
-    const visualAnomalyReasons = getVisualAnomalyReasons(imageStats, exifAnalysis);
-
-    // MODULE 3: Duplicate Similarity (already 0-1, convert to 0-100 for consistency)
-    const duplicateSimilarity = duplicateScore;
-
-    // MODULE 4: Image Quality Score (0-100)
-    const imageQuality = calculateImageQuality(imageStats, exifAnalysis);
-
-    // SCORING LOGIC: Calculate Overall Risk as weighted average
-    // AI Probability (30%), Visual Anomaly (25%), Duplicate Similarity (25%), Low Image Quality (20%)
-    const overallRisk = (
-      (aiProbability / 100) * 0.30 +
-      (visualAnomaly / 100) * 0.25 +
-      duplicateSimilarity * 0.25 +
-      ((100 - imageQuality) / 100) * 0.20
-    );
-
-    // System Score = 100 - Overall Risk (converted to 0-100)
-    const systemScore = Math.max(0, Math.min(100, 100 - (overallRisk * 100)));
-
-    console.log(`[CPU-Analysis] Scores calculated:`);
-    console.log(`  - AI Probability: ${aiProbability.toFixed(1)}%`);
-    console.log(`  - Visual Anomaly: ${visualAnomaly.toFixed(1)}%`);
-    console.log(`  - Duplicate: ${(duplicateSimilarity * 100).toFixed(1)}%`);
-    console.log(`  - Quality: ${imageQuality.toFixed(1)}`);
-    console.log(`  - Overall Risk: ${(overallRisk * 100).toFixed(1)}%`);
-    console.log(`  - System Score: ${systemScore.toFixed(1)}`);
-
-    // Generate perceptual hash for future duplicate detection
-    const perceptualHash = generatePerceptualHash(imageBytes);
-
-    // Update the submission with analysis results
-    const { error: updateError } = await supabase
-      .from('submissions')
-      .update({
-        ai_probability_score: aiProbability / 100, // Store as 0-1 for DB consistency
-        visual_anomaly_score: visualAnomaly / 100,
-        visual_anomaly_reasons: visualAnomalyReasons,
-        duplicate_similarity_score: duplicateSimilarity,
-        image_quality_score: imageQuality,
-        risk_score: overallRisk,
-        system_score: systemScore,
-        // EXIF data
-        exif_camera_make: exifAnalysis.cameraMake,
-        exif_camera_model: exifAnalysis.cameraModel,
-        exif_date_taken: exifAnalysis.dateTaken,
-        exif_software: exifAnalysis.software,
-        exif_has_anomalies: exifAnalysis.hasAnomalies,
-        exif_anomaly_reasons: exifAnalysis.anomalyReasons,
-        // Detailed scores
-        blur_score: imageStats.blurScore,
-        exposure_score: imageStats.exposureScore,
-        noise_score: imageStats.noiseScore,
-        sharpness_score: imageStats.sharpnessScore,
-        contrast_score: imageStats.contrastScore,
-        // Metadata
-        perceptual_hash: perceptualHash,
-        analysis_method: 'cpu-local',
-        ai_detection_provider: 'cpu-local-analysis',
-        analysis_completed_at: new Date().toISOString(),
-      })
-      .eq('id', submission_id);
-
-    if (updateError) {
-      console.error('Error updating submission:', updateError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to update submission' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log(`[CPU-Analysis] Analysis completed for submission: ${submission_id}`);
-
+    const result = await analyzeSubmission(supabase, submission_id);
+    
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        submission_id,
-        analysis_method: 'cpu-local',
-        scores: {
-          ai_probability: aiProbability,
-          visual_anomaly: visualAnomaly,
-          duplicate_similarity: duplicateSimilarity * 100,
-          image_quality: imageQuality,
-          overall_risk: overallRisk * 100,
-          system_score: systemScore,
-        },
-        exif: {
-          camera: exifAnalysis.cameraMake ? `${exifAnalysis.cameraMake} ${exifAnalysis.cameraModel}` : null,
-          software: exifAnalysis.software,
-          has_anomalies: exifAnalysis.hasAnomalies,
-        }
-      }),
+      JSON.stringify(result),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
@@ -181,6 +111,163 @@ serve(async (req) => {
     );
   }
 });
+
+// ============================================================================
+// MAIN ANALYSIS FUNCTION
+// ============================================================================
+
+async function analyzeSubmission(supabase: any, submission_id: string) {
+  console.log(`[CPU-Analysis] Starting analysis for submission: ${submission_id}`);
+
+  // Broadcast: Starting
+  await broadcastProgress(supabase, submission_id, 'init', 0, 'running', 'Fetching submission...');
+
+  // Fetch the submission
+  const { data: submission, error: fetchError } = await supabase
+    .from('submissions')
+    .select('id, image_url, contest_id, user_id, title, description')
+    .eq('id', submission_id)
+    .single();
+
+  if (fetchError || !submission) {
+    console.error('Error fetching submission:', fetchError);
+    await broadcastProgress(supabase, submission_id, 'error', 0, 'error', 'Submission not found');
+    throw new Error('Submission not found');
+  }
+
+  console.log(`[CPU-Analysis] Fetching image for: ${submission.title}`);
+  await broadcastProgress(supabase, submission_id, 'fetch', 10, 'running', 'Downloading image...');
+
+  // Fetch the image
+  const imageResponse = await fetch(submission.image_url);
+  if (!imageResponse.ok) {
+    await broadcastProgress(supabase, submission_id, 'error', 0, 'error', 'Failed to fetch image');
+    throw new Error(`Failed to fetch image: ${imageResponse.status}`);
+  }
+  const imageBuffer = await imageResponse.arrayBuffer();
+  const imageBytes = new Uint8Array(imageBuffer);
+
+  console.log(`[CPU-Analysis] Image size: ${imageBytes.length} bytes`);
+
+  // Broadcast: EXIF Analysis
+  await broadcastProgress(supabase, submission_id, 'exif', 20, 'running', 'Analyzing EXIF metadata...');
+  const exifAnalysis = await analyzeExifMetadata(imageBytes);
+  console.log('[CPU-Analysis] EXIF:', exifAnalysis);
+
+  // Broadcast: Image Statistics
+  await broadcastProgress(supabase, submission_id, 'quality', 40, 'running', 'Analyzing image quality...');
+  const imageStats = await analyzeImageStatistics(imageBytes);
+  console.log('[CPU-Analysis] Image Stats:', imageStats);
+
+  // Broadcast: Duplicate Check
+  await broadcastProgress(supabase, submission_id, 'duplicate', 60, 'running', 'Checking for duplicates...');
+  const duplicateScore = await checkDuplicateSimilarity(supabase, submission.id, submission.contest_id, imageBytes);
+  console.log('[CPU-Analysis] Duplicate Score:', duplicateScore);
+
+  // Broadcast: Calculating Scores
+  await broadcastProgress(supabase, submission_id, 'scoring', 80, 'running', 'Calculating final scores...');
+
+  // MODULE 1: AI/Fake Probability (0-100)
+  const aiProbability = calculateAIProbability(exifAnalysis, imageStats);
+
+  // MODULE 2: Visual Anomaly Detection (0-100)
+  const visualAnomaly = calculateVisualAnomaly(imageStats, exifAnalysis);
+  const visualAnomalyReasons = getVisualAnomalyReasons(imageStats, exifAnalysis);
+
+  // MODULE 3: Duplicate Similarity (already 0-1)
+  const duplicateSimilarity = duplicateScore;
+
+  // MODULE 4: Image Quality Score (0-100)
+  const imageQuality = calculateImageQuality(imageStats, exifAnalysis);
+
+  // SCORING LOGIC: Calculate Overall Risk as weighted average
+  // AI Probability (30%), Visual Anomaly (25%), Duplicate Similarity (25%), Low Image Quality (20%)
+  const overallRisk = (
+    (aiProbability / 100) * 0.30 +
+    (visualAnomaly / 100) * 0.25 +
+    duplicateSimilarity * 0.25 +
+    ((100 - imageQuality) / 100) * 0.20
+  );
+
+  // System Score = 100 - Overall Risk (converted to 0-100)
+  const systemScore = Math.max(0, Math.min(100, 100 - (overallRisk * 100)));
+
+  console.log(`[CPU-Analysis] Scores calculated:`);
+  console.log(`  - AI Probability: ${aiProbability.toFixed(1)}%`);
+  console.log(`  - Visual Anomaly: ${visualAnomaly.toFixed(1)}%`);
+  console.log(`  - Duplicate: ${(duplicateSimilarity * 100).toFixed(1)}%`);
+  console.log(`  - Quality: ${imageQuality.toFixed(1)}`);
+  console.log(`  - Overall Risk: ${(overallRisk * 100).toFixed(1)}%`);
+  console.log(`  - System Score: ${systemScore.toFixed(1)}`);
+
+  // Generate perceptual hash for future duplicate detection
+  const perceptualHash = generatePerceptualHash(imageBytes);
+
+  // Broadcast: Saving
+  await broadcastProgress(supabase, submission_id, 'saving', 90, 'running', 'Saving results...');
+
+  // Update the submission with analysis results
+  const { error: updateError } = await supabase
+    .from('submissions')
+    .update({
+      ai_probability_score: aiProbability / 100, // Store as 0-1 for DB consistency
+      visual_anomaly_score: visualAnomaly / 100,
+      visual_anomaly_reasons: visualAnomalyReasons,
+      duplicate_similarity_score: duplicateSimilarity,
+      image_quality_score: imageQuality,
+      risk_score: overallRisk,
+      system_score: systemScore,
+      // EXIF data
+      exif_camera_make: exifAnalysis.cameraMake,
+      exif_camera_model: exifAnalysis.cameraModel,
+      exif_date_taken: exifAnalysis.dateTaken,
+      exif_software: exifAnalysis.software,
+      exif_has_anomalies: exifAnalysis.hasAnomalies,
+      exif_anomaly_reasons: exifAnalysis.anomalyReasons,
+      // Detailed scores
+      blur_score: imageStats.blurScore,
+      exposure_score: imageStats.exposureScore,
+      noise_score: imageStats.noiseScore,
+      sharpness_score: imageStats.sharpnessScore,
+      contrast_score: imageStats.contrastScore,
+      // Metadata
+      perceptual_hash: perceptualHash,
+      analysis_method: 'cpu-local',
+      ai_detection_provider: 'cpu-local-analysis',
+      analysis_completed_at: new Date().toISOString(),
+    })
+    .eq('id', submission_id);
+
+  if (updateError) {
+    console.error('Error updating submission:', updateError);
+    await broadcastProgress(supabase, submission_id, 'error', 0, 'error', 'Failed to save results');
+    throw new Error('Failed to update submission');
+  }
+
+  // Broadcast: Complete
+  await broadcastProgress(supabase, submission_id, 'complete', 100, 'completed', `Score: ${systemScore.toFixed(0)}/100`);
+
+  console.log(`[CPU-Analysis] Analysis completed for submission: ${submission_id}`);
+
+  return { 
+    success: true, 
+    submission_id,
+    analysis_method: 'cpu-local',
+    scores: {
+      ai_probability: aiProbability,
+      visual_anomaly: visualAnomaly,
+      duplicate_similarity: duplicateSimilarity * 100,
+      image_quality: imageQuality,
+      overall_risk: overallRisk * 100,
+      system_score: systemScore,
+    },
+    exif: {
+      camera: exifAnalysis.cameraMake ? `${exifAnalysis.cameraMake} ${exifAnalysis.cameraModel}` : null,
+      software: exifAnalysis.software,
+      has_anomalies: exifAnalysis.hasAnomalies,
+    }
+  };
+}
 
 // ============================================================================
 // EXIF METADATA ANALYSIS
@@ -578,8 +665,6 @@ function sampleImagePixels(bytes: Uint8Array): {
 } | null {
   try {
     // For compressed formats, we analyze the byte distribution as a proxy
-    // This is a heuristic approach that works without full decompression
-    
     const sampleSize = Math.min(10000, bytes.length);
     const step = Math.max(1, Math.floor(bytes.length / sampleSize));
     
@@ -686,7 +771,6 @@ async function checkDuplicateSimilarity(
 }
 
 // Simplified perceptual hash based on byte patterns
-// This is a fast approximation that works without image decoding
 function generatePerceptualHash(bytes: Uint8Array): string {
   try {
     // Sample the image at regular intervals
