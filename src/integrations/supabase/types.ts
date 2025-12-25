@@ -296,6 +296,49 @@ export type Database = {
           },
         ]
       }
+      submission_likes: {
+        Row: {
+          created_at: string
+          id: string
+          submission_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          submission_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          submission_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submission_likes_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submission_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "submission_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       submissions: {
         Row: {
           admin_notes: string | null
@@ -311,6 +354,7 @@ export type Database = {
           contrast_score: number | null
           created_at: string
           description: string | null
+          download_count: number
           duplicate_similarity_score: number | null
           exif_anomaly_reasons: string[] | null
           exif_camera_make: string | null
@@ -324,6 +368,7 @@ export type Database = {
           id: string
           image_quality_score: number | null
           image_url: string
+          like_count: number
           noise_score: number | null
           originality_confirmed: boolean
           perceptual_hash: string | null
@@ -339,6 +384,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          view_count: number
           visual_anomaly_reasons: string[] | null
           visual_anomaly_score: number | null
         }
@@ -356,6 +402,7 @@ export type Database = {
           contrast_score?: number | null
           created_at?: string
           description?: string | null
+          download_count?: number
           duplicate_similarity_score?: number | null
           exif_anomaly_reasons?: string[] | null
           exif_camera_make?: string | null
@@ -369,6 +416,7 @@ export type Database = {
           id?: string
           image_quality_score?: number | null
           image_url: string
+          like_count?: number
           noise_score?: number | null
           originality_confirmed?: boolean
           perceptual_hash?: string | null
@@ -384,6 +432,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          view_count?: number
           visual_anomaly_reasons?: string[] | null
           visual_anomaly_score?: number | null
         }
@@ -401,6 +450,7 @@ export type Database = {
           contrast_score?: number | null
           created_at?: string
           description?: string | null
+          download_count?: number
           duplicate_similarity_score?: number | null
           exif_anomaly_reasons?: string[] | null
           exif_camera_make?: string | null
@@ -414,6 +464,7 @@ export type Database = {
           id?: string
           image_quality_score?: number | null
           image_url?: string
+          like_count?: number
           noise_score?: number | null
           originality_confirmed?: boolean
           perceptual_hash?: string | null
@@ -429,6 +480,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          view_count?: number
           visual_anomaly_reasons?: string[] | null
           visual_anomaly_score?: number | null
         }
@@ -592,6 +644,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_download_count: {
+        Args: { submission_id_param: string }
+        Returns: undefined
+      }
+      increment_view_count: {
+        Args: { submission_id_param: string }
+        Returns: undefined
       }
     }
     Enums: {
