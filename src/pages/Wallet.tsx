@@ -301,6 +301,75 @@ const Wallet = () => {
               </CardContent>
             </Card>
 
+            {/* Withdrawal History */}
+            {transactions.filter(tx => tx.type === 'withdrawal').length > 0 && (
+              <Card className="glass-card mb-8">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ArrowUpRight className="h-5 w-5 text-primary" />
+                    Withdrawal History
+                  </CardTitle>
+                  <CardDescription>Track your withdrawal requests</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {transactions
+                      .filter(tx => tx.type === 'withdrawal')
+                      .map((tx) => (
+                        <div
+                          key={tx.id}
+                          className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 border border-border/50"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={`p-2 rounded-full ${
+                              tx.status === 'completed' ? 'bg-success/10' : 
+                              tx.status === 'pending' ? 'bg-amber-500/10' : 'bg-muted'
+                            }`}>
+                              {tx.status === 'completed' ? (
+                                <CheckCircle className="h-5 w-5 text-success" />
+                              ) : tx.status === 'pending' ? (
+                                <Clock className="h-5 w-5 text-amber-500" />
+                              ) : (
+                                <XCircle className="h-5 w-5 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">${Number(tx.amount).toFixed(2)}</span>
+                                {getStatusBadge(tx.status)}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Requested: {new Date(tx.created_at).toLocaleDateString('en-US', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                              </p>
+                              {tx.payment_reference && tx.status === 'completed' && (
+                                <p className="text-xs text-success mt-1">
+                                  Payment Ref: {tx.payment_reference}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            {tx.status === 'pending' && (
+                              <p className="text-xs text-amber-500">Processing...</p>
+                            )}
+                            {tx.status === 'completed' && (
+                              <p className="text-xs text-success">Paid</p>
+                            )}
+                            {tx.status === 'cancelled' && (
+                              <p className="text-xs text-muted-foreground">Cancelled</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Transaction History */}
             <Card className="glass-card">
               <CardHeader>
