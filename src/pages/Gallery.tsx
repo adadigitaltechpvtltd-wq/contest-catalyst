@@ -31,7 +31,8 @@ import {
   LayoutGrid,
   X,
   CalendarIcon,
-  Filter
+  Filter,
+  ArrowUpDown
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
@@ -70,6 +71,15 @@ interface PhotographerOption {
   full_name: string | null;
 }
 
+type SortOption = 'newest' | 'oldest' | 'most_liked' | 'most_viewed';
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'newest', label: 'Newest first' },
+  { value: 'oldest', label: 'Oldest first' },
+  { value: 'most_liked', label: 'Most liked' },
+  { value: 'most_viewed', label: 'Most viewed' },
+];
+
 const ITEMS_PER_PAGE = 24;
 
 const formatCount = (count: number): string => {
@@ -97,6 +107,7 @@ const Gallery = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedContest, setSelectedContest] = useState(searchParams.get('contest') || 'all');
   const [selectedPhotographer, setSelectedPhotographer] = useState(searchParams.get('photographer') || 'all');
+  const [sortBy, setSortBy] = useState<SortOption>((searchParams.get('sort') as SortOption) || 'newest');
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
     const from = searchParams.get('from');
     const to = searchParams.get('to');
@@ -165,6 +176,29 @@ const Gallery = () => {
     }
 
     try {
+      // Determine sort column and direction
+      let orderColumn: 'created_at' | 'like_count' | 'view_count' = 'created_at';
+      let ascending = false;
+      
+      switch (sortBy) {
+        case 'oldest':
+          orderColumn = 'created_at';
+          ascending = true;
+          break;
+        case 'most_liked':
+          orderColumn = 'like_count';
+          ascending = false;
+          break;
+        case 'most_viewed':
+          orderColumn = 'view_count';
+          ascending = false;
+          break;
+        case 'newest':
+        default:
+          orderColumn = 'created_at';
+          ascending = false;
+      }
+
       let query = supabase
         .from('submissions')
         .select(`
@@ -180,7 +214,7 @@ const Gallery = () => {
           user_id
         `)
         .in('status', ['approved', 'winner'])
-        .order('created_at', { ascending: false });
+        .order(orderColumn, { ascending });
 
       // Apply search filter
       if (searchQuery) {
@@ -267,7 +301,7 @@ const Gallery = () => {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  }, [searchQuery, selectedContest, selectedPhotographer, dateRange]);
+  }, [searchQuery, selectedContest, selectedPhotographer, dateRange, sortBy]);
 
   // Reset and fetch when filters change
   useEffect(() => {
@@ -280,11 +314,12 @@ const Gallery = () => {
     if (searchQuery) params.set('q', searchQuery);
     if (selectedContest !== 'all') params.set('contest', selectedContest);
     if (selectedPhotographer !== 'all') params.set('photographer', selectedPhotographer);
+    if (sortBy !== 'newest') params.set('sort', sortBy);
     if (dateRange?.from) params.set('from', format(dateRange.from, 'yyyy-MM-dd'));
     if (dateRange?.to) params.set('to', format(dateRange.to, 'yyyy-MM-dd'));
     
     setSearchParams(params, { replace: true });
-  }, [searchQuery, selectedContest, selectedPhotographer, dateRange, fetchPhotos, setSearchParams]);
+  }, [searchQuery, selectedContest, selectedPhotographer, dateRange, sortBy, fetchPhotos, setSearchParams]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -315,6 +350,7 @@ const Gallery = () => {
     setSearchQuery('');
     setSelectedContest('all');
     setSelectedPhotographer('all');
+    setSortBy('newest');
     setDateRange(undefined);
   };
 
@@ -370,8 +406,8 @@ const Gallery = () => {
         <div className="container mx-auto px-4 pb-6">
           <div className="flex flex-col gap-4">
             {/* Search Bar */}
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <div className="relative flex-1 max-w-md">
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="relative flex-1 min-w-[200px] max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
@@ -381,6 +417,22 @@ const Gallery = () => {
                   className="pl-10"
                 />
               </div>
+              
+              {/* Sort Dropdown */}
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                <SelectTrigger className="w-[160px]">
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Button
                 type="button"
                 variant="outline"
@@ -401,7 +453,7 @@ const Gallery = () => {
                   Clear
                 </Button>
               )}
-            </form>
+            </div>
 
             {/* Expandable Filters */}
             {showFilters && (
