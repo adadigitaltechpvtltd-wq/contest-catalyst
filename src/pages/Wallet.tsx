@@ -7,9 +7,7 @@ import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import WalletSkeleton from '@/components/skeletons/WalletSkeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { 
   Wallet as WalletIcon, 
@@ -20,8 +18,12 @@ import {
   XCircle,
   DollarSign,
   Gift,
-  Loader2
+  Info,
+  AlertTriangle
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Link } from 'react-router-dom';
 
 type TransactionType = 'prize' | 'withdrawal' | 'bonus';
 type TransactionStatus = 'pending' | 'completed' | 'failed' | 'cancelled';
@@ -55,8 +57,6 @@ const Wallet = () => {
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchWalletData = useCallback(async () => {
     if (authLoading && !user) return;
@@ -134,35 +134,6 @@ const Wallet = () => {
     onRefresh: fetchWalletData,
   });
 
-  const handleWithdrawalRequest = async () => {
-    if (!user || balances.available < 100) return;
-
-    setIsSubmitting(true);
-
-    try {
-      const { error } = await supabase.from('wallet_transactions').insert({
-        user_id: user.id,
-        type: 'withdrawal',
-        amount: balances.available,
-        currency: 'USD',
-        status: 'pending',
-        notes: 'Withdrawal request'
-      });
-
-      if (error) throw error;
-
-      toast.success('Withdrawal request submitted', {
-        description: 'Your request is being processed. You will be notified once complete.'
-      });
-      setIsWithdrawModalOpen(false);
-      fetchWalletData();
-    } catch (error: any) {
-      console.error('Error requesting withdrawal:', error);
-      toast.error('Failed to submit withdrawal request');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const getTransactionIcon = (type: TransactionType, status: TransactionStatus) => {
     if (status === 'cancelled' || status === 'failed') {
@@ -252,7 +223,19 @@ const Wallet = () => {
                       <Clock className="h-6 w-6 text-amber-500" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Pending</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-muted-foreground">Pending</p>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p>Once approved, the amount will be transferred to your registered payment method within 1-3 business days.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                       <p className="text-3xl font-bold">${balances.pending.toFixed(2)}</p>
                     </div>
                   </div>
@@ -274,27 +257,17 @@ const Wallet = () => {
               </Card>
             </div>
 
-            {/* Withdraw Button */}
-            <Card className="glass-card mb-8">
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                  <div>
-                    <h3 className="font-semibold mb-1">Withdraw Your Earnings</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Transfer your winnings to your bank account or UPI
-                    </p>
-                  </div>
-                  <Button 
-                    disabled={balances.available <= 0} 
-                    className="gradient-primary"
-                    onClick={() => setIsWithdrawModalOpen(true)}
-                  >
-                    <ArrowUpRight className="h-4 w-4 mr-2" />
-                    Request Withdrawal
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Payment Details Disclaimer */}
+            <Alert className="mb-8 border-amber-500/30 bg-amber-500/10">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertDescription className="text-amber-200">
+                Please ensure you have added your UPI ID or bank account details in your{' '}
+                <Link to="/profile" className="text-amber-400 underline hover:text-amber-300">
+                  profile settings
+                </Link>{' '}
+                to avoid payment delays.
+              </AlertDescription>
+            </Alert>
 
             {/* Withdrawal History */}
             {transactions.filter(tx => tx.type === 'withdrawal').length > 0 && (
@@ -429,62 +402,6 @@ const Wallet = () => {
         )}
       </main>
       <Footer />
-
-      {/* Withdrawal Confirmation Modal */}
-      <Dialog open={isWithdrawModalOpen} onOpenChange={setIsWithdrawModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Request Withdrawal</DialogTitle>
-            <DialogDescription>
-              Confirm your withdrawal request
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-secondary/30">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Available Balance</p>
-                  <p className="font-semibold text-lg">${balances.available.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Amount to Withdraw</p>
-                  <p className="font-semibold text-lg text-success">${balances.available.toFixed(2)}</p>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-sm text-muted-foreground">
-              Your withdrawal request will be reviewed by our team. Once approved, the amount will be transferred to your registered payment method within 3-5 business days.
-            </p>
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsWithdrawModalOpen(false)}
-                disabled={isSubmitting}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleWithdrawalRequest}
-                disabled={isSubmitting}
-                className="flex-1 bg-success hover:bg-success/90"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Confirm Withdrawal
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
