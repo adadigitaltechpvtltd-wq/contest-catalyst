@@ -16,15 +16,18 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, Loader2, Trash2 } from 'lucide-react';
+import { AlertTriangle, Loader2, Trash2, Clock } from 'lucide-react';
+import { format, addDays } from 'date-fns';
 
 const DeleteAccountDialog = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const deletionDate = format(addDays(new Date(), 30), 'MMMM d, yyyy');
 
   const handleDeleteAccount = async () => {
     if (!user || !isConfirmed) return;
@@ -41,37 +44,36 @@ const DeleteAccountDialog = () => {
         throw error;
       }
 
-      const result = data as { success: boolean; error?: string; message?: string };
+      const result = data as { success: boolean; error?: string; message?: string; deletion_date?: string };
 
       if (!result.success) {
         toast({
           title: 'Cannot delete account',
-          description: result.error || 'An error occurred while deleting your account.',
+          description: result.error || 'An error occurred while scheduling your account deletion.',
           variant: 'destructive',
         });
         setIsDeleting(false);
         return;
       }
 
-      // Sign out and redirect
       toast({
-        title: 'Account deleted',
-        description: 'Your account has been deleted successfully. We\'re sorry to see you go.',
+        title: 'Account scheduled for deletion',
+        description: `Your account will be permanently deleted on ${deletionDate}. You can cancel this from your profile settings.`,
       });
 
-      await signOut();
-      navigate('/');
+      // Refresh profile to get the scheduled_deletion_at
+      await refreshProfile();
+      setIsOpen(false);
+      setIsConfirmed(false);
     } catch (error: any) {
-      console.error('Error deleting account:', error);
+      console.error('Error scheduling account deletion:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete account. Please try again.',
+        description: error.message || 'Failed to schedule account deletion. Please try again.',
         variant: 'destructive',
       });
     } finally {
       setIsDeleting(false);
-      setIsOpen(false);
-      setIsConfirmed(false);
     }
   };
 
@@ -96,27 +98,33 @@ const DeleteAccountDialog = () => {
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-4">
-              <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                <p className="text-sm font-medium text-destructive">
-                  This action is permanent.
-                </p>
+              <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <Clock className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-amber-500">
+                    30-Day Grace Period
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your account will be scheduled for deletion on <strong>{deletionDate}</strong>. 
+                    You can cancel anytime before this date.
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  Deleting your account will:
+                  After the grace period, deleting your account will:
                 </p>
                 <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
-                  <li>Remove your personal information</li>
+                  <li>Remove your personal information permanently</li>
                   <li>Anonymize your profile to "Deleted User"</li>
                   <li>Keep your submissions visible (for contest integrity)</li>
                   <li>Preserve leaderboard rankings</li>
                 </ul>
               </div>
 
-              <p className="text-sm font-medium text-foreground">
-                You will not be able to recover your account after deletion.
+              <p className="text-sm text-foreground">
+                During the grace period, you can log in and cancel the deletion from your profile settings.
               </p>
 
               <div className="flex items-center space-x-2 pt-2">
@@ -129,7 +137,7 @@ const DeleteAccountDialog = () => {
                   htmlFor="confirm-delete"
                   className="text-sm font-medium cursor-pointer"
                 >
-                  I understand that this action cannot be undone
+                  I understand and want to schedule account deletion
                 </Label>
               </div>
             </div>
@@ -145,10 +153,10 @@ const DeleteAccountDialog = () => {
             {isDeleting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Deleting...
+                Scheduling...
               </>
             ) : (
-              'Delete Account'
+              'Schedule Deletion'
             )}
           </Button>
         </AlertDialogFooter>

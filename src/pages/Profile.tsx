@@ -29,6 +29,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import DeleteAccountDialog from '@/components/DeleteAccountDialog';
+import AccountDeletionBanner from '@/components/AccountDeletionBanner';
 
 const Profile = () => {
   const { user, profile, paymentDetails, refreshProfile } = useAuth();
@@ -221,6 +222,13 @@ const Profile = () => {
       <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
       <main className="flex-1 container mx-auto px-4 py-8 pt-24">
         <h1 className="text-3xl font-display font-bold mb-8">My Profile</h1>
+
+        {/* Show deletion banner if account is scheduled for deletion */}
+        {profile?.scheduled_deletion_at && (
+          <AccountDeletionBanner 
+            scheduledDeletionAt={profile.scheduled_deletion_at}
+          />
+        )}
 
         {isLoading ? (
           <ProfileSkeleton />

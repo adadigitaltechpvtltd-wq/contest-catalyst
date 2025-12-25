@@ -122,19 +122,30 @@ const Privacy = () => {
                   You can delete your account at any time from your Profile Settings.
                 </p>
                 
-                <h3 className="text-xl font-semibold mb-3 mt-6">7.1 Account Deletion Process</h3>
+                <h3 className="text-xl font-semibold mb-3 mt-6">7.1 30-Day Grace Period</h3>
                 <p className="text-muted-foreground mb-4">
-                  When you delete your account:
+                  When you request account deletion, your account enters a 30-day grace period:
+                </p>
+                <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+                  <li><strong>Reversible during grace period:</strong> You can cancel the deletion anytime within 30 days by logging back in and visiting your Profile Settings</li>
+                  <li><strong>Full access retained:</strong> Your account remains fully functional during the grace period</li>
+                  <li><strong>Automatic processing:</strong> After 30 days, your account will be permanently anonymized</li>
+                  <li><strong>Notification:</strong> A visible banner will remind you of the scheduled deletion date when logged in</li>
+                </ul>
+
+                <h3 className="text-xl font-semibold mb-3 mt-6">7.2 What Happens After the Grace Period</h3>
+                <p className="text-muted-foreground mb-4">
+                  Once the 30-day grace period ends, account deletion is permanent:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li><strong>Personal data is anonymized:</strong> Your name becomes "Deleted User", your email is anonymized, and profile information is removed</li>
                   <li><strong>Payment details are deleted:</strong> UPI IDs, bank account numbers, and other payment information are permanently removed</li>
                   <li><strong>Contest integrity preserved:</strong> Your photo submissions remain visible to maintain contest history and leaderboard accuracy</li>
-                  <li><strong>Wallet restrictions:</strong> You cannot delete your account if you have pending earnings or an available balance</li>
+                  <li><strong>Wallet restrictions:</strong> You cannot schedule deletion if you have pending earnings or an available balance</li>
                   <li><strong>Transaction records retained:</strong> Payment history is kept for legal and accounting purposes</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold mb-3 mt-6">7.2 What Remains After Deletion</h3>
+                <h3 className="text-xl font-semibold mb-3 mt-6">7.3 What Remains After Deletion</h3>
                 <p className="text-muted-foreground mb-4">
                   To maintain platform integrity, the following data is retained after account deletion:
                 </p>
@@ -145,10 +156,11 @@ const Privacy = () => {
                   <li>Transaction history (without personal identifiers)</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold mb-3 mt-6">7.3 Account Recovery</h3>
+                <h3 className="text-xl font-semibold mb-3 mt-6">7.4 Account Recovery</h3>
                 <p className="text-muted-foreground mb-4">
-                  Account deletion is permanent and cannot be undone by users. In exceptional circumstances, 
-                  platform administrators may restore deleted accounts upon request. Contact{' '}
+                  Once the 30-day grace period has passed, account deletion cannot be undone by users. 
+                  In exceptional circumstances, platform administrators may restore deleted accounts upon request. 
+                  Contact{' '}
                   <a href="mailto:support@gaal.com" className="text-primary hover:underline">support@gaal.com</a>{' '}
                   if you believe your account was deleted in error.
                 </p>

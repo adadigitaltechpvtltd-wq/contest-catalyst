@@ -186,6 +186,7 @@ export type Database = {
           is_deleted: boolean
           kyc_verified: boolean | null
           phone: string | null
+          scheduled_deletion_at: string | null
           twitter_url: string | null
           updated_at: string
           upi_id: string | null
@@ -210,6 +211,7 @@ export type Database = {
           is_deleted?: boolean
           kyc_verified?: boolean | null
           phone?: string | null
+          scheduled_deletion_at?: string | null
           twitter_url?: string | null
           updated_at?: string
           upi_id?: string | null
@@ -234,6 +236,7 @@ export type Database = {
           is_deleted?: boolean
           kyc_verified?: boolean | null
           phone?: string | null
+          scheduled_deletion_at?: string | null
           twitter_url?: string | null
           updated_at?: string
           upi_id?: string | null
@@ -731,6 +734,7 @@ export type Database = {
       }
     }
     Functions: {
+      cancel_account_deletion: { Args: { _user_id: string }; Returns: Json }
       generate_slug: { Args: { title: string }; Returns: string }
       get_pending_balance: { Args: { _user_id: string }; Returns: number }
       get_total_earned: { Args: { _user_id: string }; Returns: number }
@@ -750,6 +754,7 @@ export type Database = {
         Args: { submission_id_param: string }
         Returns: undefined
       }
+      process_scheduled_deletions: { Args: never; Returns: Json }
       restore_deleted_account: {
         Args: { _email: string; _full_name?: string; _user_id: string }
         Returns: Json
