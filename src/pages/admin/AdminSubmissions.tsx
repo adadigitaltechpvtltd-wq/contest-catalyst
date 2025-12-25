@@ -23,7 +23,8 @@ import {
   Flag,
   User,
   Calendar,
-  Eye
+  Eye,
+  RefreshCw
 } from 'lucide-react';
 
 type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
@@ -81,6 +82,7 @@ const AdminSubmissions = () => {
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'disqualify' | 'winner'>('approve');
   const [rejectionReason, setRejectionReason] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [analyzingSubmissionId, setAnalyzingSubmissionId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSubmissions();
@@ -152,6 +154,56 @@ const AdminSubmissions = () => {
       setSubmissions([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleReanalyze = async (submissionId: string) => {
+    setAnalyzingSubmissionId(submissionId);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-submission', {
+        body: { submission_id: submissionId }
+      });
+
+      if (error) {
+        console.error('Re-analyze error:', error);
+        toast({
+          title: 'Analysis failed',
+          description: error.message || 'Failed to trigger analysis',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Analysis complete',
+        description: `Scores updated: System ${data.scores?.system_score?.toFixed(0) || 'N/A'}/100`,
+      });
+
+      // Refresh the submissions list
+      fetchSubmissions();
+      
+      // Update selected submission if it's the one being analyzed
+      if (selectedSubmission?.id === submissionId) {
+        const { data: updated } = await supabase
+          .from('submissions')
+          .select('*')
+          .eq('id', submissionId)
+          .single();
+        
+        if (updated) {
+          setSelectedSubmission(updated as unknown as Submission);
+        }
+      }
+    } catch (err) {
+      console.error('Re-analyze exception:', err);
+      toast({
+        title: 'Analysis failed',
+        description: 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setAnalyzingSubmissionId(null);
     }
   };
 
@@ -371,13 +423,31 @@ const AdminSubmissions = () => {
                   </div>
                 )}
 
-                <Button
-                  className="w-full"
-                  onClick={() => openReviewModal(submission)}
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Review
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    disabled={analyzingSubmissionId === submission.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleReanalyze(submission.id);
+                    }}
+                  >
+                    {analyzingSubmissionId === submission.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={() => openReviewModal(submission)}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Review
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -432,12 +502,27 @@ const AdminSubmissions = () => {
                   <Card className="bg-secondary/30">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center justify-between">
-                        Detection Analysis
-                        {selectedSubmission.analysis_completed_at && (
-                          <span className="text-xs font-normal text-muted-foreground">
-                            Analyzed {new Date(selectedSubmission.analysis_completed_at).toLocaleDateString()}
-                          </span>
-                        )}
+                        <span>Detection Analysis</span>
+                        <div className="flex items-center gap-2">
+                          {selectedSubmission.analysis_completed_at && (
+                            <span className="text-xs font-normal text-muted-foreground">
+                              {new Date(selectedSubmission.analysis_completed_at).toLocaleDateString()}
+                            </span>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2"
+                            disabled={analyzingSubmissionId === selectedSubmission.id}
+                            onClick={() => handleReanalyze(selectedSubmission.id)}
+                          >
+                            {analyzingSubmissionId === selectedSubmission.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
