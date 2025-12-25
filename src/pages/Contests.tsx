@@ -98,17 +98,9 @@ const Contests = () => {
   const ContestCard = ({ contest }: { contest: Contest }) => (
     <Card className="glass-card overflow-hidden group hover:border-primary/50 transition-all duration-300">
       <div className="relative aspect-video overflow-hidden">
-        {contest.cover_image_url ? (
-          <img
-            src={contest.cover_image_url}
-            alt={contest.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-            <Camera className="h-12 w-12 text-muted-foreground" />
-          </div>
-        )}
+        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+          <Camera className="h-12 w-12 text-muted-foreground" />
+        </div>
         <div className="absolute top-3 left-3">
           {getStatusBadge(contest.status)}
         </div>
