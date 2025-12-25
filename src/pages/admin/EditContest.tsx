@@ -42,6 +42,11 @@ const EditContest = () => {
   const [featuredInHero, setFeaturedInHero] = useState(false);
   const [rules, setRules] = useState<string[]>(['']);
   const [judgingCriteria, setJudgingCriteria] = useState<string[]>(['']);
+  
+  // SEO fields
+  const [seoTitle, setSeoTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
+  const [keywords, setKeywords] = useState('');
 
   useEffect(() => {
     const fetchContest = async () => {
@@ -79,6 +84,10 @@ const EditContest = () => {
       setFeaturedInHero(data.featured_in_hero ?? false);
       setRules(data.rules?.length ? data.rules : ['']);
       setJudgingCriteria(data.judging_criteria?.length ? data.judging_criteria : ['']);
+      // Load SEO fields
+      setSeoTitle(data.seo_title ?? '');
+      setMetaDescription(data.meta_description ?? '');
+      setKeywords(data.keywords?.join(', ') ?? '');
       setIsLoading(false);
     };
 
@@ -134,6 +143,12 @@ const EditContest = () => {
 
     setIsSubmitting(true);
 
+    // Parse keywords
+    const keywordsArray = keywords
+      .split(',')
+      .map(k => k.trim())
+      .filter(k => k.length > 0);
+
     const { error } = await supabase
       .from('contests')
       .update({
@@ -149,6 +164,9 @@ const EditContest = () => {
         featured_in_hero: featuredInHero,
         rules: rules.filter((r) => r.trim() !== ''),
         judging_criteria: judgingCriteria.filter((c) => c.trim() !== ''),
+        seo_title: seoTitle || null,
+        meta_description: metaDescription || null,
+        keywords: keywordsArray.length > 0 ? keywordsArray : null,
       })
       .eq('id', id);
 
@@ -219,6 +237,55 @@ const EditContest = () => {
                 placeholder="Describe the contest, what you are looking for, and any inspiration..."
                 rows={4}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* SEO Settings Card */}
+        <Card className="glass-card mb-6">
+          <CardHeader>
+            <CardTitle>SEO Settings</CardTitle>
+            <CardDescription>Optimize this contest for search engines. These fields also serve as templates for photo page SEO.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="seoTitle">SEO Title (optional, uses contest title if empty)</Label>
+              <Input
+                id="seoTitle"
+                value={seoTitle}
+                onChange={(e) => setSeoTitle(e.target.value)}
+                placeholder="e.g., Urban Street Photography Contest 2025 | Win $500"
+                maxLength={60}
+              />
+              <p className="text-xs text-muted-foreground">
+                {seoTitle.length}/60 characters
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="metaDescription">Meta Description (max 160 characters)</Label>
+              <Textarea
+                id="metaDescription"
+                value={metaDescription}
+                onChange={(e) => setMetaDescription(e.target.value)}
+                placeholder="A compelling description that appears in search results..."
+                maxLength={160}
+                rows={2}
+              />
+              <p className="text-xs text-muted-foreground">
+                {metaDescription.length}/160 characters
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="keywords">Keywords (comma-separated)</Label>
+              <Input
+                id="keywords"
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                placeholder="street photography, urban, contest, photography competition"
+              />
+              <p className="text-xs text-muted-foreground">
+                Used for SEO and categorization
+              </p>
             </div>
           </CardContent>
         </Card>

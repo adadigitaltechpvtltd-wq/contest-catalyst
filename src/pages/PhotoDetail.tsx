@@ -43,6 +43,9 @@ interface PhotoData {
     theme: string | null;
     prize_amount: number;
     prize_currency: string;
+    seo_title: string | null;
+    meta_description: string | null;
+    keywords: string[] | null;
   };
   profile: {
     full_name: string | null;
@@ -70,10 +73,10 @@ const PhotoDetail = () => {
         return;
       }
 
-      // First find the contest by slug
+      // First find the contest by slug with SEO fields
       const { data: contest, error: contestError } = await supabase
         .from('contests')
-        .select('id, title, slug, theme, prize_amount, prize_currency')
+        .select('id, title, slug, theme, prize_amount, prize_currency, seo_title, meta_description, keywords')
         .eq('slug', contestSlug)
         .maybeSingle();
 
@@ -259,8 +262,13 @@ const PhotoDetail = () => {
 
   const photographerName = photo.profile?.full_name || 'Anonymous';
   const isApproved = photo.status === 'approved' || photo.status === 'winner';
-  const seoTitle = `${photo.title} - ${photo.contest.title}`;
-  const seoDescription = photo.description || `Photography submission for ${photo.contest.title} contest on GAAL.`;
+  
+  // Auto-generate SEO from contest SEO fields + user content (no user SEO input)
+  const contestSeoTitle = photo.contest.seo_title || photo.contest.title;
+  const seoTitle = `${photo.title} - ${contestSeoTitle}`;
+  const seoDescription = photo.description 
+    ? `${photo.description.slice(0, 100)}... Photo from ${photo.contest.title} contest on GAAL.`
+    : `${photo.title} - Photography submission for ${contestSeoTitle}. ${photo.contest.meta_description || ''}`.slice(0, 160);
   const canonicalUrl = `https://gaal.app/photo/${photo.contest.slug}/${photo.slug}`;
 
   return (
