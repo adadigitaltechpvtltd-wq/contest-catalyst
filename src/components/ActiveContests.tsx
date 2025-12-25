@@ -59,31 +59,46 @@ const ActiveContests = () => {
 
   useEffect(() => {
     const fetchContests = async () => {
-      const { data, error } = await supabase
-        .from("contests")
-        .select("id, title, description, prize_amount, prize_currency, start_date, end_date, status, theme, cover_image_url")
-        .in("status", ["active", "voting", "completed"])
-        .eq("featured_in_hero", false)
-        .order("start_date", { ascending: false })
-        .limit(4);
+      try {
+        const { data, error } = await supabase
+          .from("contests")
+          .select("id, title, description, prize_amount, prize_currency, start_date, end_date, status, theme, cover_image_url")
+          .in("status", ["active", "voting", "completed"])
+          .eq("featured_in_hero", false)
+          .order("start_date", { ascending: false })
+          .limit(4);
 
-      if (!error && data) {
-        setContests(data);
-        
-        // Fetch participant counts for each contest
-        const counts: Record<string, number> = {};
-        await Promise.all(
-          data.map(async (contest) => {
-            const { count } = await supabase
-              .from("submissions")
-              .select("*", { count: "exact", head: true })
-              .eq("contest_id", contest.id);
-            counts[contest.id] = count ?? 0;
-          })
-        );
-        setParticipantCounts(counts);
+        if (error) {
+          console.error("Error fetching contests:", error);
+          setLoading(false);
+          return;
+        }
+
+        if (data) {
+          setContests(data);
+          
+          // Fetch participant counts for each contest
+          const counts: Record<string, number> = {};
+          await Promise.all(
+            data.map(async (contest) => {
+              try {
+                const { count } = await supabase
+                  .from("submissions")
+                  .select("*", { count: "exact", head: true })
+                  .eq("contest_id", contest.id);
+                counts[contest.id] = count ?? 0;
+              } catch {
+                counts[contest.id] = 0;
+              }
+            })
+          );
+          setParticipantCounts(counts);
+        }
+      } catch (err) {
+        console.error("Error fetching contests:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchContests();

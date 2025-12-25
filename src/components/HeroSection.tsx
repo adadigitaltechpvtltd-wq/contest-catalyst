@@ -23,25 +23,36 @@ const HeroSection = () => {
 
   useEffect(() => {
     const fetchFeaturedContest = async () => {
-      const { data, error } = await supabase
-        .from("contests")
-        .select("id, title, description, prize_amount, prize_currency, end_date, theme")
-        .eq("featured_in_hero", true)
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from("contests")
+          .select("id, title, description, prize_amount, prize_currency, end_date, theme")
+          .eq("featured_in_hero", true)
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (!error && data) {
-        setContest(data);
-        // Fetch participant count
-        const { count } = await supabase
-          .from("submissions")
-          .select("*", { count: "exact", head: true })
-          .eq("contest_id", data.id);
-        setParticipantCount(count ?? 0);
+        if (error) {
+          console.error("Error fetching featured contest:", error);
+          setLoading(false);
+          return;
+        }
+
+        if (data) {
+          setContest(data);
+          // Fetch participant count
+          const { count } = await supabase
+            .from("submissions")
+            .select("*", { count: "exact", head: true })
+            .eq("contest_id", data.id);
+          setParticipantCount(count ?? 0);
+        }
+      } catch (err) {
+        console.error("Error fetching featured contest:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchFeaturedContest();
