@@ -12,3 +12,31 @@ Allow: /
 
 User-agent: *
 Allow: /
+Allow: /contests
+Allow: /contest/*
+Allow: /photo/*
+Allow: /leaderboard
+Allow: /terms
+Allow: /privacy
+Allow: /contest-rules
+Allow: /how-gaal-works
+
+# Disallow non-public pages
+Disallow: /admin/*
+Disallow: /dashboard
+Disallow: /submit/*
+Disallow: /submissions
+Disallow: /submission/*
+Disallow: /wallet
+Disallow: /profile
+Disallow: /notifications
+Disallow: /auth
+Disallow: /login
+Disallow: /signup
+Disallow: /reset-password
+Disallow: /report
+
+# Sitemap
+Sitemap: https://gaal.app/sitemap.xml
+Sitemap: https://gaal.app/sitemap-contests.xml
+Sitemap: https://gaal.app/sitemap-photos.xml

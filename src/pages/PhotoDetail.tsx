@@ -1,0 +1,519 @@
+import { useEffect, useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import SEOHead from '@/components/SEOHead';
+import InlineAuthDialog from '@/components/InlineAuthDialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { 
+  generatePhotoStructuredData,
+  generateBreadcrumbStructuredData,
+  getPhotoCanonicalUrl,
+} from '@/lib/seoUtils';
+import { 
+  Eye, 
+  Download, 
+  Heart, 
+  Share2, 
+  ArrowLeft,
+  Calendar,
+  Trophy,
+  ExternalLink,
+  Loader2,
+  Camera
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+
+interface PhotoData {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string;
+  slug: string;
+  seo_title: string | null;
+  meta_description: string | null;
+  view_count: number;
+  download_count: number;
+  like_count: number;
+  created_at: string;
+  status: string;
+  user_id: string;
+  contest: {
+    id: string;
+    title: string;
+    slug: string;
+    theme: string | null;
+    prize_amount: number;
+    prize_currency: string;
+  };
+  profile: {
+    full_name: string | null;
+    avatar_url: string | null;
+  } | null;
+  tags: { tag: string }[];
+}
+
+const PhotoDetail = () => {
+  const { contestSlug, photoSlug } = useParams<{ contestSlug: string; photoSlug: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const [photo, setPhoto] = useState<PhotoData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasLiked, setHasLiked] = useState(false);
+  const [localLikeCount, setLocalLikeCount] = useState(0);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [relatedPhotos, setRelatedPhotos] = useState<{ id: string; title: string; image_url: string; slug: string }[]>([]);
+
+  useEffect(() => {
+    const fetchPhoto = async () => {
+      if (!contestSlug || !photoSlug) {
+        navigate('/contests');
+        return;
+      }
+
+      // First find the contest by slug
+      const { data: contest, error: contestError } = await supabase
+        .from('contests')
+        .select('id, title, slug, theme, prize_amount, prize_currency')
+        .eq('slug', contestSlug)
+        .maybeSingle();
+
+      if (contestError || !contest) {
+        console.error('Contest not found:', contestError);
+        navigate('/contests');
+        return;
+      }
+
+      // Then find the submission by slug within that contest
+      const { data: submission, error: subError } = await supabase
+        .from('submissions')
+        .select(`
+          id,
+          title,
+          description,
+          image_url,
+          slug,
+          seo_title,
+          meta_description,
+          view_count,
+          download_count,
+          like_count,
+          created_at,
+          status,
+          user_id
+        `)
+        .eq('contest_id', contest.id)
+        .eq('slug', photoSlug)
+        .in('status', ['approved', 'winner'])
+        .maybeSingle();
+
+      if (subError || !submission) {
+        console.error('Submission not found:', subError);
+        navigate(`/contest/${contestSlug}`);
+        return;
+      }
+
+      // Fetch photographer profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', submission.user_id)
+        .maybeSingle();
+
+      // Fetch tags
+      const { data: tags } = await supabase
+        .from('submission_tags')
+        .select('tag')
+        .eq('submission_id', submission.id);
+
+      setPhoto({
+        ...submission,
+        contest,
+        profile: profile || null,
+        tags: tags || [],
+      });
+      setLocalLikeCount(submission.like_count);
+
+      // Increment view count
+      await supabase.rpc('increment_view_count', { submission_id_param: submission.id });
+
+      // Fetch related photos from same contest
+      const { data: related } = await supabase
+        .from('submissions')
+        .select('id, title, image_url, slug')
+        .eq('contest_id', contest.id)
+        .neq('id', submission.id)
+        .in('status', ['approved', 'winner'])
+        .limit(4);
+
+      setRelatedPhotos(related || []);
+      setIsLoading(false);
+    };
+
+    fetchPhoto();
+  }, [contestSlug, photoSlug, navigate]);
+
+  // Check if user has liked
+  useEffect(() => {
+    const checkLike = async () => {
+      if (!user || !photo) return;
+      
+      const { data } = await supabase
+        .from('submission_likes')
+        .select('id')
+        .eq('submission_id', photo.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      setHasLiked(!!data);
+    };
+
+    checkLike();
+  }, [user, photo]);
+
+  const handleLike = async () => {
+    if (!user) {
+      setShowAuthDialog(true);
+      return;
+    }
+
+    if (!photo) return;
+
+    // Optimistic update
+    setHasLiked(!hasLiked);
+    setLocalLikeCount(prev => hasLiked ? prev - 1 : prev + 1);
+
+    try {
+      if (hasLiked) {
+        await supabase
+          .from('submission_likes')
+          .delete()
+          .eq('submission_id', photo.id)
+          .eq('user_id', user.id);
+      } else {
+        await supabase
+          .from('submission_likes')
+          .insert({ submission_id: photo.id, user_id: user.id });
+      }
+    } catch (error) {
+      // Revert on error
+      setHasLiked(hasLiked);
+      setLocalLikeCount(photo.like_count);
+      toast({
+        title: 'Error',
+        description: 'Failed to update like',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!photo) return;
+
+    try {
+      // Increment download count
+      await supabase.rpc('increment_download_count', { submission_id_param: photo.id });
+      
+      // Download the image
+      const response = await fetch(photo.image_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${photo.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Downloaded',
+        description: 'Photo saved successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Download failed',
+        description: 'Please try again',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleShare = async () => {
+    if (!photo) return;
+    
+    const url = window.location.href;
+    const text = `Check out "${photo.title}" on GAAL`;
+    
+    if (navigator.share) {
+      await navigator.share({ title: photo.title, text, url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: 'Link copied',
+        description: 'Photo link copied to clipboard',
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!photo) {
+    return null;
+  }
+
+  const photographerName = photo.profile?.full_name || 'Anonymous';
+  const seoTitle = photo.seo_title || `${photo.title} - ${photo.contest.title} Photo Contest`;
+  const seoDescription = photo.meta_description || photo.description || 
+    `View "${photo.title}" by ${photographerName}. Photography submission for ${photo.contest.title} contest on GAAL.`;
+  const canonicalUrl = getPhotoCanonicalUrl(photo.contest.slug, photo.slug);
+
+  const structuredData = generatePhotoStructuredData({
+    title: photo.title,
+    description: photo.description,
+    image_url: photo.image_url,
+    slug: photo.slug,
+    created_at: photo.created_at,
+    view_count: photo.view_count,
+    like_count: localLikeCount,
+    download_count: photo.download_count,
+    contest_slug: photo.contest.slug,
+    contest_title: photo.contest.title,
+    photographer_name: photographerName,
+    tags: photo.tags.map(t => t.tag),
+  });
+
+  const breadcrumbs = generateBreadcrumbStructuredData([
+    { name: 'Home', url: 'https://gaal.app' },
+    { name: 'Contests', url: 'https://gaal.app/contests' },
+    { name: photo.contest.title, url: `https://gaal.app/contest/${photo.contest.slug}` },
+    { name: photo.title, url: canonicalUrl },
+  ]);
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <SEOHead
+        title={seoTitle}
+        description={seoDescription}
+        canonicalUrl={canonicalUrl}
+        ogImage={photo.image_url}
+        ogType="article"
+        author={photographerName}
+        publishedTime={photo.created_at}
+        keywords={photo.tags.map(t => t.tag)}
+        structuredData={{ ...structuredData, ...breadcrumbs }}
+      />
+      
+      <Navbar />
+      
+      <main className="flex-1 pt-20">
+        {/* Breadcrumb */}
+        <nav className="container mx-auto px-4 py-4" aria-label="Breadcrumb">
+          <ol className="flex items-center gap-2 text-sm text-muted-foreground">
+            <li>
+              <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
+            </li>
+            <li>/</li>
+            <li>
+              <Link to="/contests" className="hover:text-foreground transition-colors">Contests</Link>
+            </li>
+            <li>/</li>
+            <li>
+              <Link to={`/contest/${photo.contest.slug}`} className="hover:text-foreground transition-colors">
+                {photo.contest.title}
+              </Link>
+            </li>
+            <li>/</li>
+            <li className="text-foreground font-medium truncate max-w-[200px]">{photo.title}</li>
+          </ol>
+        </nav>
+
+        <article className="container mx-auto px-4 pb-12">
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Main Image */}
+            <div className="lg:col-span-2">
+              <div className="relative rounded-xl overflow-hidden bg-secondary">
+                <img
+                  src={photo.image_url}
+                  alt={photo.title}
+                  className="w-full h-auto max-h-[80vh] object-contain"
+                  loading="eager"
+                  width={1200}
+                  height={800}
+                />
+                
+                {photo.status === 'winner' && (
+                  <Badge className="absolute top-4 left-4 bg-accent gap-1 text-base px-4 py-2">
+                    <Trophy className="h-4 w-4" />
+                    Winner
+                  </Badge>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between mt-6">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant={hasLiked ? 'default' : 'outline'}
+                    onClick={handleLike}
+                    className="gap-2"
+                  >
+                    <Heart className={`h-4 w-4 ${hasLiked ? 'fill-current' : ''}`} />
+                    {localLikeCount}
+                  </Button>
+                  <Button variant="outline" onClick={handleDownload} className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Download
+                  </Button>
+                  <Button variant="outline" onClick={handleShare} className="gap-2">
+                    <Share2 className="h-4 w-4" />
+                    Share
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Eye className="h-4 w-4" />
+                    {photo.view_count} views
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Download className="h-4 w-4" />
+                    {photo.download_count} downloads
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <aside className="space-y-6">
+              {/* Photo Info */}
+              <div className="p-6 rounded-xl bg-card border border-border">
+                <h1 className="text-2xl font-bold mb-2">{photo.title}</h1>
+                
+                {photo.description && (
+                  <p className="text-muted-foreground mb-4">{photo.description}</p>
+                )}
+
+                <Separator className="my-4" />
+
+                {/* Photographer */}
+                <div className="flex items-center gap-3 mb-4">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={photo.profile?.avatar_url || undefined} />
+                    <AvatarFallback>
+                      <Camera className="h-5 w-5" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{photographerName}</p>
+                    <p className="text-sm text-muted-foreground">Photographer</p>
+                  </div>
+                </div>
+
+                {/* Upload Date */}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                  <Calendar className="h-4 w-4" />
+                  <span>Uploaded {format(new Date(photo.created_at), 'MMMM d, yyyy')}</span>
+                </div>
+
+                {/* Tags */}
+                {photo.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {photo.tags.map((t, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {t.tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Contest Info */}
+              <div className="p-6 rounded-xl bg-card border border-border">
+                <h2 className="text-lg font-semibold mb-3">From Contest</h2>
+                <Link 
+                  to={`/contest/${photo.contest.slug}`}
+                  className="block p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                >
+                  <h3 className="font-medium mb-1">{photo.contest.title}</h3>
+                  {photo.contest.theme && (
+                    <p className="text-sm text-muted-foreground mb-2">{photo.contest.theme}</p>
+                  )}
+                  <div className="flex items-center gap-2 text-sm text-primary">
+                    <Trophy className="h-4 w-4" />
+                    ${photo.contest.prize_amount} {photo.contest.prize_currency}
+                  </div>
+                </Link>
+              </div>
+
+              {/* Explore More */}
+              <div className="p-6 rounded-xl bg-card border border-border">
+                <Link 
+                  to="/contests" 
+                  className="flex items-center justify-between text-primary hover:underline"
+                >
+                  <span className="font-medium">Explore more contests</span>
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+              </div>
+            </aside>
+          </div>
+
+          {/* Related Photos */}
+          {relatedPhotos.length > 0 && (
+            <section className="mt-12">
+              <h2 className="text-xl font-bold mb-6">More from this contest</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {relatedPhotos.map((related) => (
+                  <Link
+                    key={related.id}
+                    to={`/photo/${contestSlug}/${related.slug}`}
+                    className="group relative aspect-square rounded-lg overflow-hidden bg-secondary"
+                  >
+                    <img
+                      src={related.image_url}
+                      alt={related.title}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-0 left-0 right-0 p-3">
+                        <p className="text-white text-sm font-medium truncate">{related.title}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+        </article>
+      </main>
+
+      <Footer />
+
+      <InlineAuthDialog
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        onSuccess={() => {
+          handleLike();
+        }}
+      />
+    </div>
+  );
+};
+
+export default PhotoDetail;

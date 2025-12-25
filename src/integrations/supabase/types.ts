@@ -24,11 +24,15 @@ export type Database = {
           featured_in_hero: boolean
           id: string
           judging_criteria: string[] | null
+          keywords: string[] | null
           max_participants: number | null
+          meta_description: string | null
           min_participants: number
           prize_amount: number
           prize_currency: string
           rules: string[] | null
+          seo_title: string | null
+          slug: string | null
           start_date: string
           status: Database["public"]["Enums"]["contest_status"]
           theme: string | null
@@ -47,11 +51,15 @@ export type Database = {
           featured_in_hero?: boolean
           id?: string
           judging_criteria?: string[] | null
+          keywords?: string[] | null
           max_participants?: number | null
+          meta_description?: string | null
           min_participants?: number
           prize_amount?: number
           prize_currency?: string
           rules?: string[] | null
+          seo_title?: string | null
+          slug?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["contest_status"]
           theme?: string | null
@@ -70,11 +78,15 @@ export type Database = {
           featured_in_hero?: boolean
           id?: string
           judging_criteria?: string[] | null
+          keywords?: string[] | null
           max_participants?: number | null
+          meta_description?: string | null
           min_participants?: number
           prize_amount?: number
           prize_currency?: string
           rules?: string[] | null
+          seo_title?: string | null
+          slug?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["contest_status"]
           theme?: string | null
@@ -339,6 +351,35 @@ export type Database = {
           },
         ]
       }
+      submission_tags: {
+        Row: {
+          created_at: string
+          id: string
+          submission_id: string
+          tag: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          submission_id: string
+          tag: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          submission_id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submission_tags_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       submissions: {
         Row: {
           admin_notes: string | null
@@ -369,6 +410,7 @@ export type Database = {
           image_quality_score: number | null
           image_url: string
           like_count: number
+          meta_description: string | null
           noise_score: number | null
           originality_confirmed: boolean
           perceptual_hash: string | null
@@ -377,7 +419,9 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           risk_score: number | null
+          seo_title: string | null
           sharpness_score: number | null
+          slug: string | null
           status: Database["public"]["Enums"]["submission_status"]
           system_score: number | null
           thumbnail_url: string | null
@@ -417,6 +461,7 @@ export type Database = {
           image_quality_score?: number | null
           image_url: string
           like_count?: number
+          meta_description?: string | null
           noise_score?: number | null
           originality_confirmed?: boolean
           perceptual_hash?: string | null
@@ -425,7 +470,9 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           risk_score?: number | null
+          seo_title?: string | null
           sharpness_score?: number | null
+          slug?: string | null
           status?: Database["public"]["Enums"]["submission_status"]
           system_score?: number | null
           thumbnail_url?: string | null
@@ -465,6 +512,7 @@ export type Database = {
           image_quality_score?: number | null
           image_url?: string
           like_count?: number
+          meta_description?: string | null
           noise_score?: number | null
           originality_confirmed?: boolean
           perceptual_hash?: string | null
@@ -473,7 +521,9 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           risk_score?: number | null
+          seo_title?: string | null
           sharpness_score?: number | null
+          slug?: string | null
           status?: Database["public"]["Enums"]["submission_status"]
           system_score?: number | null
           thumbnail_url?: string | null
@@ -637,6 +687,7 @@ export type Database = {
       }
     }
     Functions: {
+      generate_slug: { Args: { title: string }; Returns: string }
       get_wallet_balance: { Args: { _user_id: string }; Returns: number }
       has_role: {
         Args: {
