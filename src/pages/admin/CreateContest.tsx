@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Loader2, Plus, X } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const CreateContest = () => {
@@ -31,6 +31,8 @@ const CreateContest = () => {
   const [maxParticipants, setMaxParticipants] = useState('');
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('23:59');
   const [status, setStatus] = useState<'draft' | 'active'>('draft');
   const [featuredInHero, setFeaturedInHero] = useState(false);
   const [rules, setRules] = useState<string[]>(['']);
@@ -64,10 +66,20 @@ const CreateContest = () => {
       return;
     }
 
-    if (endDate <= startDate) {
+    // Combine date and time
+    const [startHours, startMinutes] = startTime.split(':').map(Number);
+    const [endHours, endMinutes] = endTime.split(':').map(Number);
+    
+    const combinedStartDate = new Date(startDate);
+    combinedStartDate.setHours(startHours, startMinutes, 0, 0);
+    
+    const combinedEndDate = new Date(endDate);
+    combinedEndDate.setHours(endHours, endMinutes, 0, 0);
+
+    if (combinedEndDate <= combinedStartDate) {
       toast({
         title: 'Invalid dates',
-        description: 'End date must be after start date.',
+        description: 'End date/time must be after start date/time.',
         variant: 'destructive',
       });
       return;
@@ -83,8 +95,8 @@ const CreateContest = () => {
       prize_currency: 'USD',
       min_participants: parseInt(minParticipants),
       max_participants: maxParticipants ? parseInt(maxParticipants) : null,
-      start_date: startDate.toISOString(),
-      end_date: endDate.toISOString(),
+      start_date: combinedStartDate.toISOString(),
+      end_date: combinedEndDate.toISOString(),
       status,
       featured_in_hero: featuredInHero,
       rules: rules.filter((r) => r.trim() !== ''),
@@ -201,9 +213,9 @@ const CreateContest = () => {
         <Card className="glass-card mb-6">
           <CardHeader>
             <CardTitle>Schedule</CardTitle>
-            <CardDescription>Contest duration (typically 2-5 days)</CardDescription>
+            <CardDescription>Contest duration - set date and time for start and end</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Start Date *</Label>
@@ -220,17 +232,29 @@ const CreateContest = () => {
                       {startDate ? format(startDate, 'PPP') : 'Pick start date'}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0 pointer-events-auto">
                     <Calendar
                       mode="single"
                       selected={startDate}
                       onSelect={setStartDate}
-                      disabled={(date) => date < new Date()}
+                      disabled={(date) => date < startOfDay(new Date())}
                       initialFocus
+                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
               </div>
+              <div className="space-y-2">
+                <Label>Start Time *</Label>
+                <Input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>End Date *</Label>
                 <Popover>
@@ -246,16 +270,26 @@ const CreateContest = () => {
                       {endDate ? format(endDate, 'PPP') : 'Pick end date'}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0 pointer-events-auto">
                     <Calendar
                       mode="single"
                       selected={endDate}
                       onSelect={setEndDate}
-                      disabled={(date) => date < (startDate || new Date())}
+                      disabled={(date) => date < startOfDay(startDate || new Date())}
                       initialFocus
+                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label>End Time *</Label>
+                <Input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="w-full"
+                />
               </div>
             </div>
           </CardContent>
