@@ -19,8 +19,12 @@ import {
   DollarSign,
   Gift,
   Info,
-  AlertTriangle
+  AlertTriangle,
+  CreditCard,
+  Building2,
+  ExternalLink
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Link } from 'react-router-dom';
@@ -49,7 +53,7 @@ interface WalletBalances {
 }
 
 const Wallet = () => {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, paymentDetails } = useAuth();
   const [balances, setBalances] = useState<WalletBalances>({
     available: 0,
     pending: 0,
@@ -257,17 +261,69 @@ const Wallet = () => {
               </Card>
             </div>
 
-            {/* Payment Details Disclaimer */}
-            <Alert className="mb-8 border-amber-500/30 bg-amber-500/10">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <AlertDescription className="text-amber-200">
-                Please ensure you have added your UPI ID or bank account details in your{' '}
-                <Link to="/profile" className="text-amber-400 underline hover:text-amber-300">
-                  profile settings
-                </Link>{' '}
-                to avoid payment delays.
-              </AlertDescription>
-            </Alert>
+            {/* Payment Method Summary */}
+            <Card className="glass-card mb-8">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CreditCard className="h-5 w-5" />
+                  Payment Method
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {paymentDetails?.upi_id || paymentDetails?.bank_account_number ? (
+                  <div className="space-y-3">
+                    {paymentDetails.upi_id && (
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-success/10 border border-success/20">
+                        <div className="p-2 rounded-full bg-success/20">
+                          <CheckCircle className="h-4 w-4 text-success" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground">UPI ID</p>
+                          <p className="font-medium">{paymentDetails.upi_id}</p>
+                        </div>
+                      </div>
+                    )}
+                    {paymentDetails.bank_account_number && (
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-success/10 border border-success/20">
+                        <div className="p-2 rounded-full bg-success/20">
+                          <Building2 className="h-4 w-4 text-success" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground">Bank Account</p>
+                          <p className="font-medium">
+                            ****{paymentDetails.bank_account_number.slice(-4)}
+                            {paymentDetails.bank_ifsc && (
+                              <span className="text-muted-foreground ml-2">({paymentDetails.bank_ifsc})</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <Button variant="outline" size="sm" asChild className="w-full">
+                      <Link to="/profile">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Update Payment Details
+                      </Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="p-3 rounded-full bg-amber-500/10 w-fit mx-auto mb-3">
+                      <AlertTriangle className="h-6 w-6 text-amber-500" />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      No payment method configured. Add your UPI ID or bank details to receive prize payments.
+                    </p>
+                    <Button asChild>
+                      <Link to="/profile">
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Add Payment Method
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Withdrawal History */}
             {transactions.filter(tx => tx.type === 'withdrawal').length > 0 && (
