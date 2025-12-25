@@ -28,6 +28,7 @@ import {
 
 interface UserStats {
   user_id: string;
+  username: string | null;
   full_name: string | null;
   avatar_url: string | null;
   bio: string | null;
@@ -59,43 +60,66 @@ interface SubmissionWithScore {
 }
 
 const UserProfilePage = () => {
-  const { userId } = useParams<{ userId: string }>();
+  const { username } = useParams<{ username: string }>();
+
+  // First, resolve username to user_id (supports both username and UUID)
+  const { data: resolvedUserId, isLoading: resolvingUser } = useQuery({
+    queryKey: ["resolve-user", username],
+    queryFn: async () => {
+      // Check if it's a UUID format (fallback for old links)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(username || "")) {
+        return username;
+      }
+      
+      // Look up by username
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", username)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data?.id || null;
+    },
+    enabled: !!username,
+  });
 
   // Fetch user stats from leaderboard
   const { data: userStats, isLoading: statsLoading } = useQuery({
-    queryKey: ["user-stats", userId],
+    queryKey: ["user-stats", resolvedUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leaderboard_stats")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", resolvedUserId)
         .maybeSingle();
 
       if (error) throw error;
       return data as UserStats | null;
     },
-    enabled: !!userId,
+    enabled: !!resolvedUserId,
   });
 
   // Fetch social links from profiles
   const { data: socialLinks } = useQuery({
-    queryKey: ["user-social-links", userId],
+    queryKey: ["user-social-links", resolvedUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("instagram_url, twitter_url")
-        .eq("id", userId)
+        .eq("id", resolvedUserId)
         .maybeSingle();
 
       if (error) throw error;
       return data as { instagram_url: string | null; twitter_url: string | null } | null;
     },
-    enabled: !!userId,
+    enabled: !!resolvedUserId,
   });
 
   // Fetch user rank
   const { data: userRank } = useQuery({
-    queryKey: ["user-rank", userId],
+    queryKey: ["user-rank", resolvedUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leaderboard_stats")
@@ -104,15 +128,15 @@ const UserProfilePage = () => {
 
       if (error) throw error;
 
-      const rank = data?.findIndex((u) => u.user_id === userId);
+      const rank = data?.findIndex((u) => u.user_id === resolvedUserId);
       return rank !== undefined && rank >= 0 ? rank + 1 : null;
     },
-    enabled: !!userId,
+    enabled: !!resolvedUserId,
   });
 
   // Fetch user's submissions with scores
   const { data: submissions, isLoading: submissionsLoading } = useQuery({
-    queryKey: ["user-submissions", userId],
+    queryKey: ["user-submissions", resolvedUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("submissions")
@@ -134,7 +158,7 @@ const UserProfilePage = () => {
           contest:contests(id, title, slug)
         `
         )
-        .eq("user_id", userId)
+        .eq("user_id", resolvedUserId)
         .in("status", ["approved", "winner"])
         .order("created_at", { ascending: false })
         .limit(20);
@@ -142,7 +166,7 @@ const UserProfilePage = () => {
       if (error) throw error;
       return data as SubmissionWithScore[];
     },
-    enabled: !!userId,
+    enabled: !!resolvedUserId,
   });
 
   const getInitials = (name: string | null) => {
@@ -200,7 +224,9 @@ const UserProfilePage = () => {
     return "text-red-500";
   };
 
-  if (statsLoading) {
+  const isLoading = resolvingUser || statsLoading;
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -457,36 +483,34 @@ const UserProfilePage = () => {
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Target className="w-3 h-3 text-muted-foreground" />
-                              <span className="text-muted-foreground">Risk:</span>
-                              <span className={getScoreColor(100 - (submission.risk_score ?? 0))}>
-                                {submission.risk_score ?? "-"}%
-                              </span>
+                              <Eye className="w-3 h-3 text-muted-foreground" />
+                              <span className="text-muted-foreground">Views:</span>
+                              <span className="text-foreground">{submission.view_count}</span>
                             </div>
-                            <div className="flex items-center gap-1 font-medium">
-                              <TrendingUp className="w-3 h-3 text-primary" />
-                              <span className="text-muted-foreground">Score:</span>
-                              <span className={getScoreColor(submission.system_score)}>
-                                {submission.system_score ?? "-"}
-                              </span>
+                            <div className="flex items-center gap-1">
+                              <Heart className="w-3 h-3 text-muted-foreground" />
+                              <span className="text-muted-foreground">Likes:</span>
+                              <span className="text-foreground">{submission.like_count}</span>
                             </div>
                           </div>
 
-                          {/* Stats */}
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Eye className="w-3 h-3" />
-                              {submission.view_count} views
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Heart className="w-3 h-3" />
-                              {submission.like_count} likes
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(submission.created_at).toLocaleDateString()}
-                            </span>
+                          {/* Date */}
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(submission.created_at).toLocaleDateString()}
                           </div>
+                        </div>
+
+                        {/* System Score */}
+                        <div className="text-center sm:text-right flex-shrink-0">
+                          <p className="text-xs text-muted-foreground mb-1">System Score</p>
+                          <p
+                            className={`text-2xl font-bold ${getScoreColor(
+                              submission.system_score
+                            )}`}
+                          >
+                            {submission.system_score?.toFixed(0) ?? "-"}
+                          </p>
                         </div>
                       </div>
                     ))}

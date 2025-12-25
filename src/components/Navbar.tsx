@@ -82,7 +82,7 @@ const Navbar = () => {
                       </div>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link to={`/user/${user.id}`} className="cursor-pointer">
+                        <Link to={`/user/${profile?.username || user.id}`} className="cursor-pointer">
                           <UserCircle className="mr-2 h-4 w-4" />
                           View Public Profile
                         </Link>

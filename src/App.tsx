@@ -66,7 +66,7 @@ const App = () => (
               <Route path="/contest/:id" element={<ContestDetail />} />
               <Route path="/photo/:contestSlug/:photoSlug" element={<PhotoDetail />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
-              <Route path="/user/:userId" element={<UserProfilePage />} />
+              <Route path="/user/:username" element={<UserProfilePage />} />
             
             {/* Protected User Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

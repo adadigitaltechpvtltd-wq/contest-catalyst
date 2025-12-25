@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface LeaderboardEntry {
   user_id: string;
+  username: string | null;
   full_name: string | null;
   avatar_url: string | null;
   bio: string | null;
@@ -24,7 +25,7 @@ export const useLeaderboard = (options: UseLeaderboardOptions = {}) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leaderboard_stats")
-        .select("user_id, full_name, avatar_url, bio, wins, total_submissions, contests_entered, total_points")
+        .select("user_id, username, full_name, avatar_url, bio, wins, total_submissions, contests_entered, total_points")
         .order("total_points", { ascending: false })
         .order("wins", { ascending: false })
         .limit(limit);
