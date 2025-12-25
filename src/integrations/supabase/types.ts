@@ -304,8 +304,11 @@ export type Database = {
           ai_detection_raw_response: Json | null
           ai_probability_score: number | null
           analysis_completed_at: string | null
+          analysis_method: string | null
+          blur_score: number | null
           combined_score: number | null
           contest_id: string
+          contrast_score: number | null
           created_at: string
           description: string | null
           duplicate_similarity_score: number | null
@@ -317,15 +320,19 @@ export type Database = {
           exif_gps_lng: number | null
           exif_has_anomalies: boolean | null
           exif_software: string | null
+          exposure_score: number | null
           id: string
           image_quality_score: number | null
           image_url: string
+          noise_score: number | null
           originality_confirmed: boolean
+          perceptual_hash: string | null
           rejection_reason: string | null
           report_count: number | null
           reviewed_at: string | null
           reviewed_by: string | null
           risk_score: number | null
+          sharpness_score: number | null
           status: Database["public"]["Enums"]["submission_status"]
           system_score: number | null
           thumbnail_url: string | null
@@ -342,8 +349,11 @@ export type Database = {
           ai_detection_raw_response?: Json | null
           ai_probability_score?: number | null
           analysis_completed_at?: string | null
+          analysis_method?: string | null
+          blur_score?: number | null
           combined_score?: number | null
           contest_id: string
+          contrast_score?: number | null
           created_at?: string
           description?: string | null
           duplicate_similarity_score?: number | null
@@ -355,15 +365,19 @@ export type Database = {
           exif_gps_lng?: number | null
           exif_has_anomalies?: boolean | null
           exif_software?: string | null
+          exposure_score?: number | null
           id?: string
           image_quality_score?: number | null
           image_url: string
+          noise_score?: number | null
           originality_confirmed?: boolean
+          perceptual_hash?: string | null
           rejection_reason?: string | null
           report_count?: number | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           risk_score?: number | null
+          sharpness_score?: number | null
           status?: Database["public"]["Enums"]["submission_status"]
           system_score?: number | null
           thumbnail_url?: string | null
@@ -380,8 +394,11 @@ export type Database = {
           ai_detection_raw_response?: Json | null
           ai_probability_score?: number | null
           analysis_completed_at?: string | null
+          analysis_method?: string | null
+          blur_score?: number | null
           combined_score?: number | null
           contest_id?: string
+          contrast_score?: number | null
           created_at?: string
           description?: string | null
           duplicate_similarity_score?: number | null
@@ -393,15 +410,19 @@ export type Database = {
           exif_gps_lng?: number | null
           exif_has_anomalies?: boolean | null
           exif_software?: string | null
+          exposure_score?: number | null
           id?: string
           image_quality_score?: number | null
           image_url?: string
+          noise_score?: number | null
           originality_confirmed?: boolean
+          perceptual_hash?: string | null
           rejection_reason?: string | null
           report_count?: number | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           risk_score?: number | null
+          sharpness_score?: number | null
           status?: Database["public"]["Enums"]["submission_status"]
           system_score?: number | null
           thumbnail_url?: string | null
