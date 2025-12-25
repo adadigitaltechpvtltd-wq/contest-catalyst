@@ -36,6 +36,7 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import WinnerSelection from "./pages/admin/WinnerSelection";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import NotFound from "./pages/NotFound";
 
@@ -75,6 +76,7 @@ const App = () => (
               <Route path="contests" element={<AdminContests />} />
               <Route path="contests/new" element={<CreateContest />} />
               <Route path="contests/:id/edit" element={<EditContest />} />
+              <Route path="contests/:contestId/winner" element={<WinnerSelection />} />
               <Route path="submissions" element={<AdminSubmissions />} />
               <Route path="payments" element={<AdminPayments />} />
               <Route path="users" element={<AdminUsers />} />
