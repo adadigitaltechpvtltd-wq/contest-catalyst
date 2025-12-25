@@ -304,6 +304,25 @@ const Profile = () => {
                     </p>
                   </div>
                 </div>
+                <div className="flex items-center gap-3">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Payment Details</p>
+                    <p className="text-sm">
+                      {paymentDetails?.upi_id || paymentDetails?.bank_account_number ? (
+                        <span className="flex items-center gap-1 text-success">
+                          <CheckCircle className="h-3 w-3" />
+                          Configured
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-amber-500">
+                          <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                          Missing
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
