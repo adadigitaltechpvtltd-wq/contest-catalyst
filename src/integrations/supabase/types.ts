@@ -712,6 +712,8 @@ export type Database = {
     }
     Functions: {
       generate_slug: { Args: { title: string }; Returns: string }
+      get_pending_balance: { Args: { _user_id: string }; Returns: number }
+      get_total_earned: { Args: { _user_id: string }; Returns: number }
       get_wallet_balance: { Args: { _user_id: string }; Returns: number }
       has_role: {
         Args: {

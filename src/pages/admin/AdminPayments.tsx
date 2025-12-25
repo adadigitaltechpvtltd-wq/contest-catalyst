@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -18,14 +18,16 @@ import {
   Clock,
   User,
   Trophy,
-  IndianRupee
+  ArrowUpRight,
+  DollarSign
 } from 'lucide-react';
 
 type TransactionStatus = 'pending' | 'completed' | 'failed' | 'cancelled';
+type TransactionType = 'prize' | 'withdrawal' | 'bonus';
 
 interface Transaction {
   id: string;
-  type: string;
+  type: TransactionType;
   amount: number;
   currency: string;
   status: TransactionStatus;
@@ -82,7 +84,7 @@ const AdminPayments = () => {
         notes,
         created_at,
         user_id,
-        profile:profiles!wallet_transactions_user_id_fkey(id, full_name, email),
+        profile:profiles!inner(id, full_name, email),
         contest:contests(title)
       `)
       .order('created_at', { ascending: false });
@@ -145,11 +147,12 @@ const AdminPayments = () => {
         variant: 'destructive',
       });
     } else {
+      const actionLabel = selectedTransaction.type === 'prize' ? 'payout' : 'withdrawal';
       toast({
-        title: action === 'complete' ? 'Payment completed' : 'Payment cancelled',
+        title: action === 'complete' ? `${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)} completed` : `${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)} cancelled`,
         description: action === 'complete' 
-          ? `$${selectedTransaction.amount} has been marked as paid.`
-          : 'Payment has been cancelled.',
+          ? `$${selectedTransaction.amount} has been marked as paid. User's available balance has been updated.`
+          : `${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)} has been cancelled.`,
       });
       setIsProcessModalOpen(false);
       fetchTransactions();
@@ -175,9 +178,42 @@ const AdminPayments = () => {
     );
   };
 
+  const getTypeIcon = (type: TransactionType) => {
+    switch (type) {
+      case 'prize':
+        return <Trophy className="h-4 w-4 text-accent" />;
+      case 'withdrawal':
+        return <ArrowUpRight className="h-4 w-4 text-primary" />;
+      case 'bonus':
+        return <DollarSign className="h-4 w-4 text-success" />;
+      default:
+        return <DollarSign className="h-4 w-4" />;
+    }
+  };
+
+  const getTypeLabel = (type: TransactionType) => {
+    switch (type) {
+      case 'prize':
+        return 'Contest Prize';
+      case 'withdrawal':
+        return 'Withdrawal';
+      case 'bonus':
+        return 'Bonus';
+      default:
+        return type;
+    }
+  };
+
   const pendingTotal = transactions
     .filter((t) => t.status === 'pending')
     .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const completedThisMonth = transactions.filter((t) => {
+    if (t.status !== 'completed') return false;
+    const txDate = new Date(t.created_at);
+    const now = new Date();
+    return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+  }).length;
 
   return (
     <div>
@@ -206,9 +242,7 @@ const AdminPayments = () => {
             <div className="flex items-center gap-3">
               <CheckCircle className="h-8 w-8 text-success" />
               <div>
-                <p className="text-2xl font-bold">
-                  {transactions.filter((t) => t.status === 'completed').length}
-                </p>
+                <p className="text-2xl font-bold">{completedThisMonth}</p>
                 <p className="text-xs text-muted-foreground">Completed This Month</p>
               </div>
             </div>
@@ -284,12 +318,8 @@ const AdminPayments = () => {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          {tx.type === 'prize' ? (
-                            <Trophy className="h-4 w-4 text-accent" />
-                          ) : (
-                            <IndianRupee className="h-4 w-4 text-primary" />
-                          )}
-                          <span className="capitalize">{tx.type}</span>
+                          {getTypeIcon(tx.type)}
+                          <span>{getTypeLabel(tx.type)}</span>
                         </div>
                         {tx.contest && (
                           <p className="text-xs text-muted-foreground">{tx.contest.title}</p>
@@ -327,9 +357,14 @@ const AdminPayments = () => {
           {selectedTransaction && (
             <>
               <DialogHeader>
-                <DialogTitle>Process Payment</DialogTitle>
+                <DialogTitle>
+                  Process {selectedTransaction.type === 'prize' ? 'Prize Payout' : 'Withdrawal'}
+                </DialogTitle>
                 <DialogDescription>
-                  Approve or cancel this payout request
+                  {selectedTransaction.type === 'prize' 
+                    ? 'Mark this contest prize as paid after completing the manual payment'
+                    : 'Approve or cancel this withdrawal request'
+                  }
                 </DialogDescription>
               </DialogHeader>
 
@@ -339,30 +374,56 @@ const AdminPayments = () => {
                     <div>
                       <p className="text-muted-foreground">Recipient</p>
                       <p className="font-semibold">{selectedTransaction.profile?.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{selectedTransaction.profile?.email}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Amount</p>
                       <p className="font-semibold text-lg">${Number(selectedTransaction.amount).toFixed(2)}</p>
                     </div>
-                    {selectedTransaction.payment_details?.upi_id && (
-                      <div>
-                        <p className="text-muted-foreground">UPI ID</p>
-                        <p className="font-semibold">{selectedTransaction.payment_details.upi_id}</p>
+                    {selectedTransaction.type === 'prize' && selectedTransaction.contest && (
+                      <div className="col-span-2">
+                        <p className="text-muted-foreground">Contest</p>
+                        <p className="font-semibold">{selectedTransaction.contest.title}</p>
                       </div>
                     )}
-                    {selectedTransaction.payment_details?.bank_account_number && (
-                      <>
-                        <div>
-                          <p className="text-muted-foreground">Bank Account</p>
-                          <p className="font-semibold">{selectedTransaction.payment_details.bank_account_number}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">IFSC</p>
-                          <p className="font-semibold">{selectedTransaction.payment_details.bank_ifsc}</p>
-                        </div>
-                      </>
-                    )}
                   </div>
+                </div>
+
+                {/* Payment Details */}
+                {(selectedTransaction.payment_details?.upi_id || selectedTransaction.payment_details?.bank_account_number) && (
+                  <div className="p-4 rounded-lg bg-secondary/30">
+                    <p className="text-sm font-semibold mb-2">Payment Details</p>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      {selectedTransaction.payment_details?.upi_id && (
+                        <div>
+                          <p className="text-muted-foreground">UPI ID</p>
+                          <p className="font-semibold">{selectedTransaction.payment_details.upi_id}</p>
+                        </div>
+                      )}
+                      {selectedTransaction.payment_details?.bank_account_number && (
+                        <>
+                          <div>
+                            <p className="text-muted-foreground">Bank Account</p>
+                            <p className="font-semibold">{selectedTransaction.payment_details.bank_account_number}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">IFSC</p>
+                            <p className="font-semibold">{selectedTransaction.payment_details.bank_ifsc}</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* What happens section */}
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                  <p className="text-sm font-semibold mb-2">What happens when you mark as paid:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>• User's <strong>Pending</strong> balance decreases by ${Number(selectedTransaction.amount).toFixed(2)}</li>
+                    <li>• User's <strong>Available Balance</strong> increases by ${Number(selectedTransaction.amount).toFixed(2)}</li>
+                    <li>• Transaction is marked as completed in user's history</li>
+                  </ul>
                 </div>
 
                 <div className="space-y-2">
@@ -381,7 +442,8 @@ const AdminPayments = () => {
                     disabled={isProcessing}
                     className="flex-1"
                   >
-                    Cancel Payment
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Cancel
                   </Button>
                   <Button
                     onClick={() => processPayment('complete')}

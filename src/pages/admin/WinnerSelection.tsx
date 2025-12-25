@@ -157,9 +157,37 @@ const WinnerSelection = () => {
 
       if (contestError) throw contestError;
 
+      // Create wallet transaction for prize (pending status)
+      const { error: walletError } = await supabase
+        .from('wallet_transactions')
+        .insert({
+          user_id: selectedSubmission.profile?.id,
+          contest_id: contest.id,
+          submission_id: selectedSubmission.id,
+          type: 'prize',
+          amount: contest.prize_amount,
+          currency: contest.prize_currency || 'USD',
+          status: 'pending',
+          notes: `Prize for winning "${contest.title}"`,
+        });
+
+      if (walletError) {
+        console.error('Error creating wallet transaction:', walletError);
+        // Don't throw - winner is selected, wallet transaction is secondary
+      }
+
+      // Create notification for the winner
+      await supabase.from('notifications').insert({
+        user_id: selectedSubmission.profile?.id,
+        type: 'success',
+        title: '🏆 Congratulations! You Won!',
+        message: `You've won the "${contest.title}" contest! Prize: $${contest.prize_amount}. Your earnings will be transferred soon.`,
+        link: `/contest/${contest.id}`,
+      });
+
       toast({
         title: 'Winner Selected!',
-        description: `${selectedSubmission.profile?.full_name || 'Anonymous'} has been selected as the winner.`,
+        description: `${selectedSubmission.profile?.full_name || 'Anonymous'} has been selected as the winner. A pending prize of $${contest.prize_amount} has been added to their wallet.`,
       });
 
       // Refresh data
@@ -250,8 +278,7 @@ const WinnerSelection = () => {
             <div>
               <p className="text-sm text-muted-foreground">Prize</p>
               <p className="text-2xl font-bold text-primary">
-                {contest.prize_currency === 'INR' ? '₹' : '$'}
-                {contest.prize_amount}
+                ${contest.prize_amount}
               </p>
             </div>
             <div>
@@ -423,6 +450,8 @@ const WinnerSelection = () => {
               <ul className="list-disc ml-6 mt-2">
                 <li>Mark this submission as the winner</li>
                 <li>Update the contest status to "Completed"</li>
+                <li>Add <strong>${contest.prize_amount}</strong> to winner's wallet (pending payout)</li>
+                <li>Notify the winner</li>
                 <li>Update the leaderboard</li>
               </ul>
               <br />
