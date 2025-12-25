@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.auto-complete-contests]
 verify_jwt = false
+
+[functions.prerender]
+verify_jwt = false

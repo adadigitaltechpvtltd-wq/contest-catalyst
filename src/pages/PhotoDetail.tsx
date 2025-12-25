@@ -11,16 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { 
-  generatePhotoStructuredData,
-  generateBreadcrumbStructuredData,
-  getPhotoCanonicalUrl,
-} from '@/lib/seoUtils';
-import { 
   Eye, 
   Download, 
   Heart, 
   Share2, 
-  ArrowLeft,
   Calendar,
   Trophy,
   ExternalLink,
@@ -36,8 +30,6 @@ interface PhotoData {
   description: string | null;
   image_url: string;
   slug: string;
-  seo_title: string | null;
-  meta_description: string | null;
   view_count: number;
   download_count: number;
   like_count: number;
@@ -56,7 +48,6 @@ interface PhotoData {
     full_name: string | null;
     avatar_url: string | null;
   } | null;
-  tags: { tag: string }[];
 }
 
 const PhotoDetail = () => {
@@ -101,8 +92,6 @@ const PhotoDetail = () => {
           description,
           image_url,
           slug,
-          seo_title,
-          meta_description,
           view_count,
           download_count,
           like_count,
@@ -112,7 +101,6 @@ const PhotoDetail = () => {
         `)
         .eq('contest_id', contest.id)
         .eq('slug', photoSlug)
-        .in('status', ['approved', 'winner'])
         .maybeSingle();
 
       if (subError || !submission) {
@@ -128,22 +116,17 @@ const PhotoDetail = () => {
         .eq('id', submission.user_id)
         .maybeSingle();
 
-      // Fetch tags
-      const { data: tags } = await supabase
-        .from('submission_tags')
-        .select('tag')
-        .eq('submission_id', submission.id);
-
       setPhoto({
         ...submission,
         contest,
         profile: profile || null,
-        tags: tags || [],
       });
       setLocalLikeCount(submission.like_count);
 
-      // Increment view count
-      await supabase.rpc('increment_view_count', { submission_id_param: submission.id });
+      // Increment view count only for approved/winner
+      if (submission.status === 'approved' || submission.status === 'winner') {
+        await supabase.rpc('increment_view_count', { submission_id_param: submission.id });
+      }
 
       // Fetch related photos from same contest
       const { data: related } = await supabase
@@ -219,10 +202,8 @@ const PhotoDetail = () => {
     if (!photo) return;
 
     try {
-      // Increment download count
       await supabase.rpc('increment_download_count', { submission_id_param: photo.id });
       
-      // Download the image
       const response = await fetch(photo.image_url);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -277,32 +258,10 @@ const PhotoDetail = () => {
   }
 
   const photographerName = photo.profile?.full_name || 'Anonymous';
-  const seoTitle = photo.seo_title || `${photo.title} - ${photo.contest.title} Photo Contest`;
-  const seoDescription = photo.meta_description || photo.description || 
-    `View "${photo.title}" by ${photographerName}. Photography submission for ${photo.contest.title} contest on GAAL.`;
-  const canonicalUrl = getPhotoCanonicalUrl(photo.contest.slug, photo.slug);
-
-  const structuredData = generatePhotoStructuredData({
-    title: photo.title,
-    description: photo.description,
-    image_url: photo.image_url,
-    slug: photo.slug,
-    created_at: photo.created_at,
-    view_count: photo.view_count,
-    like_count: localLikeCount,
-    download_count: photo.download_count,
-    contest_slug: photo.contest.slug,
-    contest_title: photo.contest.title,
-    photographer_name: photographerName,
-    tags: photo.tags.map(t => t.tag),
-  });
-
-  const breadcrumbs = generateBreadcrumbStructuredData([
-    { name: 'Home', url: 'https://gaal.app' },
-    { name: 'Contests', url: 'https://gaal.app/contests' },
-    { name: photo.contest.title, url: `https://gaal.app/contest/${photo.contest.slug}` },
-    { name: photo.title, url: canonicalUrl },
-  ]);
+  const isApproved = photo.status === 'approved' || photo.status === 'winner';
+  const seoTitle = `${photo.title} - ${photo.contest.title}`;
+  const seoDescription = photo.description || `Photography submission for ${photo.contest.title} contest on GAAL.`;
+  const canonicalUrl = `https://gaal.app/photo/${photo.contest.slug}/${photo.slug}`;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -312,10 +271,7 @@ const PhotoDetail = () => {
         canonicalUrl={canonicalUrl}
         ogImage={photo.image_url}
         ogType="article"
-        author={photographerName}
-        publishedTime={photo.created_at}
-        keywords={photo.tags.map(t => t.tag)}
-        structuredData={{ ...structuredData, ...breadcrumbs }}
+        noIndex={!isApproved}
       />
       
       <Navbar />
@@ -352,8 +308,6 @@ const PhotoDetail = () => {
                   alt={photo.title}
                   className="w-full h-auto max-h-[80vh] object-contain"
                   loading="eager"
-                  width={1200}
-                  height={800}
                 />
                 
                 {photo.status === 'winner' && (
@@ -425,21 +379,10 @@ const PhotoDetail = () => {
                 </div>
 
                 {/* Upload Date */}
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   <span>Uploaded {format(new Date(photo.created_at), 'MMMM d, yyyy')}</span>
                 </div>
-
-                {/* Tags */}
-                {photo.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {photo.tags.map((t, i) => (
-                      <Badge key={i} variant="secondary" className="text-xs">
-                        {t.tag}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
               </div>
 
               {/* Contest Info */}
@@ -502,15 +445,14 @@ const PhotoDetail = () => {
           )}
         </article>
       </main>
-
+      
       <Footer />
 
-      <InlineAuthDialog
-        open={showAuthDialog}
+      <InlineAuthDialog 
+        open={showAuthDialog} 
         onOpenChange={setShowAuthDialog}
-        onSuccess={() => {
-          handleLike();
-        }}
+        title="Sign in to like photos"
+        description="Create an account or sign in to like and interact with photos."
       />
     </div>
   );

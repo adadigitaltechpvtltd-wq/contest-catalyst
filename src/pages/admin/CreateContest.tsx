@@ -17,7 +17,7 @@ import { TimePicker } from '@/components/ui/time-picker';
 import { format, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-import { validateSEOTitle, validateSEODescription, isTitleGeneric } from '@/lib/seoUtils';
+
 
 const CreateContest = () => {
   const { user } = useAuth();
@@ -65,21 +65,10 @@ const CreateContest = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate SEO title
-    const titleValidation = validateSEOTitle(title);
-    if (!titleValidation.valid) {
+    if (!title.trim()) {
       toast({
-        title: 'SEO Warning',
-        description: titleValidation.message,
-        variant: 'destructive',
-      });
-    }
-
-    // Validate description for SEO
-    if (description.length < 100) {
-      toast({
-        title: 'Description too short',
-        description: 'For better SEO, contest description should be at least 100 characters.',
+        title: 'Title required',
+        description: 'Please enter a contest title.',
         variant: 'destructive',
       });
       return;
