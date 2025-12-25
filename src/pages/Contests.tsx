@@ -4,13 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ErrorState from '@/components/ErrorState';
-import ContestCardSkeleton from '@/components/skeletons/ContestCardSkeleton';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Clock, Users, Camera } from 'lucide-react';
+import { Trophy, Clock, Users, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatDistanceToNow, isPast, isFuture } from 'date-fns';
 
 type ContestStatus = 'active' | 'voting' | 'completed';
 
@@ -28,11 +27,45 @@ interface Contest {
   status: ContestStatus;
 }
 
+const gradientBorders = [
+  "from-orange-500 via-red-500 to-pink-500",
+  "from-purple-500 via-pink-500 to-red-500",
+  "from-yellow-500 via-orange-500 to-red-500",
+  "from-blue-500 via-cyan-500 to-teal-500",
+  "from-emerald-500 via-green-500 to-lime-500",
+  "from-indigo-500 via-purple-500 to-pink-500",
+];
+
+const getContestDisplayStatus = (contest: Contest): "live" | "soon" | "ended" => {
+  const now = new Date();
+  const start = new Date(contest.start_date);
+  const end = new Date(contest.end_date);
+
+  if (contest.status === "completed" || isPast(end)) return "ended";
+  if (isFuture(start)) return "soon";
+  return "live";
+};
+
+const getTimeDisplay = (contest: Contest, status: "live" | "soon" | "ended"): string => {
+  if (status === "ended") return "Ended";
+  if (status === "soon") {
+    return `Starts ${formatDistanceToNow(new Date(contest.start_date), { addSuffix: true })}`;
+  }
+  return formatDistanceToNow(new Date(contest.end_date), { addSuffix: false }) + " left";
+};
+
+const formatPrize = (amount: number, currency: string) => {
+  if (currency === "USD") return `$${amount.toLocaleString()}`;
+  if (currency === "INR") return `₹${amount.toLocaleString()}`;
+  return `$${amount.toLocaleString()}`;
+};
+
 const Contests = () => {
   const [contests, setContests] = useState<Contest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
+  const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchContests();
@@ -54,37 +87,27 @@ const Contests = () => {
       toast.error('Failed to load contests. Please try again.');
     } else {
       setContests(data as Contest[]);
+      
+      // Fetch participant counts for each contest
+      if (data) {
+        const counts: Record<string, number> = {};
+        await Promise.all(
+          data.map(async (contest) => {
+            try {
+              const { count } = await supabase
+                .from("submissions")
+                .select("*", { count: "exact", head: true })
+                .eq("contest_id", contest.id);
+              counts[contest.id] = count ?? 0;
+            } catch {
+              counts[contest.id] = 0;
+            }
+          })
+        );
+        setParticipantCounts(counts);
+      }
     }
     setIsLoading(false);
-  };
-
-  const formatTimeLeft = (endDate: string) => {
-    const end = new Date(endDate);
-    const now = new Date();
-    const diff = end.getTime() - now.getTime();
-
-    if (diff <= 0) return 'Ended';
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (days > 0) return `${days}d ${hours}h`;
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
-  };
-
-  const getStatusBadge = (status: ContestStatus) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-success">Live</Badge>;
-      case 'voting':
-        return <Badge className="bg-accent">Voting</Badge>;
-      case 'completed':
-        return <Badge variant="secondary">Completed</Badge>;
-      default:
-        return null;
-    }
   };
 
   const now = new Date();
@@ -95,56 +118,117 @@ const Contests = () => {
     c.status === 'completed' || new Date(c.end_date) <= now
   );
 
-  const ContestCard = ({ contest }: { contest: Contest }) => (
-    <Card className="glass-card overflow-hidden group hover:border-primary/50 transition-all duration-300">
-      <div className="relative aspect-video overflow-hidden">
-        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-          <Camera className="h-12 w-12 text-muted-foreground" />
-        </div>
-        <div className="absolute top-3 left-3">
-          {getStatusBadge(contest.status)}
-        </div>
-        <div className="absolute top-3 right-3 flex gap-2">
-          {contest.prize_amount === 0 && (
-            <Badge className="bg-emerald-500 text-white border-0">
-              🎉 FREE
-            </Badge>
+  const ContestCard = ({ contest, index }: { contest: Contest; index: number }) => {
+    const status = getContestDisplayStatus(contest);
+    const timeDisplay = getTimeDisplay(contest, status);
+    const gradientBorder = gradientBorders[index % gradientBorders.length];
+
+    return (
+      <div 
+        className={`group relative overflow-hidden rounded-2xl bg-card transition-all duration-300 hover:border-primary/50 ${
+          status === "ended" ? "opacity-60" : ""
+        }`}
+      >
+        {/* Gradient top border */}
+        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${gradientBorder}`} />
+        
+        <div className="relative p-5 pt-6">
+          {/* Header */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg overflow-hidden border border-border bg-muted flex items-center justify-center">
+                <span className="text-lg">📷</span>
+              </div>
+              <div>
+                <span className="text-xs text-muted-foreground">{contest.theme || "Photography"}</span>
+                <h3 className="font-display font-bold text-foreground">"{contest.title}"</h3>
+              </div>
+            </div>
+            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+              status === "live" 
+                ? "bg-primary text-primary-foreground" 
+                : status === "soon"
+                ? "bg-amber-500 text-black"
+                : "bg-muted text-muted-foreground"
+            }`}>
+              {status === "live" ? "Live" : status === "soon" ? "Soon" : "Ended"}
+            </span>
+          </div>
+
+          {/* Description */}
+          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+            {contest.description || "Join this exciting photography challenge!"}
+          </p>
+
+          <div className="flex items-center gap-4 mb-4 text-sm">
+            <span className="flex items-center gap-1.5 text-foreground">
+              {contest.prize_amount === 0 ? (
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold">🎉 FREE</span>
+              ) : (
+                <>
+                  <span className="text-primary">🏆</span>
+                  {formatPrize(contest.prize_amount, contest.prize_currency)}
+                </>
+              )}
+            </span>
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Users className="w-4 h-4" />
+              {participantCounts[contest.id] ?? 0}
+            </span>
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              {timeDisplay}
+            </span>
+          </div>
+
+          {/* Action */}
+          {status === "live" ? (
+            <Link to={`/contest/${contest.id}`}>
+              <Button className="w-full">
+                Enter Contest <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          ) : status === "soon" ? (
+            <Button variant="outline" className="w-full">
+              Notify Me <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          ) : (
+            <Link to={`/contest/${contest.id}`}>
+              <Button variant="ghost" className="w-full text-muted-foreground">
+                View Results <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
           )}
-          <Badge variant="secondary" className="bg-background/80 backdrop-blur">
-            <Trophy className="h-3 w-3 mr-1" />
-            {contest.prize_amount === 0 ? 'Free' : `$${contest.prize_amount}`}
-          </Badge>
         </div>
       </div>
-      <CardContent className="p-5">
-        <h3 className="text-xl font-display font-semibold mb-2 group-hover:text-primary transition-colors">
-          {contest.title}
-        </h3>
-        {contest.theme && (
-          <p className="text-sm text-muted-foreground mb-3">Theme: {contest.theme}</p>
-        )}
-        {contest.description && (
-          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-            {contest.description}
-          </p>
-        )}
-        <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-          <span className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            {contest.status === 'completed' ? 'Ended' : formatTimeLeft(contest.end_date)}
-          </span>
-          <span className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            Min {contest.min_participants}
-          </span>
+    );
+  };
+
+  const LoadingSkeleton = () => (
+    <div className="grid md:grid-cols-2 gap-6">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="rounded-2xl bg-card p-5 pt-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-lg" />
+              <div>
+                <Skeleton className="h-3 w-16 mb-1" />
+                <Skeleton className="h-5 w-32" />
+              </div>
+            </div>
+            <Skeleton className="h-6 w-12 rounded-full" />
+          </div>
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-3/4 mb-4" />
+          <div className="flex gap-4 mb-4">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <Skeleton className="h-10 w-full" />
         </div>
-        <Button asChild className="w-full">
-          <Link to={`/contest/${contest.id}`}>
-            {contest.status === 'completed' ? 'View Results' : 'View Contest'}
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+      ))}
+    </div>
   );
 
   return (
@@ -172,11 +256,7 @@ const Contests = () => {
           </TabsList>
 
           {isLoading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <ContestCardSkeleton key={i} />
-              ))}
-            </div>
+            <LoadingSkeleton />
           ) : error ? (
             <ErrorState
               title="Failed to Load Contests"
@@ -188,16 +268,16 @@ const Contests = () => {
               <TabsContent value="active">
                 {activeContests.length === 0 ? (
                   <div className="text-center py-12">
-                    <Camera className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                    <Trophy className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                     <h3 className="text-xl font-semibold mb-2">No Active Contests</h3>
                     <p className="text-muted-foreground">
                       Check back soon for new photography contests!
                     </p>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {activeContests.map((contest) => (
-                      <ContestCard key={contest.id} contest={contest} />
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {activeContests.map((contest, index) => (
+                      <ContestCard key={contest.id} contest={contest} index={index} />
                     ))}
                   </div>
                 )}
@@ -213,9 +293,9 @@ const Contests = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {completedContests.map((contest) => (
-                      <ContestCard key={contest.id} contest={contest} />
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {completedContests.map((contest, index) => (
+                      <ContestCard key={contest.id} contest={contest} index={index} />
                     ))}
                   </div>
                 )}
