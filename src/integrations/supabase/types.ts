@@ -187,6 +187,7 @@ export type Database = {
           twitter_url: string | null
           updated_at: string
           upi_id: string | null
+          username: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -208,6 +209,7 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           upi_id?: string | null
+          username?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -229,6 +231,7 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           upi_id?: string | null
+          username?: string | null
         }
         Relationships: []
       }
