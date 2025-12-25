@@ -1,9 +1,8 @@
-import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Instagram, Twitter, Youtube, Linkedin } from "lucide-react";
 import GaalLogo from "./GaalLogo";
 
-const Footer = forwardRef<HTMLElement>((_, ref) => {
+const Footer = () => {
   const socialLinks = [
     { icon: Instagram, href: "https://www.instagram.com/gaal.app/" },
     { icon: Twitter, href: "https://x.com/gaalapp" },
@@ -12,7 +11,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
   ];
 
   return (
-    <footer ref={ref} className="border-t border-border py-12 bg-card/50">
+    <footer className="border-t border-border py-12 bg-card/50">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
           {/* Logo & Description */}
@@ -89,8 +88,6 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
       </div>
     </footer>
   );
-});
-
-Footer.displayName = "Footer";
+};
 
 export default Footer;
