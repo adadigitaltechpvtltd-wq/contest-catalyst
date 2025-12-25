@@ -669,6 +669,20 @@ export type Database = {
             referencedRelation: "submissions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "wallet_transactions_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
