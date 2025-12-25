@@ -278,6 +278,63 @@ const AdminSubmissions = () => {
     }
   };
 
+  const handleBatchAnalyze = async () => {
+    const pendingSubmissions = submissions.filter(s => !s.analysis_completed_at || s.status === 'pending');
+    
+    if (pendingSubmissions.length === 0) {
+      toast({
+        title: 'No submissions to analyze',
+        description: 'All submissions have already been analyzed.',
+      });
+      return;
+    }
+
+    setIsBatchAnalyzing(true);
+    setBatchProgress({
+      submission_id: 'batch',
+      module: 'batch',
+      progress: 0,
+      status: 'running',
+      details: `Starting analysis of ${pendingSubmissions.length} submissions...`,
+    });
+
+    try {
+      const submissionIds = pendingSubmissions.map(s => s.id);
+      
+      const { data, error } = await supabase.functions.invoke('analyze-submission', {
+        body: { submission_ids: submissionIds }
+      });
+
+      if (error) {
+        console.error('Batch analysis error:', error);
+        toast({
+          title: 'Batch analysis failed',
+          description: error.message || 'Failed to trigger batch analysis',
+          variant: 'destructive',
+        });
+        setIsBatchAnalyzing(false);
+        setBatchProgress(null);
+        return;
+      }
+
+      toast({
+        title: 'Batch analysis complete',
+        description: `Analyzed ${data.results?.length || 0} submissions`,
+      });
+    } catch (err) {
+      console.error('Batch analysis exception:', err);
+      toast({
+        title: 'Batch analysis failed',
+        description: 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+      setIsBatchAnalyzing(false);
+      setBatchProgress(null);
+    }
+  };
+
+  const pendingAnalysisCount = submissions.filter(s => !s.analysis_completed_at || s.status === 'pending').length;
+
   const openReviewModal = (submission: Submission) => {
     setSelectedSubmission(submission);
     setReviewScore(submission.admin_score?.toString() || '');
@@ -370,7 +427,46 @@ const AdminSubmissions = () => {
           <h1 className="text-3xl font-display font-bold">Review Submissions</h1>
           <p className="text-muted-foreground">Review and moderate photo submissions</p>
         </div>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={fetchSubmissions}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button
+            onClick={handleBatchAnalyze}
+            disabled={isBatchAnalyzing || pendingAnalysisCount === 0}
+            className="gap-2"
+          >
+            {isBatchAnalyzing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Zap className="h-4 w-4" />
+            )}
+            Analyze All ({pendingAnalysisCount})
+          </Button>
+        </div>
       </div>
+
+      {/* Batch Analysis Progress */}
+      {batchProgress && (
+        <Card className="mb-6 border-primary/30 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <div className="flex-1">
+                <p className="font-medium">Batch Analysis in Progress</p>
+                <p className="text-sm text-muted-foreground">{batchProgress.details}</p>
+              </div>
+              <Badge variant="secondary">{batchProgress.progress}%</Badge>
+            </div>
+            <Progress value={batchProgress.progress} className="h-2" />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <div className="flex gap-2 mb-6">
@@ -472,8 +568,21 @@ const AdminSubmissions = () => {
                   </div>
                 </div>
 
+                {/* Analysis Progress Indicator */}
+                {analysisProgress[submission.id] && (
+                  <div className="mb-3 p-2 rounded bg-primary/10 border border-primary/20">
+                    <div className="flex items-center gap-2 text-xs mb-1">
+                      <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                      <span className="font-medium text-primary">
+                        {MODULE_LABELS[analysisProgress[submission.id].module] || analysisProgress[submission.id].module}
+                      </span>
+                    </div>
+                    <Progress value={analysisProgress[submission.id].progress} className="h-1" />
+                  </div>
+                )}
+
                 {/* Analysis Status */}
-                {!submission.analysis_completed_at && (
+                {!submission.analysis_completed_at && !analysisProgress[submission.id] && (
                   <div className="flex items-center gap-2 text-xs text-amber-500 mb-3">
                     <Clock className="h-3 w-3 animate-pulse" />
                     Analysis pending...
