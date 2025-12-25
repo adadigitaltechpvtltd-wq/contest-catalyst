@@ -79,15 +79,15 @@ const Dashboard = () => {
         }));
       }
 
-      // Fetch wallet balance
-      const { data: balance, error: balanceError } = await supabase.rpc('get_wallet_balance', {
+      // Fetch wallet balance (total earned = available + pending)
+      const { data: totalEarned, error: totalEarnedError } = await supabase.rpc('get_total_earned', {
         _user_id: user.id,
       });
 
-      if (balanceError) throw balanceError;
+      if (totalEarnedError) throw totalEarnedError;
 
-      if (balance !== null) {
-        setStats((prev) => ({ ...prev, walletBalance: balance }));
+      if (totalEarned !== null) {
+        setStats((prev) => ({ ...prev, walletBalance: totalEarned }));
       }
 
       // Fetch active contests
