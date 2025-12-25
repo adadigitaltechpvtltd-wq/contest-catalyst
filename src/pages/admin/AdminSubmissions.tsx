@@ -42,10 +42,15 @@ interface Submission {
   exif_anomaly_reasons: string[] | null;
   ai_probability_score: number;
   visual_anomaly_score: number;
+  duplicate_similarity_score: number;
+  image_quality_score: number;
   risk_score: number;
+  system_score: number;
+  combined_score: number | null;
   report_count: number;
   admin_score: number | null;
   admin_notes: string | null;
+  analysis_completed_at: string | null;
   created_at: string;
   contest: {
     id: string;
@@ -101,10 +106,15 @@ const AdminSubmissions = () => {
           exif_anomaly_reasons,
           ai_probability_score,
           visual_anomaly_score,
+          duplicate_similarity_score,
+          image_quality_score,
           risk_score,
+          system_score,
+          combined_score,
           report_count,
           admin_score,
           admin_notes,
+          analysis_completed_at,
           created_at,
           contest:contests!submissions_contest_id_fkey(id, title, status),
           profile:profiles!submissions_user_id_profiles_fkey(id, full_name, email)
@@ -164,11 +174,22 @@ const AdminSubmissions = () => {
       reviewAction === 'reject' ? 'rejected' :
       reviewAction === 'disqualify' ? 'disqualified' : 'winner';
 
+    // Calculate combined score if admin provides a score
+    const adminScoreNum = reviewScore ? parseFloat(reviewScore) : null;
+    const systemScore = selectedSubmission.system_score || 0;
+    let combinedScore = null;
+    
+    if (adminScoreNum !== null) {
+      // Combined score: 40% system score + 60% admin score
+      combinedScore = (systemScore * 0.4) + (adminScoreNum * 0.6);
+    }
+
     const { error } = await supabase
       .from('submissions')
       .update({
         status: newStatus,
-        admin_score: reviewScore ? parseFloat(reviewScore) : null,
+        admin_score: adminScoreNum,
+        combined_score: combinedScore,
         admin_notes: reviewNotes || null,
         rejection_reason: (newStatus === 'rejected' || newStatus === 'disqualified') ? rejectionReason : null,
         reviewed_by: user.id,
@@ -284,9 +305,9 @@ const AdminSubmissions = () => {
                 </p>
 
                 {/* Risk Indicators */}
-                <div className="grid grid-cols-3 gap-2 mb-3 text-xs">
+                <div className="grid grid-cols-2 gap-2 mb-2 text-xs">
                   <div className="p-2 rounded bg-secondary/50 text-center">
-                    <p className="text-muted-foreground">AI Score</p>
+                    <p className="text-muted-foreground">AI</p>
                     <p className={`font-bold ${getRiskColor(submission.ai_probability_score)}`}>
                       {(submission.ai_probability_score * 100).toFixed(0)}%
                     </p>
@@ -298,12 +319,42 @@ const AdminSubmissions = () => {
                     </p>
                   </div>
                   <div className="p-2 rounded bg-secondary/50 text-center">
-                    <p className="text-muted-foreground">Risk</p>
-                    <p className={`font-bold ${getRiskColor(submission.risk_score)}`}>
-                      {(submission.risk_score * 100).toFixed(0)}%
+                    <p className="text-muted-foreground">Duplicate</p>
+                    <p className={`font-bold ${getRiskColor(submission.duplicate_similarity_score || 0)}`}>
+                      {((submission.duplicate_similarity_score || 0) * 100).toFixed(0)}%
+                    </p>
+                  </div>
+                  <div className="p-2 rounded bg-secondary/50 text-center">
+                    <p className="text-muted-foreground">Quality</p>
+                    <p className="font-bold text-primary">
+                      {(submission.image_quality_score || 0).toFixed(0)}
                     </p>
                   </div>
                 </div>
+
+                {/* Scores Row */}
+                <div className="flex justify-between items-center mb-3 text-xs p-2 rounded bg-primary/10">
+                  <div className="text-center">
+                    <p className="text-muted-foreground">System</p>
+                    <p className="font-bold text-primary">{(submission.system_score || 0).toFixed(0)}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-muted-foreground">Admin</p>
+                    <p className="font-bold">{submission.admin_score ?? '-'}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-muted-foreground">Combined</p>
+                    <p className="font-bold text-accent">{submission.combined_score?.toFixed(0) ?? '-'}</p>
+                  </div>
+                </div>
+
+                {/* Analysis Status */}
+                {!submission.analysis_completed_at && (
+                  <div className="flex items-center gap-2 text-xs text-amber-500 mb-3">
+                    <Clock className="h-3 w-3 animate-pulse" />
+                    Analysis pending...
+                  </div>
+                )}
 
                 {/* EXIF Info */}
                 {submission.exif_camera_model && (
@@ -380,7 +431,14 @@ const AdminSubmissions = () => {
                   {/* Detection Scores */}
                   <Card className="bg-secondary/30">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Detection Analysis</CardTitle>
+                      <CardTitle className="text-sm flex items-center justify-between">
+                        Detection Analysis
+                        {selectedSubmission.analysis_completed_at && (
+                          <span className="text-xs font-normal text-muted-foreground">
+                            Analyzed {new Date(selectedSubmission.analysis_completed_at).toLocaleDateString()}
+                          </span>
+                        )}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
                       <div className="flex justify-between">
@@ -396,6 +454,18 @@ const AdminSubmissions = () => {
                         </span>
                       </div>
                       <div className="flex justify-between">
+                        <span>Duplicate Similarity:</span>
+                        <span className={`font-bold ${getRiskColor(selectedSubmission.duplicate_similarity_score)}`}>
+                          {((selectedSubmission.duplicate_similarity_score || 0) * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Image Quality:</span>
+                        <span className="font-bold text-primary">
+                          {(selectedSubmission.image_quality_score || 0).toFixed(0)}/100
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-t border-border pt-2 mt-2">
                         <span>Overall Risk:</span>
                         <span className={`font-bold ${getRiskColor(selectedSubmission.risk_score)}`}>
                           {(selectedSubmission.risk_score * 100).toFixed(1)}%
@@ -413,6 +483,38 @@ const AdminSubmissions = () => {
                           <span>{selectedSubmission.exif_camera_make} {selectedSubmission.exif_camera_model}</span>
                         </div>
                       )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Scoring Summary */}
+                  <Card className="bg-primary/10 border-primary/20">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Scoring Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>System Score:</span>
+                        <span className="font-bold text-primary">
+                          {(selectedSubmission.system_score || 0).toFixed(1)}/100
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Admin Score:</span>
+                        <span className="font-bold">
+                          {selectedSubmission.admin_score !== null ? `${selectedSubmission.admin_score}/100` : 'Not set'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-t border-primary/20 pt-2 mt-2">
+                        <span className="font-semibold">Combined Score:</span>
+                        <span className="font-bold text-lg text-accent">
+                          {selectedSubmission.combined_score !== null 
+                            ? `${selectedSubmission.combined_score.toFixed(1)}/100` 
+                            : 'Pending review'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Combined = 40% System + 60% Admin Score
+                      </p>
                     </CardContent>
                   </Card>
 
