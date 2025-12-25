@@ -365,32 +365,65 @@ const AdminSubmissions = () => {
       combinedScore = (systemScore * 0.6) + (adminScoreNum * 0.4);
     }
 
-    const { error } = await supabase
-      .from('submissions')
-      .update({
-        status: newStatus,
-        admin_score: adminScoreNum,
-        combined_score: combinedScore,
-        admin_notes: reviewNotes || null,
-        rejection_reason: (newStatus === 'rejected' || newStatus === 'disqualified') ? rejectionReason : null,
-        reviewed_by: user.id,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', selectedSubmission.id);
+    try {
+      // Update the submission
+      const { error: submissionError } = await supabase
+        .from('submissions')
+        .update({
+          status: newStatus,
+          admin_score: adminScoreNum,
+          combined_score: combinedScore,
+          admin_notes: reviewNotes || null,
+          rejection_reason: (newStatus === 'rejected' || newStatus === 'disqualified') ? rejectionReason : null,
+          reviewed_by: user.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq('id', selectedSubmission.id);
 
-    if (error) {
-      toast({
-        title: 'Failed to submit review',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } else {
+      if (submissionError) {
+        toast({
+          title: 'Failed to submit review',
+          description: submissionError.message,
+          variant: 'destructive',
+        });
+        setIsSubmittingReview(false);
+        return;
+      }
+
+      // If marking as winner, also update the contest with winner info and set status to completed
+      if (newStatus === 'winner' && selectedSubmission.contest?.id) {
+        const { error: contestError } = await supabase
+          .from('contests')
+          .update({
+            winner_id: selectedSubmission.profile?.id,
+            winning_submission_id: selectedSubmission.id,
+            status: 'completed',
+          })
+          .eq('id', selectedSubmission.contest.id);
+
+        if (contestError) {
+          console.error('Failed to update contest with winner:', contestError);
+          toast({
+            title: 'Warning',
+            description: 'Submission marked as winner but contest update failed. Please update contest manually.',
+            variant: 'destructive',
+          });
+        }
+      }
+
       toast({
         title: 'Review submitted',
         description: `Submission ${newStatus === 'approved' ? 'approved' : newStatus === 'winner' ? 'selected as winner' : 'rejected'}.`,
       });
       setIsReviewModalOpen(false);
       fetchSubmissions();
+    } catch (err) {
+      console.error('Review submission error:', err);
+      toast({
+        title: 'Failed to submit review',
+        description: 'An unexpected error occurred',
+        variant: 'destructive',
+      });
     }
 
     setIsSubmittingReview(false);
