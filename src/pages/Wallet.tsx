@@ -281,11 +281,11 @@ const Wallet = () => {
                   <div>
                     <h3 className="font-semibold mb-1">Withdraw Your Earnings</h3>
                     <p className="text-sm text-muted-foreground">
-                      Transfer your winnings to your bank account or UPI. Minimum withdrawal: $100
+                      Transfer your winnings to your bank account or UPI
                     </p>
                   </div>
                   <Button 
-                    disabled={balances.available < 100} 
+                    disabled={balances.available <= 0} 
                     className="gradient-primary"
                     onClick={() => setIsWithdrawModalOpen(true)}
                   >
@@ -293,11 +293,6 @@ const Wallet = () => {
                     Request Withdrawal
                   </Button>
                 </div>
-                {balances.available < 100 && balances.available > 0 && (
-                  <p className="text-xs text-muted-foreground mt-4">
-                    You need ${(100 - balances.available).toFixed(2)} more to reach the minimum withdrawal amount.
-                  </p>
-                )}
               </CardContent>
             </Card>
 
