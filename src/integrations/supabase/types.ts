@@ -179,10 +179,12 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          instagram_url: string | null
           is_adult: boolean | null
           is_banned: boolean | null
           kyc_verified: boolean | null
           phone: string | null
+          twitter_url: string | null
           updated_at: string
           upi_id: string | null
         }
@@ -198,10 +200,12 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          instagram_url?: string | null
           is_adult?: boolean | null
           is_banned?: boolean | null
           kyc_verified?: boolean | null
           phone?: string | null
+          twitter_url?: string | null
           updated_at?: string
           upi_id?: string | null
         }
@@ -217,10 +221,12 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          instagram_url?: string | null
           is_adult?: boolean | null
           is_banned?: boolean | null
           kyc_verified?: boolean | null
           phone?: string | null
+          twitter_url?: string | null
           updated_at?: string
           upi_id?: string | null
         }
