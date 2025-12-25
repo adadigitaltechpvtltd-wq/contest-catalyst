@@ -168,7 +168,7 @@ const AdminAnalytics = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{totalPrizes.toLocaleString()}</div>
+            <div className="text-2xl font-bold">${totalPrizes.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Across all contests</p>
           </CardContent>
         </Card>

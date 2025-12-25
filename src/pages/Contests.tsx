@@ -110,7 +110,7 @@ const Contests = () => {
         <div className="absolute top-3 right-3">
           <Badge variant="secondary" className="bg-background/80 backdrop-blur">
             <Trophy className="h-3 w-3 mr-1" />
-            ₹{contest.prize_amount}
+            ${contest.prize_amount}
           </Badge>
         </div>
       </div>

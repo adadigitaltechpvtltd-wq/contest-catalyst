@@ -214,7 +214,7 @@ const EditContest = () => {
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="prize">Prize Amount (₹) *</Label>
+                <Label htmlFor="prize">Prize Amount ($) *</Label>
                 <Input
                   id="prize"
                   type="number"

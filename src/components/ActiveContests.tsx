@@ -38,9 +38,9 @@ const getTimeDisplay = (contest: Contest, status: "live" | "soon" | "ended"): st
 };
 
 const formatPrize = (amount: number, currency: string) => {
-  if (currency === "INR") return `₹${amount.toLocaleString()}`;
   if (currency === "USD") return `$${amount.toLocaleString()}`;
-  return `${amount.toLocaleString()} ${currency}`;
+  if (currency === "INR") return `₹${amount.toLocaleString()}`;
+  return `$${amount.toLocaleString()}`;
 };
 
 const gradientBorders = [

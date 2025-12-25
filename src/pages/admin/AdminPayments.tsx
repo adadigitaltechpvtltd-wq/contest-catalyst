@@ -148,7 +148,7 @@ const AdminPayments = () => {
       toast({
         title: action === 'complete' ? 'Payment completed' : 'Payment cancelled',
         description: action === 'complete' 
-          ? `₹${selectedTransaction.amount} has been marked as paid.`
+          ? `$${selectedTransaction.amount} has been marked as paid.`
           : 'Payment has been cancelled.',
       });
       setIsProcessModalOpen(false);
@@ -195,7 +195,7 @@ const AdminPayments = () => {
             <div className="flex items-center gap-3">
               <Clock className="h-8 w-8 text-amber-500" />
               <div>
-                <p className="text-2xl font-bold">₹{pendingTotal.toFixed(2)}</p>
+                <p className="text-2xl font-bold">${pendingTotal.toFixed(2)}</p>
                 <p className="text-xs text-muted-foreground">Pending Payouts</p>
               </div>
             </div>
@@ -296,7 +296,7 @@ const AdminPayments = () => {
                         )}
                       </td>
                       <td className="p-4">
-                        <span className="font-bold">₹{Number(tx.amount).toFixed(2)}</span>
+                        <span className="font-bold">${Number(tx.amount).toFixed(2)}</span>
                       </td>
                       <td className="p-4">{getStatusBadge(tx.status)}</td>
                       <td className="p-4 text-sm text-muted-foreground">
@@ -342,7 +342,7 @@ const AdminPayments = () => {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Amount</p>
-                      <p className="font-semibold text-lg">₹{Number(selectedTransaction.amount).toFixed(2)}</p>
+                      <p className="font-semibold text-lg">${Number(selectedTransaction.amount).toFixed(2)}</p>
                     </div>
                     {selectedTransaction.payment_details?.upi_id && (
                       <div>

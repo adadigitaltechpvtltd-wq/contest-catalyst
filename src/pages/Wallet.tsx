@@ -177,7 +177,7 @@ const Wallet = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Available Balance</p>
-                  <p className="text-3xl font-bold">₹{balance.toFixed(2)}</p>
+                  <p className="text-3xl font-bold">${balance.toFixed(2)}</p>
                 </div>
               </div>
             </CardContent>
@@ -191,7 +191,7 @@ const Wallet = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Pending</p>
-                  <p className="text-3xl font-bold">₹{pendingBalance.toFixed(2)}</p>
+                  <p className="text-3xl font-bold">${pendingBalance.toFixed(2)}</p>
                 </div>
               </div>
             </CardContent>
@@ -206,7 +206,7 @@ const Wallet = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Earned</p>
                   <p className="text-3xl font-bold">
-                    ₹{transactions
+                    ${transactions
                       .filter((t) => t.type === 'prize' && t.status === 'completed')
                       .reduce((sum, t) => sum + Number(t.amount), 0)
                       .toFixed(2)}
@@ -224,7 +224,7 @@ const Wallet = () => {
               <div>
                 <h3 className="font-semibold mb-1">Withdraw Your Earnings</h3>
                 <p className="text-sm text-muted-foreground">
-                  Transfer your winnings to your bank account or UPI. Minimum withdrawal: ₹100
+                  Transfer your winnings to your bank account or UPI. Minimum withdrawal: $100
                 </p>
               </div>
               <Button disabled={balance < 100} className="gradient-primary">
@@ -234,7 +234,7 @@ const Wallet = () => {
             </div>
             {balance < 100 && balance > 0 && (
               <p className="text-xs text-muted-foreground mt-4">
-                You need ₹{(100 - balance).toFixed(2)} more to reach the minimum withdrawal amount.
+                You need ${(100 - balance).toFixed(2)} more to reach the minimum withdrawal amount.
               </p>
             )}
           </CardContent>
@@ -293,7 +293,7 @@ const Wallet = () => {
                       </div>
                     </div>
                     <div className={`text-lg font-bold ${tx.type === 'withdrawal' ? 'text-primary' : 'text-success'}`}>
-                      {tx.type === 'withdrawal' ? '-' : '+'}₹{Number(tx.amount).toFixed(2)}
+                      {tx.type === 'withdrawal' ? '-' : '+'}${Number(tx.amount).toFixed(2)}
                     </div>
                   </div>
                 ))}
