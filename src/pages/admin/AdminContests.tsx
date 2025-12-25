@@ -13,6 +13,7 @@ import {
   Edit,
   Eye,
   Loader2,
+  Crown,
 } from 'lucide-react';
 
 type ContestStatus = 'draft' | 'active' | 'voting' | 'completed' | 'cancelled';
@@ -28,6 +29,7 @@ interface Contest {
   status: ContestStatus;
   created_at: string;
   submission_count: number;
+  winner_id: string | null;
 }
 
 const AdminContests = () => {
@@ -52,7 +54,8 @@ const AdminContests = () => {
             start_date,
             end_date,
             status,
-            created_at
+            created_at,
+            winner_id
           `
           )
           .order('created_at', { ascending: false });
@@ -155,58 +158,83 @@ const AdminContests = () => {
         </Card>
       ) : (
         <div className="space-y-4">
-          {contests.map((contest) => (
-            <Card key={contest.id} className="glass-card">
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold">{contest.title}</h3>
-                      {getStatusBadge(contest.status)}
+          {contests.map((contest) => {
+            const isEnded = new Date(contest.end_date) <= new Date();
+            const needsWinner = isEnded && !contest.winner_id && contest.status !== 'cancelled';
+            
+            return (
+              <Card key={contest.id} className={`glass-card ${needsWinner ? 'border-amber-500/50' : ''}`}>
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold">{contest.title}</h3>
+                        {getStatusBadge(contest.status)}
+                        {contest.winner_id && (
+                          <Badge className="bg-yellow-500 text-black">
+                            <Crown className="h-3 w-3 mr-1" />
+                            Winner Selected
+                          </Badge>
+                        )}
+                        {needsWinner && (
+                          <Badge variant="outline" className="border-amber-500 text-amber-500">
+                            Needs Winner
+                          </Badge>
+                        )}
+                      </div>
+                      {contest.theme && (
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Theme: {contest.theme}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Trophy className="h-4 w-4" />
+                          ${contest.prize_amount}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users className="h-4 w-4" />
+                          {contest.submission_count} / {contest.min_participants} min
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {formatDate(contest.start_date)} - {formatDate(contest.end_date)}
+                        </span>
+                      </div>
                     </div>
-                    {contest.theme && (
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Theme: {contest.theme}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Trophy className="h-4 w-4" />
-                        ${contest.prize_amount}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        {contest.submission_count} / {contest.min_participants} min
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {formatDate(contest.start_date)} - {formatDate(contest.end_date)}
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/contest/${contest.id}`}>
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Link>
+                      </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/admin/contests/${contest.id}/edit`}>
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit
+                        </Link>
+                      </Button>
+                      {needsWinner ? (
+                        <Button size="sm" className="bg-amber-500 hover:bg-amber-600" asChild>
+                          <Link to={`/admin/contests/${contest.id}/winner`}>
+                            <Crown className="h-4 w-4 mr-1" />
+                            Select Winner
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button size="sm" asChild>
+                          <Link to="/admin/submissions">
+                            Review ({contest.submission_count})
+                          </Link>
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/contest/${contest.id}`}>
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Link>
-                    </Button>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/admin/contests/${contest.id}/edit`}>
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Link>
-                    </Button>
-                    <Button size="sm" asChild>
-                      <Link to="/admin/submissions">
-                        Review ({contest.submission_count})
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
