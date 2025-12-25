@@ -87,8 +87,13 @@ const Contests = () => {
     }
   };
 
-  const activeContests = contests.filter((c) => c.status === 'active' || c.status === 'voting');
-  const completedContests = contests.filter((c) => c.status === 'completed');
+  const now = new Date();
+  const activeContests = contests.filter((c) => 
+    (c.status === 'active' || c.status === 'voting') && new Date(c.end_date) > now
+  );
+  const completedContests = contests.filter((c) => 
+    c.status === 'completed' || new Date(c.end_date) <= now
+  );
 
   const ContestCard = ({ contest }: { contest: Contest }) => (
     <Card className="glass-card overflow-hidden group hover:border-primary/50 transition-all duration-300">
