@@ -301,12 +301,7 @@ const ContestDetail = () => {
 
       {/* Hero Section */}
       <section className="relative">
-        <div className="absolute inset-0 h-80 md:h-96">
-          <img 
-            src={contest.cover_image_url || defaultImage} 
-            alt={contest.title}
-            className="w-full h-full object-cover"
-          />
+        <div className="absolute inset-0 h-80 md:h-96 bg-gradient-to-br from-primary/20 via-accent/10 to-background">
           <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background" />
         </div>
 
