@@ -176,12 +176,14 @@ export type Database = {
           bio: string | null
           created_at: string
           date_of_birth: string | null
+          deleted_at: string | null
           email: string | null
           full_name: string | null
           id: string
           instagram_url: string | null
           is_adult: boolean | null
           is_banned: boolean | null
+          is_deleted: boolean
           kyc_verified: boolean | null
           phone: string | null
           twitter_url: string | null
@@ -198,12 +200,14 @@ export type Database = {
           bio?: string | null
           created_at?: string
           date_of_birth?: string | null
+          deleted_at?: string | null
           email?: string | null
           full_name?: string | null
           id: string
           instagram_url?: string | null
           is_adult?: boolean | null
           is_banned?: boolean | null
+          is_deleted?: boolean
           kyc_verified?: boolean | null
           phone?: string | null
           twitter_url?: string | null
@@ -220,12 +224,14 @@ export type Database = {
           bio?: string | null
           created_at?: string
           date_of_birth?: string | null
+          deleted_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
           instagram_url?: string | null
           is_adult?: boolean | null
           is_banned?: boolean | null
+          is_deleted?: boolean
           kyc_verified?: boolean | null
           phone?: string | null
           twitter_url?: string | null
@@ -744,6 +750,11 @@ export type Database = {
         Args: { submission_id_param: string }
         Returns: undefined
       }
+      restore_deleted_account: {
+        Args: { _email: string; _full_name?: string; _user_id: string }
+        Returns: Json
+      }
+      soft_delete_account: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

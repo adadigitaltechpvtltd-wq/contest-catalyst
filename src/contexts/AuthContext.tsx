@@ -15,6 +15,7 @@ interface Profile {
   phone: string | null;
   kyc_verified: boolean;
   username: string | null;
+  is_deleted: boolean | null;
 }
 
 interface PaymentDetails {
@@ -52,7 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, email, full_name, avatar_url, bio, date_of_birth, is_adult, phone, kyc_verified, username')
+      .select('id, email, full_name, avatar_url, bio, date_of_birth, is_adult, phone, kyc_verified, username, is_deleted')
       .eq('id', userId)
       .maybeSingle();
 
@@ -121,7 +122,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fetchRoles(session.user.id),
           ]);
 
-          setProfile(profileRes.status === 'fulfilled' ? profileRes.value : null);
+          const profileData = profileRes.status === 'fulfilled' ? profileRes.value : null;
+          
+          // Check if account is deleted - sign them out
+          if (profileData?.is_deleted) {
+            console.log('Account is deleted, signing out');
+            await supabase.auth.signOut();
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            setPaymentDetails(null);
+            setRoles([]);
+            return;
+          }
+
+          setProfile(profileData);
           setPaymentDetails(paymentRes.status === 'fulfilled' ? paymentRes.value : null);
           setRoles(rolesRes.status === 'fulfilled' ? rolesRes.value : []);
         } else {
@@ -157,6 +172,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fetchPaymentDetails(session.user.id),
             fetchRoles(session.user.id),
           ]);
+          
+          // Check if account is deleted - sign them out
+          if (profileData?.is_deleted) {
+            console.log('Account is deleted, signing out');
+            await supabase.auth.signOut();
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            setPaymentDetails(null);
+            setRoles([]);
+            return;
+          }
+          
           setProfile(profileData);
           setPaymentDetails(paymentData);
           setRoles(rolesData);
