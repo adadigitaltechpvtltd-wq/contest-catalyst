@@ -239,7 +239,7 @@ const Dashboard = () => {
                   <Wallet className="h-6 w-6 text-warm-pink" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">₹{stats.walletBalance}</p>
+                  <p className="text-2xl font-bold">${stats.walletBalance}</p>
                   <p className="text-sm text-muted-foreground">Wallet Balance</p>
                 </div>
               </div>
@@ -277,7 +277,7 @@ const Dashboard = () => {
                           <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Trophy className="h-4 w-4" />
-                              ₹{contest.prize_amount}
+                              ${contest.prize_amount}
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />

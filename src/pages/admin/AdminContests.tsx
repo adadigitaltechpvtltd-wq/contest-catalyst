@@ -172,7 +172,7 @@ const AdminContests = () => {
                     <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Trophy className="h-4 w-4" />
-                        ₹{contest.prize_amount}
+                        ${contest.prize_amount}
                       </span>
                       <span className="flex items-center gap-1">
                         <Users className="h-4 w-4" />

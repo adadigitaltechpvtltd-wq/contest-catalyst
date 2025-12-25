@@ -329,7 +329,7 @@ const Profile = () => {
                 <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
                   <p className="text-xs text-muted-foreground">
                     <strong className="text-amber-500">Note:</strong> Payment details are encrypted and 
-                    stored securely. KYC verification may be required for withdrawals above ₹10,000.
+                    stored securely. KYC verification may be required for withdrawals above $10,000.
                   </p>
                 </div>
 

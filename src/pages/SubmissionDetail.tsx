@@ -728,7 +728,7 @@ const SubmissionDetail = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Prize</p>
                   <p className="font-bold text-primary text-lg">
-                    {submission.contest.prize_currency} {submission.contest.prize_amount.toLocaleString()}
+                    ${submission.contest.prize_amount.toLocaleString()}
                   </p>
                 </div>
                 <Separator />

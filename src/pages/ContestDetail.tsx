@@ -270,7 +270,7 @@ const ContestDetail = () => {
 
   const statusDisplay = getStatusDisplay(contest.status);
   const defaultImage = "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&auto=format&fit=crop";
-  const prizeFormatted = `${contest.prize_currency} ${contest.prize_amount.toLocaleString()}`;
+  const prizeFormatted = contest.prize_currency === 'USD' ? `$${contest.prize_amount.toLocaleString()}` : `$${contest.prize_amount.toLocaleString()}`;
 
   // Default judging criteria if none provided
   const judgingCriteria = contest.judging_criteria?.length 
