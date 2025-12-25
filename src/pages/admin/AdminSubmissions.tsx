@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Image as ImageIcon, 
@@ -24,10 +25,20 @@ import {
   User,
   Calendar,
   Eye,
-  RefreshCw
+  RefreshCw,
+  Play,
+  Zap
 } from 'lucide-react';
 
 type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
+
+interface AnalysisProgress {
+  submission_id: string;
+  module: string;
+  progress: number;
+  status: 'running' | 'completed' | 'error';
+  details?: string;
+}
 
 interface Submission {
   id: string;
@@ -65,6 +76,19 @@ interface Submission {
   };
 }
 
+const MODULE_LABELS: Record<string, string> = {
+  init: 'Initializing',
+  fetch: 'Downloading Image',
+  exif: 'EXIF Analysis',
+  quality: 'Quality Analysis',
+  duplicate: 'Duplicate Check',
+  scoring: 'Calculating Scores',
+  saving: 'Saving Results',
+  complete: 'Complete',
+  batch: 'Batch Processing',
+  error: 'Error',
+};
+
 const AdminSubmissions = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -84,12 +108,59 @@ const AdminSubmissions = () => {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [analyzingSubmissionId, setAnalyzingSubmissionId] = useState<string | null>(null);
 
+  // Batch analysis state
+  const [isBatchAnalyzing, setIsBatchAnalyzing] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<AnalysisProgress | null>(null);
+  const [analysisProgress, setAnalysisProgress] = useState<Record<string, AnalysisProgress>>({});
+
+  // Subscribe to real-time progress updates
+  useEffect(() => {
+    const channel = supabase.channel('analysis-progress');
+    
+    channel.on('broadcast', { event: 'progress' }, (payload) => {
+      const progress = payload.payload as AnalysisProgress;
+      
+      if (progress.module === 'batch') {
+        setBatchProgress(progress);
+        if (progress.status === 'completed') {
+          setTimeout(() => {
+            setBatchProgress(null);
+            setIsBatchAnalyzing(false);
+            fetchSubmissions();
+          }, 1500);
+        }
+      } else {
+        setAnalysisProgress(prev => ({
+          ...prev,
+          [progress.submission_id]: progress,
+        }));
+        
+        if (progress.status === 'completed' || progress.status === 'error') {
+          setTimeout(() => {
+            setAnalysisProgress(prev => {
+              const next = { ...prev };
+              delete next[progress.submission_id];
+              return next;
+            });
+          }, 2000);
+        }
+      }
+    });
+
+    channel.subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   useEffect(() => {
     fetchSubmissions();
   }, [statusFilter]);
 
   const fetchSubmissions = async () => {
     setIsLoading(true);
+
 
     try {
       let query = supabase
