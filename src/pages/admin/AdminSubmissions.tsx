@@ -227,13 +227,14 @@ const AdminSubmissions = () => {
       reviewAction === 'disqualify' ? 'disqualified' : 'winner';
 
     // Calculate combined score if admin provides a score
+    // Formula: 60% System Score + 40% Admin Score
     const adminScoreNum = reviewScore ? parseFloat(reviewScore) : null;
     const systemScore = selectedSubmission.system_score || 0;
     let combinedScore = null;
     
     if (adminScoreNum !== null) {
-      // Combined score: 40% system score + 60% admin score
-      combinedScore = (systemScore * 0.4) + (adminScoreNum * 0.6);
+      // Combined score: 60% system score + 40% admin score
+      combinedScore = (systemScore * 0.6) + (adminScoreNum * 0.4);
     }
 
     const { error } = await supabase
