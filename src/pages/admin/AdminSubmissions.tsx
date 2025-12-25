@@ -52,7 +52,6 @@ interface Submission {
   exif_date_taken: string | null;
   exif_has_anomalies: boolean;
   exif_anomaly_reasons: string[] | null;
-  ai_probability_score: number;
   visual_anomaly_score: number;
   duplicate_similarity_score: number;
   image_quality_score: number;
@@ -177,7 +176,6 @@ const AdminSubmissions = () => {
           exif_date_taken,
           exif_has_anomalies,
           exif_anomaly_reasons,
-          ai_probability_score,
           visual_anomaly_score,
           duplicate_similarity_score,
           image_quality_score,
@@ -558,13 +556,7 @@ const AdminSubmissions = () => {
                 </p>
 
                 {/* Risk Indicators */}
-                <div className="grid grid-cols-2 gap-2 mb-2 text-xs">
-                  <div className="p-2 rounded bg-secondary/50 text-center">
-                    <p className="text-muted-foreground">AI</p>
-                    <p className={`font-bold ${getRiskColor(submission.ai_probability_score)}`}>
-                      {(submission.ai_probability_score * 100).toFixed(0)}%
-                    </p>
-                  </div>
+                <div className="grid grid-cols-3 gap-2 mb-2 text-xs">
                   <div className="p-2 rounded bg-secondary/50 text-center">
                     <p className="text-muted-foreground">Visual</p>
                     <p className={`font-bold ${getRiskColor(submission.visual_anomaly_score)}`}>
@@ -740,12 +732,6 @@ const AdminSubmissions = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>AI Probability:</span>
-                        <span className={`font-bold ${getRiskColor(selectedSubmission.ai_probability_score)}`}>
-                          {(selectedSubmission.ai_probability_score * 100).toFixed(1)}%
-                        </span>
-                      </div>
                       <div className="flex justify-between">
                         <span>Visual Anomaly:</span>
                         <span className={`font-bold ${getRiskColor(selectedSubmission.visual_anomaly_score)}`}>
