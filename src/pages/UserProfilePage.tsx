@@ -21,6 +21,9 @@ import {
   ImageIcon,
   AlertTriangle,
   CheckCircle,
+  Instagram,
+  Twitter,
+  ExternalLink,
 } from "lucide-react";
 
 interface UserStats {
@@ -70,6 +73,22 @@ const UserProfilePage = () => {
 
       if (error) throw error;
       return data as UserStats | null;
+    },
+    enabled: !!userId,
+  });
+
+  // Fetch social links from profiles
+  const { data: socialLinks } = useQuery({
+    queryKey: ["user-social-links", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("instagram_url, twitter_url")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as { instagram_url: string | null; twitter_url: string | null } | null;
     },
     enabled: !!userId,
   });
@@ -283,6 +302,36 @@ const UserProfilePage = () => {
                       {userStats.contests_entered} contests
                     </span>
                   </div>
+
+                  {/* Social Links */}
+                  {(socialLinks?.instagram_url || socialLinks?.twitter_url) && (
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
+                      {socialLinks?.instagram_url && (
+                        <a
+                          href={socialLinks.instagram_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-pink-500 hover:from-purple-500/20 hover:to-pink-500/20 transition-colors text-sm"
+                        >
+                          <Instagram className="w-4 h-4" />
+                          Instagram
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                      {socialLinks?.twitter_url && (
+                        <a
+                          href={socialLinks.twitter_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-500/10 text-sky-500 hover:bg-sky-500/20 transition-colors text-sm"
+                        >
+                          <Twitter className="w-4 h-4" />
+                          Twitter
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="text-center md:text-right">

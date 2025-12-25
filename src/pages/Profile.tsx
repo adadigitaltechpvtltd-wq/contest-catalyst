@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
@@ -22,7 +22,10 @@ import {
   Loader2,
   Camera,
   Shield,
-  CheckCircle
+  CheckCircle,
+  Instagram,
+  Twitter,
+  Upload
 } from 'lucide-react';
 
 const Profile = () => {
@@ -30,11 +33,15 @@ const Profile = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [fullName, setFullName] = useState('');
   const [bio, setBio] = useState('');
   const [phone, setPhone] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [twitterUrl, setTwitterUrl] = useState('');
   const [upiId, setUpiId] = useState('');
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [bankIfsc, setBankIfsc] = useState('');
@@ -44,6 +51,8 @@ const Profile = () => {
       setFullName(profile.full_name || '');
       setBio(profile.bio || '');
       setPhone(profile.phone || '');
+      setInstagramUrl((profile as any).instagram_url || '');
+      setTwitterUrl((profile as any).twitter_url || '');
       setIsLoading(false);
     }
   }, [profile]);
@@ -56,6 +65,71 @@ const Profile = () => {
     }
   }, [paymentDetails]);
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid file',
+        description: 'Please select an image file.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Please select an image under 5MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/avatar.${fileExt}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: `${publicUrl}?t=${Date.now()}` })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: 'Avatar updated',
+        description: 'Your profile photo has been updated.',
+      });
+      await refreshProfile();
+    } catch (error: any) {
+      toast({
+        title: 'Upload failed',
+        description: getUserFriendlyError(error),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   const handleSaveProfile = async () => {
     if (!user) return;
 
@@ -67,7 +141,9 @@ const Profile = () => {
         full_name: fullName,
         bio,
         phone,
-      })
+        instagram_url: instagramUrl || null,
+        twitter_url: twitterUrl || null,
+      } as any)
       .eq('id', user.id);
 
     if (error) {
@@ -158,13 +234,25 @@ const Profile = () => {
                     {getInitials(profile?.full_name)}
                   </AvatarFallback>
                 </Avatar>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
                 <Button
                   size="icon"
                   variant="secondary"
                   className="absolute bottom-0 right-0 h-8 w-8 rounded-full"
-                  disabled
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingAvatar}
                 >
-                  <Camera className="h-4 w-4" />
+                  {isUploadingAvatar ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
               <h2 className="text-xl font-semibold">{profile?.full_name || 'User'}</h2>
@@ -272,6 +360,38 @@ const Profile = () => {
                     rows={3}
                   />
                 </div>
+
+                <Separator className="my-4" />
+                <p className="text-sm font-medium text-foreground">Social Media Links</p>
+                <p className="text-xs text-muted-foreground mb-2">These will be displayed on your public profile</p>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram" className="flex items-center gap-2">
+                      <Instagram className="h-4 w-4" />
+                      Instagram
+                    </Label>
+                    <Input
+                      id="instagram"
+                      value={instagramUrl}
+                      onChange={(e) => setInstagramUrl(e.target.value)}
+                      placeholder="https://instagram.com/username"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="twitter" className="flex items-center gap-2">
+                      <Twitter className="h-4 w-4" />
+                      Twitter / X
+                    </Label>
+                    <Input
+                      id="twitter"
+                      value={twitterUrl}
+                      onChange={(e) => setTwitterUrl(e.target.value)}
+                      placeholder="https://twitter.com/username"
+                    />
+                  </div>
+                </div>
+
                 <Button onClick={handleSaveProfile} disabled={isSaving}>
                   {isSaving ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
