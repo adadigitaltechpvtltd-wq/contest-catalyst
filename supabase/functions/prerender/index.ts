@@ -28,10 +28,10 @@ serve(async (req) => {
     if (photoMatch) {
       const [, contestSlug, photoSlug] = photoMatch;
       
-      // Get contest
+      // Get contest with SEO fields
       const { data: contest } = await supabase
         .from('contests')
-        .select('id, title, slug, theme, description')
+        .select('id, title, slug, theme, description, seo_title, meta_description, keywords')
         .eq('slug', contestSlug)
         .maybeSingle();
 
@@ -67,11 +67,18 @@ serve(async (req) => {
       const photographerName = profile?.full_name || 'Anonymous';
       const isApproved = submission.status === 'approved' || submission.status === 'winner';
       
+      // Auto-generate SEO metadata using contest SEO fields + user content
+      const generatedSeoTitle = `${submission.title} - ${contest.seo_title || contest.title} | GAAL`;
+      const generatedMetaDesc = submission.description 
+        ? `${submission.description.slice(0, 100)}... Photo from ${contest.title} contest on GAAL.`
+        : `${submission.title} - Photography submission for ${contest.seo_title || contest.title}. ${contest.meta_description || ''}`.slice(0, 160);
+      
       const html = generatePhotoHTML({
         title: submission.title,
-        description: submission.description || `Photography submission for ${contest.title} contest.`,
+        description: generatedMetaDesc,
+        seoTitle: generatedSeoTitle,
         imageUrl: submission.image_url,
-        contestTitle: contest.title,
+        contestTitle: contest.seo_title || contest.title,
         contestSlug: contest.slug,
         photoSlug: submission.slug,
         photographerName,
@@ -79,6 +86,8 @@ serve(async (req) => {
         viewCount: submission.view_count,
         likeCount: submission.like_count,
         noIndex: !isApproved,
+        keywords: contest.keywords || [],
+        contestTheme: contest.theme,
       });
 
       return new Response(html, {
@@ -93,7 +102,7 @@ serve(async (req) => {
       
       const { data: contest } = await supabase
         .from('contests')
-        .select('id, title, description, theme, prize_amount, prize_currency, start_date, end_date, cover_image_url, status')
+        .select('id, title, description, theme, prize_amount, prize_currency, start_date, end_date, cover_image_url, status, seo_title, meta_description, keywords')
         .eq('slug', contestSlug)
         .maybeSingle();
 
@@ -105,8 +114,8 @@ serve(async (req) => {
       }
 
       const html = generateContestHTML({
-        title: contest.title,
-        description: contest.description || `Photography contest on GAAL`,
+        title: contest.seo_title || contest.title,
+        description: contest.meta_description || contest.description || `Photography contest on GAAL`,
         theme: contest.theme,
         prizeAmount: contest.prize_amount,
         prizeCurrency: contest.prize_currency,
@@ -114,6 +123,7 @@ serve(async (req) => {
         endDate: contest.end_date,
         coverImage: contest.cover_image_url,
         slug: contestSlug,
+        keywords: contest.keywords || [],
       });
 
       return new Response(html, {
@@ -139,6 +149,7 @@ serve(async (req) => {
 function generatePhotoHTML(data: {
   title: string;
   description: string;
+  seoTitle: string;
   imageUrl: string;
   contestTitle: string;
   contestSlug: string;
@@ -148,8 +159,13 @@ function generatePhotoHTML(data: {
   viewCount: number;
   likeCount: number;
   noIndex: boolean;
+  keywords: string[];
+  contestTheme: string | null;
 }) {
   const canonicalUrl = `${BASE_URL}/photo/${data.contestSlug}/${data.photoSlug}`;
+  const keywordsMeta = data.keywords.length > 0 
+    ? `<meta name="keywords" content="${escapeHtml(data.keywords.join(', '))}">` 
+    : '';
   const robotsTag = data.noIndex ? '<meta name="robots" content="noindex, nofollow">' : '<meta name="robots" content="index, follow">';
   
   return `<!DOCTYPE html>
@@ -157,13 +173,14 @@ function generatePhotoHTML(data: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(data.title)} - ${escapeHtml(data.contestTitle)} | GAAL</title>
+  <title>${escapeHtml(data.seoTitle)}</title>
   <meta name="description" content="${escapeHtml(data.description)}">
+  ${keywordsMeta}
   ${robotsTag}
   <link rel="canonical" href="${canonicalUrl}">
   
   <meta property="og:type" content="article">
-  <meta property="og:title" content="${escapeHtml(data.title)} - ${escapeHtml(data.contestTitle)}">
+  <meta property="og:title" content="${escapeHtml(data.seoTitle)}">
   <meta property="og:description" content="${escapeHtml(data.description)}">
   <meta property="og:image" content="${data.imageUrl}">
   <meta property="og:url" content="${canonicalUrl}">
@@ -228,8 +245,12 @@ function generateContestHTML(data: {
   endDate: string;
   coverImage: string | null;
   slug: string;
+  keywords: string[];
 }) {
   const canonicalUrl = `${BASE_URL}/contest/${data.slug}`;
+  const keywordsMeta = data.keywords.length > 0 
+    ? `<meta name="keywords" content="${escapeHtml(data.keywords.join(', '))}">` 
+    : '';
   const imageUrl = data.coverImage || `${BASE_URL}/og-default.jpg`;
   
   return `<!DOCTYPE html>
@@ -239,6 +260,7 @@ function generateContestHTML(data: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(data.title)} - Photo Contest | GAAL</title>
   <meta name="description" content="${escapeHtml(data.description)}">
+  ${keywordsMeta}
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="${canonicalUrl}">
   
