@@ -41,6 +41,7 @@ import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSEO from "./pages/admin/AdminSEO";
 import WinnerSelection from "./pages/admin/WinnerSelection";
 import LeaderboardPage from "./pages/LeaderboardPage";
+import UserProfilePage from "./pages/UserProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/contest/:id" element={<ContestDetail />} />
               <Route path="/photo/:contestSlug/:photoSlug" element={<PhotoDetail />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/user/:userId" element={<UserProfilePage />} />
             
             {/* Protected User Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
