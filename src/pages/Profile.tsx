@@ -25,8 +25,10 @@ import {
   CheckCircle,
   Instagram,
   Twitter,
-  Upload
+  Upload,
+  AlertTriangle
 } from 'lucide-react';
+import DeleteAccountDialog from '@/components/DeleteAccountDialog';
 
 const Profile = () => {
   const { user, profile, paymentDetails, refreshProfile } = useAuth();
@@ -478,6 +480,33 @@ const Profile = () => {
                   ) : null}
                   Save Payment Info
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* Danger Zone */}
+            <Card className="glass-card border-destructive/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-5 w-5" />
+                  Danger Zone
+                </CardTitle>
+                <CardDescription>
+                  Irreversible actions that affect your account
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <h4 className="font-medium text-foreground">Delete Account</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Permanently delete your account and anonymize your data. Your submissions 
+                        and contest history will remain for platform integrity.
+                      </p>
+                    </div>
+                    <DeleteAccountDialog />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

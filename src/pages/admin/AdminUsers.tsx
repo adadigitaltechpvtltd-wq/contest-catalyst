@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Ban, UserCheck, Shield, Eye, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Search, Ban, UserCheck, Shield, Eye, ShieldCheck, ShieldAlert, RotateCcw, UserX } from "lucide-react";
 import { format } from "date-fns";
 
 type AppRole = "admin" | "moderator" | "user";
@@ -46,6 +46,8 @@ interface UserProfile {
   is_banned: boolean | null;
   banned_at: string | null;
   banned_reason: string | null;
+  is_deleted: boolean | null;
+  deleted_at: string | null;
   created_at: string;
 }
 
@@ -56,6 +58,9 @@ const AdminUsers = () => {
   const [banReason, setBanReason] = useState("");
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
+  const [restoreEmail, setRestoreEmail] = useState("");
+  const [restoreFullName, setRestoreFullName] = useState("");
   const [selectedRole, setSelectedRole] = useState<AppRole>("user");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -160,6 +165,41 @@ const AdminUsers = () => {
     },
   });
 
+  const restoreMutation = useMutation({
+    mutationFn: async ({ userId, email, fullName }: { userId: string; email: string; fullName: string }) => {
+      const { data, error } = await supabase.rpc('restore_deleted_account', {
+        _user_id: userId,
+        _email: email,
+        _full_name: fullName || null,
+      });
+
+      if (error) throw error;
+      
+      const result = data as { success: boolean; error?: string };
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to restore account');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast({
+        title: "Account Restored",
+        description: "The user account has been restored successfully.",
+      });
+      setRestoreDialogOpen(false);
+      setRestoreEmail("");
+      setRestoreFullName("");
+      setSelectedUser(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to restore account.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const getUserRole = (userId: string): AppRole => {
     const role = userRoles?.find((r) => r.user_id === userId);
     return (role?.role as AppRole) || "user";
@@ -190,6 +230,13 @@ const AdminUsers = () => {
     setSelectedUser(user);
     setSelectedRole(getUserRole(user.id));
     setRoleDialogOpen(true);
+  };
+
+  const handleRestoreClick = (user: UserProfile) => {
+    setSelectedUser(user);
+    setRestoreEmail("");
+    setRestoreFullName("");
+    setRestoreDialogOpen(true);
   };
 
   return (
@@ -258,13 +305,26 @@ const AdminUsers = () => {
                             </div>
                           )}
                         </div>
-                        <span className="font-medium">{user.full_name || "Unnamed"}</span>
+                        <span className="font-medium">
+                          {user.full_name || "Unnamed"}
+                          {user.is_deleted && (
+                            <Badge variant="outline" className="ml-2 text-xs text-muted-foreground">
+                              <UserX className="w-3 h-3 mr-1" />
+                              Deleted
+                            </Badge>
+                          )}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{user.email || "—"}</TableCell>
                     <TableCell>{getRoleBadge(getUserRole(user.id))}</TableCell>
                     <TableCell>
-                      {user.is_banned ? (
+                      {user.is_deleted ? (
+                        <Badge variant="outline" className="text-muted-foreground">
+                          <UserX className="w-3 h-3 mr-1" />
+                          Deleted
+                        </Badge>
+                      ) : user.is_banned ? (
                         <Badge variant="destructive">Banned</Badge>
                       ) : (
                         <Badge className="bg-green-500/20 text-green-600">Active</Badge>
@@ -299,22 +359,35 @@ const AdminUsers = () => {
                           onClick={() => handleRoleClick(user)}
                           title="Manage Role"
                           className="text-primary"
+                          disabled={user.is_deleted === true}
                         >
                           <Shield className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleBanClick(user)}
-                          className={user.is_banned ? "text-green-600" : "text-destructive"}
-                          title={user.is_banned ? "Unban User" : "Ban User"}
-                        >
-                          {user.is_banned ? (
-                            <UserCheck className="w-4 h-4" />
-                          ) : (
-                            <Ban className="w-4 h-4" />
-                          )}
-                        </Button>
+                        {user.is_deleted ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRestoreClick(user)}
+                            className="text-blue-500"
+                            title="Restore Account"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleBanClick(user)}
+                            className={user.is_banned ? "text-green-600" : "text-destructive"}
+                            title={user.is_banned ? "Unban User" : "Ban User"}
+                          >
+                            {user.is_banned ? (
+                              <UserCheck className="w-4 h-4" />
+                            ) : (
+                              <Ban className="w-4 h-4" />
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -516,7 +589,9 @@ const AdminUsers = () => {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Status:</span>
-                  <p className="font-medium">{selectedUser.is_banned ? "Banned" : "Active"}</p>
+                  <p className="font-medium">
+                    {selectedUser.is_deleted ? "Deleted" : selectedUser.is_banned ? "Banned" : "Active"}
+                  </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Joined:</span>
@@ -525,6 +600,18 @@ const AdminUsers = () => {
                   </p>
                 </div>
               </div>
+
+              {selectedUser.is_deleted && selectedUser.deleted_at && (
+                <div className="bg-muted p-4 rounded-lg border">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <UserX className="w-4 h-4" />
+                    Account Deleted
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Deleted on {format(new Date(selectedUser.deleted_at), "MMM d, yyyy 'at' h:mm a")}
+                  </p>
+                </div>
+              )}
 
               {selectedUser.is_banned && selectedUser.banned_reason && (
                 <div className="bg-destructive/10 p-4 rounded-lg">
@@ -543,6 +630,63 @@ const AdminUsers = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewDialogOpen(false)}>
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Restore Account Dialog */}
+      <Dialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RotateCcw className="w-5 h-5 text-blue-500" />
+              Restore Deleted Account
+            </DialogTitle>
+            <DialogDescription>
+              Restore this account by providing a new email and name. The user will be able to log in again.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">New Email Address *</label>
+              <Input
+                placeholder="user@example.com"
+                type="email"
+                value={restoreEmail}
+                onChange={(e) => setRestoreEmail(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                This email will be used for the restored account
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Full Name</label>
+              <Input
+                placeholder="John Doe"
+                value={restoreFullName}
+                onChange={(e) => setRestoreFullName(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRestoreDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                selectedUser && restoreMutation.mutate({
+                  userId: selectedUser.id,
+                  email: restoreEmail,
+                  fullName: restoreFullName,
+                })
+              }
+              disabled={restoreMutation.isPending || !restoreEmail}
+              className="bg-blue-500 hover:bg-blue-600"
+            >
+              {restoreMutation.isPending ? "Restoring..." : "Restore Account"}
             </Button>
           </DialogFooter>
         </DialogContent>
