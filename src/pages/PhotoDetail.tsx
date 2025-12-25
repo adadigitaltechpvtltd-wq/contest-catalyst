@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
 import InlineAuthDialog from '@/components/InlineAuthDialog';
+import DownloadConfirmModal from '@/components/DownloadConfirmModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,7 +20,8 @@ import {
   Trophy,
   ExternalLink,
   Loader2,
-  Camera
+  Camera,
+  Info
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -64,6 +66,7 @@ const PhotoDetail = () => {
   const [hasLiked, setHasLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [relatedPhotos, setRelatedPhotos] = useState<{ id: string; title: string; image_url: string; slug: string }[]>([]);
 
   useEffect(() => {
@@ -201,7 +204,11 @@ const PhotoDetail = () => {
     }
   };
 
-  const handleDownload = async () => {
+  const handleDownloadClick = () => {
+    setShowDownloadModal(true);
+  };
+
+  const handleDownloadConfirm = async () => {
     if (!photo) return;
 
     try {
@@ -337,7 +344,7 @@ const PhotoDetail = () => {
                     <Heart className={`h-4 w-4 ${hasLiked ? 'fill-current' : ''}`} />
                     {localLikeCount}
                   </Button>
-                  <Button variant="outline" onClick={handleDownload} className="gap-2">
+                  <Button variant="outline" onClick={handleDownloadClick} className="gap-2">
                     <Download className="h-4 w-4" />
                     Download
                   </Button>
@@ -414,12 +421,23 @@ const PhotoDetail = () => {
               {/* Explore More */}
               <div className="p-6 rounded-xl bg-card border border-border">
                 <Link 
-                  to="/contests" 
+                  to="/gallery" 
                   className="flex items-center justify-between text-primary hover:underline"
                 >
-                  <span className="font-medium">Explore more contests</span>
+                  <span className="font-medium">Explore the Gallery</span>
                   <ExternalLink className="h-4 w-4" />
                 </Link>
+              </div>
+
+              {/* Image Usage Notice */}
+              <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                <div className="flex items-start gap-3">
+                  <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground">
+                    Images are provided for personal inspiration and viewing only. 
+                    Not for commercial use without creator consent.
+                  </p>
+                </div>
               </div>
             </aside>
           </div>
@@ -462,6 +480,62 @@ const PhotoDetail = () => {
         title="Sign in to like photos"
         description="Create an account or sign in to like and interact with photos."
       />
+
+      <DownloadConfirmModal
+        open={showDownloadModal}
+        onOpenChange={setShowDownloadModal}
+        onConfirm={handleDownloadConfirm}
+        photoTitle={photo.title}
+      />
+
+      {/* Structured Data for SEO */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{
+        __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ImageObject",
+          "name": photo.title,
+          "description": seoDescription,
+          "contentUrl": canonicalUrl,
+          "thumbnailUrl": photo.image_url,
+          "uploadDate": photo.created_at,
+          "author": {
+            "@type": "Person",
+            "name": photographerName
+          },
+          "creator": {
+            "@type": "Person",
+            "name": photographerName
+          },
+          "copyrightHolder": {
+            "@type": "Person",
+            "name": photographerName
+          },
+          "acquireLicensePage": canonicalUrl,
+          "license": "https://gaal.app/terms",
+          "interactionStatistic": [
+            {
+              "@type": "InteractionCounter",
+              "interactionType": "https://schema.org/ViewAction",
+              "userInteractionCount": photo.view_count
+            },
+            {
+              "@type": "InteractionCounter",
+              "interactionType": "https://schema.org/LikeAction",
+              "userInteractionCount": localLikeCount
+            },
+            {
+              "@type": "InteractionCounter",
+              "interactionType": "https://schema.org/DownloadAction",
+              "userInteractionCount": photo.download_count
+            }
+          ],
+          "isPartOf": {
+            "@type": "CreativeWork",
+            "name": photo.contest.title,
+            "url": `https://gaal.app/contest/${photo.contest.slug}`
+          }
+        })
+      }} />
     </div>
   );
 };

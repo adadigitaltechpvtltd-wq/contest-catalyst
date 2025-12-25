@@ -95,6 +95,14 @@ serve(async (req) => {
       });
     }
 
+    // Gallery page: /gallery
+    if (path === '/gallery') {
+      const html = generateGalleryHTML();
+      return new Response(html, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/html' },
+      });
+    }
+
     // Contest detail page: /contest/{contestSlug}
     const contestMatch = path.match(/^\/contest\/([^/]+)$/);
     if (contestMatch) {
@@ -349,6 +357,45 @@ function generateDefaultHTML() {
     <p>Compete, showcase your work, and win prizes.</p>
   </main>
   <footer>
+    <p>&copy; GAAL Photography Contests</p>
+  </footer>
+</body>
+</html>`;
+}
+
+function generateGalleryHTML() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery - Photography Showcase | GAAL</title>
+  <meta name="description" content="Explore authentic user-submitted photography from GAAL contests. Discover inspiring images from talented photographers worldwide.">
+  <meta name="keywords" content="photography gallery, photo showcase, contest submissions, creative photography, photographer portfolio">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="${BASE_URL}/gallery">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Gallery - Photography Showcase | GAAL">
+  <meta property="og:description" content="Explore authentic user-submitted photography from GAAL contests. Discover inspiring images from talented photographers worldwide.">
+  <meta property="og:url" content="${BASE_URL}/gallery">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Gallery - Photography Showcase | GAAL">
+  <meta name="twitter:description" content="Explore authentic user-submitted photography from GAAL contests.">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="${BASE_URL}">GAAL</a>
+      <a href="${BASE_URL}/contests">Contests</a>
+      <a href="${BASE_URL}/gallery">Gallery</a>
+    </nav>
+  </header>
+  <main>
+    <h1>Gallery - Photography Showcase</h1>
+    <p>Discover authentic photography from talented creators around the world.</p>
+  </main>
+  <footer>
+    <p>Images are provided for personal inspiration and viewing only. Not for commercial use.</p>
     <p>&copy; GAAL Photography Contests</p>
   </footer>
 </body>
