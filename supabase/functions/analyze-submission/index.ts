@@ -167,33 +167,28 @@ async function analyzeSubmission(supabase: any, submission_id: string) {
   // Broadcast: Calculating Scores
   await broadcastProgress(supabase, submission_id, 'scoring', 80, 'running', 'Calculating final scores...');
 
-  // MODULE 1: AI/Fake Probability (0-100)
-  const aiProbability = calculateAIProbability(exifAnalysis, imageStats);
-
-  // MODULE 2: Visual Anomaly Detection (0-100)
+  // MODULE 1: Visual Anomaly Detection (0-100)
   const visualAnomaly = calculateVisualAnomaly(imageStats, exifAnalysis);
   const visualAnomalyReasons = getVisualAnomalyReasons(imageStats, exifAnalysis);
 
-  // MODULE 3: Duplicate Similarity (already 0-1)
+  // MODULE 2: Duplicate Similarity (already 0-1)
   const duplicateSimilarity = duplicateScore;
 
-  // MODULE 4: Image Quality Score (0-100)
+  // MODULE 3: Image Quality Score (0-100)
   const imageQuality = calculateImageQuality(imageStats, exifAnalysis);
 
   // SCORING LOGIC: Calculate Overall Risk as weighted average
-  // AI Probability (30%), Visual Anomaly (25%), Duplicate Similarity (25%), Low Image Quality (20%)
+  // Visual Anomaly (35%), Duplicate Similarity (35%), Low Image Quality (30%)
   const overallRisk = (
-    (aiProbability / 100) * 0.30 +
-    (visualAnomaly / 100) * 0.25 +
-    duplicateSimilarity * 0.25 +
-    ((100 - imageQuality) / 100) * 0.20
+    (visualAnomaly / 100) * 0.35 +
+    duplicateSimilarity * 0.35 +
+    ((100 - imageQuality) / 100) * 0.30
   );
 
   // System Score = 100 - Overall Risk (converted to 0-100)
   const systemScore = Math.max(0, Math.min(100, 100 - (overallRisk * 100)));
 
   console.log(`[CPU-Analysis] Scores calculated:`);
-  console.log(`  - AI Probability: ${aiProbability.toFixed(1)}%`);
   console.log(`  - Visual Anomaly: ${visualAnomaly.toFixed(1)}%`);
   console.log(`  - Duplicate: ${(duplicateSimilarity * 100).toFixed(1)}%`);
   console.log(`  - Quality: ${imageQuality.toFixed(1)}`);
@@ -210,7 +205,6 @@ async function analyzeSubmission(supabase: any, submission_id: string) {
   const { error: updateError } = await supabase
     .from('submissions')
     .update({
-      ai_probability_score: aiProbability / 100, // Store as 0-1 for DB consistency
       visual_anomaly_score: visualAnomaly / 100,
       visual_anomaly_reasons: visualAnomalyReasons,
       duplicate_similarity_score: duplicateSimilarity,
@@ -233,7 +227,6 @@ async function analyzeSubmission(supabase: any, submission_id: string) {
       // Metadata
       perceptual_hash: perceptualHash,
       analysis_method: 'cpu-local',
-      ai_detection_provider: 'cpu-local-analysis',
       analysis_completed_at: new Date().toISOString(),
     })
     .eq('id', submission_id);
@@ -254,7 +247,6 @@ async function analyzeSubmission(supabase: any, submission_id: string) {
     submission_id,
     analysis_method: 'cpu-local',
     scores: {
-      ai_probability: aiProbability,
       visual_anomaly: visualAnomaly,
       duplicate_similarity: duplicateSimilarity * 100,
       image_quality: imageQuality,
@@ -831,42 +823,6 @@ function countBits(n: number): number {
 // ============================================================================
 // SCORING CALCULATIONS
 // ============================================================================
-
-function calculateAIProbability(exif: ExifAnalysis, stats: ImageStats): number {
-  let probability = 0;
-
-  // EXIF-based signals (strong indicators)
-  if (exif.isLikelySynthetic) {
-    probability += 80; // AI software detected in EXIF
-  } else {
-    probability += exif.syntheticConfidence * 60;
-  }
-
-  // No camera info at all
-  if (!exif.hasExif) {
-    probability += 20;
-  } else if (!exif.cameraMake && !exif.cameraModel) {
-    probability += 15;
-  }
-
-  // Image characteristics
-  // AI images often have very uniform regions
-  if (stats.hasUniformRegions) {
-    probability += 15;
-  }
-
-  // Very low noise can indicate AI (too clean)
-  if (stats.noiseScore < 10) {
-    probability += 10;
-  }
-
-  // Unusual sharpness patterns
-  if (stats.sharpnessScore > 90) {
-    probability += 5; // Suspiciously sharp
-  }
-
-  return Math.min(100, probability);
-}
 
 function calculateVisualAnomaly(stats: ImageStats, exif: ExifAnalysis): number {
   let anomaly = 0;
