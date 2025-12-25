@@ -670,9 +670,30 @@ export type Database = {
           bio: string | null
           contests_entered: number | null
           full_name: string | null
+          total_points: number | null
           total_submissions: number | null
           user_id: string | null
           wins: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          contests_entered?: never
+          full_name?: string | null
+          total_points?: never
+          total_submissions?: never
+          user_id?: string | null
+          wins?: never
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          contests_entered?: never
+          full_name?: string | null
+          total_points?: never
+          total_submissions?: never
+          user_id?: string | null
+          wins?: never
         }
         Relationships: []
       }
