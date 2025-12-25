@@ -246,7 +246,7 @@ const EditContest = () => {
                 <Input
                   id="minParticipants"
                   type="number"
-                  min="10"
+                  min="1"
                   value={minParticipants}
                   onChange={(e) => setMinParticipants(e.target.value)}
                   required
