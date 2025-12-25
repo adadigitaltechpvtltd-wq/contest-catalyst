@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SubmissionModal from "@/components/SubmissionModal";
+import InlineAuthDialog from "@/components/InlineAuthDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +38,9 @@ interface Submission {
   user_id: string;
   status: 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
   created_at: string;
+  view_count: number;
+  download_count: number;
+  like_count: number;
   profiles?: {
     full_name: string | null;
     avatar_url: string | null;
@@ -61,12 +65,33 @@ const ContestDetail = () => {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [likedImages, setLikedImages] = useState<Set<string>>(new Set());
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
+  const [pendingLikeSubmissionId, setPendingLikeSubmissionId] = useState<string | null>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
   const shareText = contest ? `Check out "${contest.title}" contest on GAAL!` : "Check out this contest on GAAL!";
+
+  // Fetch user's likes for submissions
+  const fetchUserLikes = useCallback(async () => {
+    if (!user || submissions.length === 0) return;
+    
+    const { data } = await supabase
+      .from("submission_likes")
+      .select("submission_id")
+      .eq("user_id", user.id)
+      .in("submission_id", submissions.map(s => s.id));
+    
+    if (data) {
+      setLikedImages(new Set(data.map(l => l.submission_id)));
+    }
+  }, [user, submissions]);
+
+  useEffect(() => {
+    fetchUserLikes();
+  }, [fetchUserLikes]);
 
   const handleShare = (platform: string) => {
     const encodedUrl = encodeURIComponent(shareUrl);
@@ -126,22 +151,114 @@ const ContestDetail = () => {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const handleLike = (submissionId: string, e: React.MouseEvent) => {
+  const handleLike = async (submissionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // If not logged in, show auth dialog
+    if (!user) {
+      setPendingLikeSubmissionId(submissionId);
+      setIsAuthDialogOpen(true);
+      return;
+    }
+
+    await toggleLike(submissionId);
+  };
+
+  const toggleLike = async (submissionId: string) => {
+    if (!user) return;
+
+    const isCurrentlyLiked = likedImages.has(submissionId);
+
+    // Optimistic update
     setLikedImages(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(submissionId)) {
+      if (isCurrentlyLiked) {
         newSet.delete(submissionId);
       } else {
         newSet.add(submissionId);
       }
       return newSet;
     });
+
+    // Update local submission count optimistically
+    setSubmissions(prev => prev.map(s => 
+      s.id === submissionId 
+        ? { ...s, like_count: s.like_count + (isCurrentlyLiked ? -1 : 1) }
+        : s
+    ));
+
+    if (selectedImage?.id === submissionId) {
+      setSelectedImage(prev => prev ? {
+        ...prev,
+        like_count: prev.like_count + (isCurrentlyLiked ? -1 : 1)
+      } : null);
+    }
+
+    try {
+      if (isCurrentlyLiked) {
+        // Unlike
+        const { error } = await supabase
+          .from("submission_likes")
+          .delete()
+          .eq("submission_id", submissionId)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+      } else {
+        // Like
+        const { error } = await supabase
+          .from("submission_likes")
+          .insert({ submission_id: submissionId, user_id: user.id });
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      // Revert on error
+      setLikedImages(prev => {
+        const newSet = new Set(prev);
+        if (isCurrentlyLiked) {
+          newSet.add(submissionId);
+        } else {
+          newSet.delete(submissionId);
+        }
+        return newSet;
+      });
+      setSubmissions(prev => prev.map(s => 
+        s.id === submissionId 
+          ? { ...s, like_count: s.like_count + (isCurrentlyLiked ? 1 : -1) }
+          : s
+      ));
+      toast.error("Failed to update like");
+    }
   };
 
-  const handleDownload = async (imageUrl: string, title: string, e?: React.MouseEvent) => {
+  const handleAuthSuccess = () => {
+    // If there was a pending like, process it now
+    if (pendingLikeSubmissionId) {
+      setTimeout(() => {
+        toggleLike(pendingLikeSubmissionId);
+        setPendingLikeSubmissionId(null);
+      }, 500);
+    }
+  };
+
+  const handleDownload = async (imageUrl: string, title: string, submissionId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
     try {
+      // Increment download count
+      await supabase.rpc('increment_download_count', { submission_id_param: submissionId });
+      
+      // Update local count
+      setSubmissions(prev => prev.map(s => 
+        s.id === submissionId 
+          ? { ...s, download_count: s.download_count + 1 }
+          : s
+      ));
+
+      if (selectedImage?.id === submissionId) {
+        setSelectedImage(prev => prev ? { ...prev, download_count: prev.download_count + 1 } : null);
+      }
+
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -218,6 +335,9 @@ const ContestDetail = () => {
           user_id,
           status,
           created_at,
+          view_count,
+          download_count,
+          like_count,
           profiles:user_id (
             full_name,
             avatar_url
@@ -255,6 +375,9 @@ const ContestDetail = () => {
         user_id,
         status,
         created_at,
+        view_count,
+        download_count,
+        like_count,
         profiles:user_id (
           full_name,
           avatar_url
@@ -337,9 +460,24 @@ const ContestDetail = () => {
     }
   };
 
-  const openImageModal = (submission: Submission, index: number) => {
+  const openImageModal = async (submission: Submission, index: number) => {
     setSelectedImage(submission);
     setSelectedImageIndex(index);
+
+    // Increment view count
+    try {
+      await supabase.rpc('increment_view_count', { submission_id_param: submission.id });
+      
+      // Update local count
+      setSubmissions(prev => prev.map(s => 
+        s.id === submission.id 
+          ? { ...s, view_count: s.view_count + 1 }
+          : s
+      ));
+      setSelectedImage(prev => prev ? { ...prev, view_count: prev.view_count + 1 } : null);
+    } catch (error) {
+      console.error("Failed to increment view count:", error);
+    }
   };
 
   // Sample tags for demo
@@ -347,6 +485,16 @@ const ContestDetail = () => {
     const baseTags = ['Photography', 'Contest'];
     if (contest?.theme) baseTags.push(contest.theme);
     return baseTags;
+  };
+
+  const formatCount = (count: number): string => {
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1) + 'M';
+    }
+    if (count >= 1000) {
+      return (count / 1000).toFixed(1) + 'K';
+    }
+    return count.toString();
   };
 
   if (isLoading) {
@@ -649,7 +797,7 @@ const ContestDetail = () => {
                       />
                     </button>
                     <button
-                      onClick={(e) => handleDownload(submission.image_url, submission.title, e)}
+                      onClick={(e) => handleDownload(submission.image_url, submission.title, submission.id, e)}
                       className="p-2 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background transition-colors"
                     >
                       <Download className="w-4 h-4 text-foreground" />
@@ -679,11 +827,11 @@ const ContestDetail = () => {
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Eye className="w-3 h-3" />
-                          {Math.floor(Math.random() * 1000) + 100}
+                          {formatCount(submission.view_count)}
                         </span>
                         <span className="flex items-center gap-1">
                           <Download className="w-3 h-3" />
-                          {Math.floor(Math.random() * 100) + 10}
+                          {formatCount(submission.download_count)}
                         </span>
                       </div>
                     </div>
@@ -753,6 +901,15 @@ const ContestDetail = () => {
       )}
 
       <Footer />
+
+      {/* Inline Auth Dialog */}
+      <InlineAuthDialog 
+        open={isAuthDialogOpen}
+        onOpenChange={setIsAuthDialogOpen}
+        onSuccess={handleAuthSuccess}
+        title="Sign in to like"
+        description="Create an account or log in to like photos."
+      />
 
       {/* Contest Share Dialog */}
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
@@ -884,11 +1041,11 @@ const ContestDetail = () => {
                   {/* Stats */}
                   <div className="flex items-center gap-6 text-sm text-muted-foreground">
                     <div className="text-center">
-                      <p className="font-bold text-foreground text-lg">{Math.floor(Math.random() * 10000) + 1000}</p>
+                      <p className="font-bold text-foreground text-lg">{formatCount(selectedImage.view_count)}</p>
                       <p className="text-xs">Views</p>
                     </div>
                     <div className="text-center">
-                      <p className="font-bold text-foreground text-lg">{Math.floor(Math.random() * 500) + 50}</p>
+                      <p className="font-bold text-foreground text-lg">{formatCount(selectedImage.download_count)}</p>
                       <p className="text-xs">Downloads</p>
                     </div>
                   </div>
@@ -912,15 +1069,15 @@ const ContestDetail = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleLike(selectedImage.id, {} as React.MouseEvent)}
+                      onClick={(e) => handleLike(selectedImage.id, e)}
                     >
                       <Heart className={`w-4 h-4 mr-2 ${likedImages.has(selectedImage.id) ? 'fill-primary text-primary' : ''}`} />
-                      Like
+                      Like {selectedImage.like_count > 0 && `(${formatCount(selectedImage.like_count)})`}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDownload(selectedImage.image_url, selectedImage.title)}
+                      onClick={() => handleDownload(selectedImage.image_url, selectedImage.title, selectedImage.id)}
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download
