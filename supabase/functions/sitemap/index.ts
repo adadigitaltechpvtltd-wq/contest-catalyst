@@ -89,7 +89,12 @@ serve(async (req) => {
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>${BASE_URL}/how-it-works</loc>
+    <loc>${BASE_URL}/gallery</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${BASE_URL}/how-gaal-works</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

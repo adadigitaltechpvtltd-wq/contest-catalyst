@@ -42,6 +42,7 @@ import AdminSEO from "./pages/admin/AdminSEO";
 import WinnerSelection from "./pages/admin/WinnerSelection";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import UserProfilePage from "./pages/UserProfilePage";
+import Gallery from "./pages/Gallery";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/contests" element={<Contests />} />
               <Route path="/contest/:slug" element={<ContestDetail />} />
               <Route path="/photo/:contestSlug/:photoSlug" element={<PhotoDetail />} />
+              <Route path="/gallery" element={<Gallery />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/user/:username" element={<UserProfilePage />} />
             
