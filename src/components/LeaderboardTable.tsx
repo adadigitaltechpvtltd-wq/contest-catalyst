@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Camera, RefreshCw, ExternalLink } from "lucide-react";
+import { Camera, RefreshCw, ExternalLink, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { LeaderboardEntry } from "@/hooks/useLeaderboard";
@@ -49,11 +49,12 @@ const LeaderboardTable = ({
       {/* Table Header */}
       <div className="grid grid-cols-12 gap-2 px-6 py-3 bg-muted/30 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
         <div className="col-span-1">#</div>
-        <div className="col-span-4 md:col-span-3">Name</div>
+        <div className="col-span-3 md:col-span-2">Name</div>
         <div className="col-span-2 text-center hidden md:block">Contests</div>
         <div className="col-span-2 text-center hidden md:block">Submissions</div>
-        <div className="col-span-2 text-center">Wins</div>
-        <div className="col-span-5 md:col-span-2 text-right">Points</div>
+        <div className="col-span-2 text-center hidden md:block">Wins</div>
+        <div className="col-span-3 md:col-span-2 text-right">Points</div>
+        <div className="col-span-5 md:col-span-1 text-right hidden sm:block"></div>
       </div>
 
       {/* Content */}
@@ -115,10 +116,10 @@ const LeaderboardTable = ({
                 </div>
 
                 {/* Name & Avatar */}
-                <div className="col-span-4 md:col-span-3 flex items-center gap-3 min-w-0">
+                <div className="col-span-3 md:col-span-2 flex items-center gap-2 min-w-0">
                   <Link
                     to={`/user/${leader.user_id}`}
-                    className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-border bg-muted flex-shrink-0 hover:ring-primary transition-all"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden ring-2 ring-border bg-muted flex-shrink-0 hover:ring-primary transition-all"
                   >
                     {leader.avatar_url ? (
                       <img
@@ -134,17 +135,17 @@ const LeaderboardTable = ({
                     )}
                   </Link>
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1">
                       <Link
                         to={`/user/${leader.user_id}`}
-                        className="font-medium text-foreground truncate hover:text-primary transition-colors"
+                        className="font-medium text-foreground truncate hover:text-primary transition-colors text-sm"
                       >
-                        {leader.full_name || "Anonymous Creator"}
+                        {leader.full_name || "Anonymous"}
                       </Link>
-                      {badge && <span>{badge}</span>}
+                      {badge && <span className="text-sm">{badge}</span>}
                     </div>
                     <span className="text-xs text-muted-foreground md:hidden">
-                      {leader.contests_entered} contests
+                      {leader.wins} wins
                     </span>
                   </div>
                 </div>
@@ -160,16 +161,26 @@ const LeaderboardTable = ({
                 </div>
 
                 {/* Wins */}
-                <div className="col-span-2 text-center">
+                <div className="col-span-2 text-center hidden md:block">
                   <span className="text-foreground font-medium">{leader.wins}</span>
                 </div>
 
                 {/* Points */}
-                <div className="col-span-5 md:col-span-2 text-right">
-                  <div className="font-display font-bold text-primary">
+                <div className="col-span-3 md:col-span-2 text-right">
+                  <div className="font-display font-bold text-primary text-sm md:text-base">
                     {leader.total_points.toLocaleString()}
                   </div>
                   <span className="text-xs text-muted-foreground">points</span>
+                </div>
+
+                {/* View Profile Button */}
+                <div className="col-span-5 md:col-span-1 text-right hidden sm:flex justify-end">
+                  <Link to={`/user/${leader.user_id}`}>
+                    <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+                      <Eye className="w-3.5 h-3.5 mr-1" />
+                      View
+                    </Button>
+                  </Link>
                 </div>
               </div>
             );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, User, LogOut, Image, Wallet, Settings } from "lucide-react";
+import { X, User, LogOut, Image, Wallet, Settings, UserCircle } from "lucide-react";
 import GaalLogo from "./GaalLogo";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -45,12 +45,13 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
     { label: "For Brands", href: "/#brands", isLink: false },
   ];
 
-  const userLinks = [
+  const userLinks = user ? [
+    { label: "View Public Profile", href: `/user/${user.id}`, icon: UserCircle },
     { label: "Dashboard", href: "/dashboard", icon: User },
     { label: "My Submissions", href: "/submissions", icon: Image },
     { label: "Wallet", href: "/wallet", icon: Wallet },
     { label: "Profile Settings", href: "/profile", icon: Settings },
-  ];
+  ] : [];
 
   return (
     <>
