@@ -29,6 +29,8 @@ import {
   Info
 } from 'lucide-react';
 import ImageCropper from '@/components/ImageCropper';
+import CameraCapture from '@/components/CameraCapture';
+import { useIsCameraAvailable } from '@/hooks/useCameraCapture';
 
 interface Contest {
   id: string;
@@ -120,9 +122,13 @@ const SubmitPhoto = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [rawPhotoFile, setRawPhotoFile] = useState<File | null>(null);
   const [showCropper, setShowCropper] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
   const [originalityConfirmed, setOriginalityConfirmed] = useState(false);
   const [noAiConfirmed, setNoAiConfirmed] = useState(false);
   const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
+
+  // Camera availability
+  const isCameraAvailable = useIsCameraAvailable();
 
   // Check if user already submitted
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -341,6 +347,25 @@ const SubmitPhoto = () => {
     setPhotoFile(null);
     setPhotoPreview(null);
   };
+
+  // Handle camera capture - same validation as file upload
+  const handleCameraCapture = useCallback((file: File) => {
+    // Validate file size (8MB max)
+    if (file.size > 8 * 1024 * 1024) {
+      toast({
+        title: 'Photo too large',
+        description: 'The captured photo exceeds 8MB. Please try again with a smaller resolution.',
+        variant: 'destructive',
+      });
+      setShowCamera(false);
+      return;
+    }
+
+    // Set raw file and open cropper for camera captures
+    setRawPhotoFile(file);
+    setShowCropper(true);
+    setShowCamera(false);
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -565,23 +590,39 @@ const SubmitPhoto = () => {
                       )}
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-secondary/30">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="h-10 w-10 text-muted-foreground mb-3" />
-                        <p className="mb-2 text-sm text-muted-foreground">
-                          <span className="font-semibold">Click to upload</span> or drag and drop
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          JPEG, PNG, or WebP (max 8MB)
-                        </p>
-                      </div>
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/jpeg,image/png,image/webp"
-                        onChange={handleFileChange}
-                      />
-                    </label>
+                    <div className="space-y-4">
+                      {/* Upload area */}
+                      <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-secondary/30">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Upload className="h-10 w-10 text-muted-foreground mb-3" />
+                          <p className="mb-2 text-sm text-muted-foreground">
+                            <span className="font-semibold">Click to upload</span> or drag and drop
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            JPEG, PNG, or WebP (max 8MB)
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={handleFileChange}
+                        />
+                      </label>
+
+                      {/* Camera capture button - only on mobile */}
+                      {isCameraAvailable && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full h-14 gap-3"
+                          onClick={() => setShowCamera(true)}
+                        >
+                          <Camera className="h-5 w-5" />
+                          <span className="font-medium">Take Photo</span>
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -771,6 +812,13 @@ const SubmitPhoto = () => {
           quality={0.85}
         />
       )}
+
+      {/* Camera Capture Modal */}
+      <CameraCapture
+        isOpen={showCamera}
+        onClose={() => setShowCamera(false)}
+        onCapture={handleCameraCapture}
+      />
     </div>
   );
 };
