@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -76,8 +77,10 @@ const PhotoDetail = () => {
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [relatedPhotos, setRelatedPhotos] = useState<{ id: string; title: string; image_url: string; slug: string }[]>([]);
 
-  useEffect(() => {
-    const fetchPhoto = async () => {
+  const fetchPhoto = useCallback(async () => {
+    setIsLoading(true);
+
+    try {
       if (!contestSlug || !photoSlug) {
         navigate('/contests');
         return;
@@ -169,11 +172,25 @@ const PhotoDetail = () => {
         .limit(4);
 
       setRelatedPhotos(related || []);
+    } catch (error) {
+      console.error('[PhotoDetail] fetchPhoto failed:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load photo. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
       setIsLoading(false);
-    };
+    }
+  }, [category, contestSlug, photoSlug, navigate, toast]);
 
+  useEffect(() => {
     fetchPhoto();
-  }, [category, contestSlug, photoSlug, navigate]);
+  }, [fetchPhoto]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  useGlobalRefresh(fetchPhoto);
+
 
   // Check if user has liked
   useEffect(() => {

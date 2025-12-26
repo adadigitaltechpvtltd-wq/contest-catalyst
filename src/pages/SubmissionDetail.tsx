@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -97,10 +98,12 @@ const SubmissionDetail = () => {
   const [editDescription, setEditDescription] = useState('');
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchSubmission = async () => {
-      if (!user || !id) return;
+  const fetchSubmission = useCallback(async () => {
+    if (!user || !id) return;
 
+    setIsLoading(true);
+
+    try {
       const { data, error } = await supabase
         .from('submissions')
         .select(`
@@ -133,12 +136,17 @@ const SubmissionDetail = () => {
       }
 
       setSubmission(data as unknown as Submission);
+    } finally {
       setIsLoading(false);
-    };
+    }
+  }, [id, user, navigate]);
 
+  useEffect(() => {
     fetchSubmission();
 
     // Real-time subscription for this submission
+    if (!id) return;
+
     const channel = supabase
       .channel(`submission-${id}`)
       .on(
@@ -159,7 +167,11 @@ const SubmissionDetail = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [id, user, navigate]);
+  }, [id, fetchSubmission]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  useGlobalRefresh(fetchSubmission);
+
 
   const getStatusBadge = (status: SubmissionStatus) => {
     switch (status) {
