@@ -45,7 +45,7 @@ const Navbar = () => {
               <Link to="/gallery" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Gallery</Link>
               <Link to="/#how-it-works" className="text-muted-foreground text-sm hover:text-foreground transition-colors">How It Works</Link>
               <Link to="/leaderboard" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Leaderboard</Link>
-              <Link to="/#brands" className="text-muted-foreground text-sm hover:text-foreground transition-colors">For Brands</Link>
+              <Link to="/for-brands" className="text-muted-foreground text-sm hover:text-foreground transition-colors">For Brands</Link>
             </div>
 
             {/* Right side */}
