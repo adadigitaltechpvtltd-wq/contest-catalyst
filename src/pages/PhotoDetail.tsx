@@ -205,6 +205,10 @@ const PhotoDetail = () => {
   };
 
   const handleDownloadClick = () => {
+    if (!user) {
+      setShowAuthDialog(true);
+      return;
+    }
     setShowDownloadModal(true);
   };
 
