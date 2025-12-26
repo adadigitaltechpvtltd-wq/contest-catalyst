@@ -29,6 +29,8 @@ const CreateContest = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [theme, setTheme] = useState('');
+  const [category, setCategory] = useState('');
+  const [customCategory, setCustomCategory] = useState('');
   const [prizeAmount, setPrizeAmount] = useState('500');
   const [minParticipants, setMinParticipants] = useState('100');
   const [maxParticipants, setMaxParticipants] = useState('');
@@ -43,6 +45,21 @@ const CreateContest = () => {
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [rawImageFile, setRawImageFile] = useState<File | null>(null);
   const [showCropper, setShowCropper] = useState(false);
+
+  // Predefined categories
+  const CATEGORIES = [
+    { value: 'street-photography', label: 'Street Photography' },
+    { value: 'wildlife', label: 'Wildlife' },
+    { value: 'portraits', label: 'Portraits' },
+    { value: 'food', label: 'Food' },
+    { value: 'travel', label: 'Travel' },
+    { value: 'nature', label: 'Nature' },
+    { value: 'sports', label: 'Sports' },
+    { value: 'architecture', label: 'Architecture' },
+    { value: 'fashion', label: 'Fashion' },
+    { value: 'pets', label: 'Pets' },
+    { value: 'custom', label: '+ Add Custom Category' },
+  ];
   
   // SEO fields
   const [seoTitle, setSeoTitle] = useState('');
@@ -139,6 +156,17 @@ const CreateContest = () => {
       return;
     }
 
+    // Validate category
+    const finalCategory = category === 'custom' ? customCategory : category;
+    if (!finalCategory?.trim()) {
+      toast({
+        title: 'Category required',
+        description: 'Please select or enter a contest category.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!startDate || !endDate) {
       toast({
         title: 'Missing dates',
@@ -175,8 +203,17 @@ const CreateContest = () => {
       .map(k => k.trim())
       .filter(k => k.length > 0);
 
+    // Generate category slug
+    const categorySlug = (category === 'custom' ? customCategory : category)
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+
     const { error } = await supabase.from('contests').insert({
       title,
+      category: categorySlug,
       description,
       theme: theme || null,
       prize_amount: parseFloat(prizeAmount),
@@ -245,6 +282,29 @@ const CreateContest = () => {
                 placeholder="e.g., Urban Street Photography Challenge"
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category *</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {category === 'custom' && (
+                <Input
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  placeholder="Enter custom category (e.g., macro-photography)"
+                  className="mt-2"
+                />
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="theme">Theme (Optional)</Label>

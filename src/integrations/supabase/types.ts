@@ -64,6 +64,7 @@ export type Database = {
           brand_twitter_url: string | null
           brand_website_url: string | null
           brand_youtube_url: string | null
+          category: string | null
           cover_image_url: string | null
           created_at: string
           created_by: string | null
@@ -100,6 +101,7 @@ export type Database = {
           brand_twitter_url?: string | null
           brand_website_url?: string | null
           brand_youtube_url?: string | null
+          category?: string | null
           cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           brand_twitter_url?: string | null
           brand_website_url?: string | null
           brand_youtube_url?: string | null
+          category?: string | null
           cover_image_url?: string | null
           created_at?: string
           created_by?: string | null

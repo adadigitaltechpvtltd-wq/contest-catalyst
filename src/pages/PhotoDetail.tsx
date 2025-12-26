@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { getGalleryCanonicalUrl } from '@/lib/seoUtils';
 
 interface PhotoData {
   id: string;
@@ -45,6 +46,7 @@ interface PhotoData {
     id: string;
     title: string;
     slug: string;
+    category: string | null;
     theme: string | null;
     prize_amount: number;
     prize_currency: string;
@@ -60,7 +62,8 @@ interface PhotoData {
 }
 
 const PhotoDetail = () => {
-  const { contestSlug, photoSlug } = useParams<{ contestSlug: string; photoSlug: string }>();
+  // Support both new format (/gallery/:category/:contestSlug/:photoSlug) and legacy format (/photo/:contestSlug/:photoSlug)
+  const { category, contestSlug, photoSlug } = useParams<{ category?: string; contestSlug: string; photoSlug: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -80,16 +83,31 @@ const PhotoDetail = () => {
         return;
       }
 
-      // First find the contest by slug with SEO fields
+      // First find the contest by slug with SEO fields and category
       const { data: contest, error: contestError } = await supabase
         .from('contests')
-        .select('id, title, slug, theme, prize_amount, prize_currency, seo_title, meta_description, keywords')
+        .select('id, title, slug, category, theme, prize_amount, prize_currency, seo_title, meta_description, keywords')
         .eq('slug', contestSlug)
         .maybeSingle();
 
       if (contestError || !contest) {
         console.error('Contest not found:', contestError);
         navigate('/contests');
+        return;
+      }
+
+      // Handle legacy /photo/ URLs - redirect to /gallery/ with category
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/photo/')) {
+        const contestCategory = contest.category || 'general';
+        navigate(`/gallery/${contestCategory}/${contestSlug}/${photoSlug}`, { replace: true });
+        return;
+      }
+
+      // Validate category matches - redirect to correct URL if mismatch
+      const contestCategory = contest.category || 'general';
+      if (category && category !== contestCategory) {
+        navigate(`/gallery/${contestCategory}/${contestSlug}/${photoSlug}`, { replace: true });
         return;
       }
 
@@ -118,7 +136,7 @@ const PhotoDetail = () => {
 
       if (subError || !submission) {
         console.error('Submission not found:', subError);
-        navigate(`/contest/${contestSlug}`);
+        navigate(`/contest/${contestCategory}/${contestSlug}`);
         return;
       }
 
@@ -155,7 +173,7 @@ const PhotoDetail = () => {
     };
 
     fetchPhoto();
-  }, [contestSlug, photoSlug, navigate]);
+  }, [category, contestSlug, photoSlug, navigate]);
 
   // Check if user has liked
   useEffect(() => {
@@ -285,6 +303,7 @@ const PhotoDetail = () => {
   const hasTitleQualityIssue = photo.title_quality_flag === 'low';
   
   // Use stored SEO fields if available, otherwise auto-generate
+  const contestCategory = photo.contest.category || 'general';
   const contestSeoTitle = photo.contest.seo_title || photo.contest.title;
   const seoTitle = photo.seo_title 
     ? photo.seo_title 
@@ -294,7 +313,7 @@ const PhotoDetail = () => {
     : photo.description 
       ? `${photo.description.slice(0, 100)}... Photo from ${photo.contest.title} contest on GAAL.`
       : `${photo.title} - Photography submission for ${contestSeoTitle}. ${photo.contest.meta_description || ''}`.slice(0, 160);
-  const canonicalUrl = `https://gaal.app/photo/${photo.contest.slug}/${photo.slug}`;
+  const canonicalUrl = getGalleryCanonicalUrl(contestCategory, photo.contest.slug, photo.slug);
   
   // Only index if approved AND title passes quality validation
   const shouldNoIndex = !isApproved || hasTitleQualityIssue;
@@ -315,17 +334,21 @@ const PhotoDetail = () => {
       <main className="flex-1 pt-20">
         {/* Breadcrumb */}
         <nav className="container mx-auto px-4 py-4" aria-label="Breadcrumb">
-          <ol className="flex items-center gap-2 text-sm text-muted-foreground">
+          <ol className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
             <li>
               <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             </li>
             <li>/</li>
             <li>
-              <Link to="/contests" className="hover:text-foreground transition-colors">Contests</Link>
+              <Link to="/gallery" className="hover:text-foreground transition-colors">Gallery</Link>
             </li>
             <li>/</li>
             <li>
-              <Link to={`/contest/${photo.contest.slug}`} className="hover:text-foreground transition-colors">
+              <span className="capitalize">{contestCategory.replace(/-/g, ' ')}</span>
+            </li>
+            <li>/</li>
+            <li>
+              <Link to={`/contest/${contestCategory}/${photo.contest.slug}`} className="hover:text-foreground transition-colors">
                 {photo.contest.title}
               </Link>
             </li>
@@ -401,6 +424,11 @@ const PhotoDetail = () => {
                   <p className="text-muted-foreground mb-4">{photo.description}</p>
                 )}
 
+                {/* Category Badge */}
+                <Badge variant="secondary" className="mb-4 capitalize">
+                  {contestCategory.replace(/-/g, ' ')}
+                </Badge>
+
                 <Separator className="my-4" />
 
                 {/* Photographer */}
@@ -428,7 +456,7 @@ const PhotoDetail = () => {
               <div className="p-6 rounded-xl bg-card border border-border">
                 <h2 className="text-lg font-semibold mb-3">From Contest</h2>
                 <Link 
-                  to={`/contest/${photo.contest.slug}`}
+                  to={`/contest/${contestCategory}/${photo.contest.slug}`}
                   className="block p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
                 >
                   <h3 className="font-medium mb-1">{photo.contest.title}</h3>
@@ -474,7 +502,7 @@ const PhotoDetail = () => {
                 {relatedPhotos.map((related) => (
                   <Link
                     key={related.id}
-                    to={`/photo/${contestSlug}/${related.slug}`}
+                    to={`/gallery/${contestCategory}/${contestSlug}/${related.slug}`}
                     className="group relative aspect-square rounded-lg overflow-hidden bg-secondary"
                   >
                     <img
@@ -519,6 +547,7 @@ const PhotoDetail = () => {
         __html: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "ImageObject",
+          "@id": canonicalUrl,
           "name": photo.title,
           "description": seoDescription,
           "contentUrl": canonicalUrl,
@@ -558,7 +587,7 @@ const PhotoDetail = () => {
           "isPartOf": {
             "@type": "CreativeWork",
             "name": photo.contest.title,
-            "url": `https://gaal.app/contest/${photo.contest.slug}`
+            "url": `https://gaal.app/contest/${contestCategory}/${photo.contest.slug}`
           }
         })
       }} />

@@ -33,6 +33,9 @@ const EditContest = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [theme, setTheme] = useState('');
+  const [category, setCategory] = useState('');
+  const [customCategory, setCustomCategory] = useState('');
+  const [originalCategory, setOriginalCategory] = useState('');
   const [prizeAmount, setPrizeAmount] = useState('500');
   const [minParticipants, setMinParticipants] = useState('100');
   const [maxParticipants, setMaxParticipants] = useState('');
@@ -47,6 +50,24 @@ const EditContest = () => {
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [rawImageFile, setRawImageFile] = useState<File | null>(null);
   const [showCropper, setShowCropper] = useState(false);
+
+  // Predefined categories
+  const CATEGORIES = [
+    { value: 'street-photography', label: 'Street Photography' },
+    { value: 'wildlife', label: 'Wildlife' },
+    { value: 'portraits', label: 'Portraits' },
+    { value: 'food', label: 'Food' },
+    { value: 'travel', label: 'Travel' },
+    { value: 'nature', label: 'Nature' },
+    { value: 'sports', label: 'Sports' },
+    { value: 'architecture', label: 'Architecture' },
+    { value: 'fashion', label: 'Fashion' },
+    { value: 'pets', label: 'Pets' },
+    { value: 'custom', label: '+ Add Custom Category' },
+  ];
+
+  // Check if category is editable (only before contest goes live)
+  const isCategoryEditable = status === 'draft';
   
   // SEO fields
   const [seoTitle, setSeoTitle] = useState('');
@@ -100,6 +121,17 @@ const EditContest = () => {
       setFeaturedInHero(data.featured_in_hero ?? false);
       setRules(data.rules?.length ? data.rules : ['']);
       setJudgingCriteria(data.judging_criteria?.length ? data.judging_criteria : ['']);
+      // Load category
+      const existingCategory = data.category || '';
+      setOriginalCategory(existingCategory);
+      // Check if it's a predefined category
+      const isPredefined = CATEGORIES.some(c => c.value === existingCategory && c.value !== 'custom');
+      if (isPredefined) {
+        setCategory(existingCategory);
+      } else if (existingCategory) {
+        setCategory('custom');
+        setCustomCategory(existingCategory);
+      }
       // Load SEO fields
       setSeoTitle(data.seo_title ?? '');
       setMetaDescription(data.meta_description ?? '');
@@ -227,10 +259,22 @@ const EditContest = () => {
       .map(k => k.trim())
       .filter(k => k.length > 0);
 
+    // Determine final category
+    const finalCategory = category === 'custom' ? customCategory : category;
+    const categorySlug = finalCategory
+      ? finalCategory
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .trim()
+      : originalCategory;
+
     const { error } = await supabase
       .from('contests')
       .update({
         title,
+        category: categorySlug || null,
         description,
         theme: theme || null,
         prize_amount: parseFloat(prizeAmount),
@@ -306,6 +350,35 @@ const EditContest = () => {
                 placeholder="e.g., Urban Street Photography Challenge"
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">
+                Category *
+                {!isCategoryEditable && (
+                  <span className="text-xs text-muted-foreground ml-2">(Cannot be changed after contest goes live)</span>
+                )}
+              </Label>
+              <Select value={category} onValueChange={setCategory} disabled={!isCategoryEditable}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {category === 'custom' && (
+                <Input
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  placeholder="Enter custom category (e.g., macro-photography)"
+                  className="mt-2"
+                  disabled={!isCategoryEditable}
+                />
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="theme">Theme (Optional)</Label>

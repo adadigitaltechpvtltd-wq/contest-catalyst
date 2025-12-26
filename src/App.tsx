@@ -67,6 +67,10 @@ const App = () => (
               <Route path="/signup" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/contests" element={<Contests />} />
+              {/* New URL structure with category */}
+              <Route path="/contest/:category/:slug" element={<ContestDetail />} />
+              <Route path="/gallery/:category/:contestSlug/:photoSlug" element={<PhotoDetail />} />
+              {/* Legacy redirects - handled by components */}
               <Route path="/contest/:slug" element={<ContestDetail />} />
               <Route path="/photo/:contestSlug/:photoSlug" element={<PhotoDetail />} />
               <Route path="/gallery" element={<Gallery />} />
