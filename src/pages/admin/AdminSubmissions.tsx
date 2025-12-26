@@ -27,7 +27,9 @@ import {
   Eye,
   RefreshCw,
   Play,
-  Zap
+  Zap,
+  Search,
+  FileText
 } from 'lucide-react';
 
 type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
@@ -45,6 +47,9 @@ interface Submission {
   title: string;
   description: string | null;
   image_url: string;
+  slug: string | null;
+  seo_title: string | null;
+  meta_description: string | null;
   status: SubmissionStatus;
   originality_confirmed: boolean;
   exif_camera_make: string | null;
@@ -106,6 +111,12 @@ const AdminSubmissions = () => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [analyzingSubmissionId, setAnalyzingSubmissionId] = useState<string | null>(null);
+
+  // SEO enhancement state
+  const [seoTitle, setSeoTitle] = useState('');
+  const [seoDescription, setSeoDescription] = useState('');
+  const [enhancedTitle, setEnhancedTitle] = useState('');
+  const [enhancedDescription, setEnhancedDescription] = useState('');
 
   // Batch analysis state
   const [isBatchAnalyzing, setIsBatchAnalyzing] = useState(false);
@@ -169,6 +180,9 @@ const AdminSubmissions = () => {
           title,
           description,
           image_url,
+          slug,
+          seo_title,
+          meta_description,
           status,
           originality_confirmed,
           exif_camera_make,
@@ -339,6 +353,11 @@ const AdminSubmissions = () => {
     setReviewNotes(submission.admin_notes || '');
     setReviewAction('approve');
     setRejectionReason('');
+    // Initialize SEO fields
+    setSeoTitle(submission.seo_title || '');
+    setSeoDescription(submission.meta_description || '');
+    setEnhancedTitle(submission.title || '');
+    setEnhancedDescription(submission.description || '');
     setIsReviewModalOpen(true);
   };
 
@@ -364,7 +383,7 @@ const AdminSubmissions = () => {
     }
 
     try {
-      // Update the submission
+      // Update the submission with SEO fields
       const { error: submissionError } = await supabase
         .from('submissions')
         .update({
@@ -375,6 +394,11 @@ const AdminSubmissions = () => {
           rejection_reason: (newStatus === 'rejected' || newStatus === 'disqualified') ? rejectionReason : null,
           reviewed_by: user.id,
           reviewed_at: new Date().toISOString(),
+          // SEO fields - only update if enhanced
+          title: enhancedTitle || selectedSubmission.title,
+          description: enhancedDescription || selectedSubmission.description,
+          seo_title: seoTitle || null,
+          meta_description: seoDescription || null,
         })
         .eq('id', selectedSubmission.id);
 
@@ -800,6 +824,120 @@ const AdminSubmissions = () => {
                       <p className="text-xs text-muted-foreground mt-1">
                         Combined = 40% System + 60% Admin Score
                       </p>
+                    </CardContent>
+                  </Card>
+
+                  {/* SEO Enhancement Section */}
+                  <Card className="bg-secondary/30 border-secondary">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Search className="h-4 w-4" />
+                        SEO Enhancement
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Improve titles and descriptions for better search visibility
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Original vs Enhanced Title */}
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Original Title</Label>
+                        <p className="text-sm p-2 bg-background/50 rounded border border-border/50">
+                          {selectedSubmission.title}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          Enhanced Title
+                          <span className="text-xs text-muted-foreground">
+                            ({enhancedTitle.length}/100)
+                          </span>
+                        </Label>
+                        <Input
+                          value={enhancedTitle}
+                          onChange={(e) => setEnhancedTitle(e.target.value)}
+                          placeholder="Enter SEO-friendly title..."
+                          maxLength={100}
+                        />
+                      </div>
+
+                      {/* Original vs Enhanced Description */}
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Original Description</Label>
+                        <p className="text-sm p-2 bg-background/50 rounded border border-border/50 min-h-[40px]">
+                          {selectedSubmission.description || <span className="text-muted-foreground italic">No description provided</span>}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          Enhanced Description
+                          <span className="text-xs text-muted-foreground">
+                            ({enhancedDescription.length}/500)
+                          </span>
+                        </Label>
+                        <Textarea
+                          value={enhancedDescription}
+                          onChange={(e) => setEnhancedDescription(e.target.value)}
+                          placeholder="Enter descriptive text for the photo..."
+                          maxLength={500}
+                          rows={3}
+                        />
+                      </div>
+
+                      {/* SEO Meta Fields */}
+                      <div className="pt-2 border-t border-border/50">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">Meta Tags</span>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2 text-xs">
+                              SEO Title (for search engines)
+                              <span className="text-muted-foreground">
+                                ({seoTitle.length}/60)
+                              </span>
+                            </Label>
+                            <Input
+                              value={seoTitle}
+                              onChange={(e) => setSeoTitle(e.target.value)}
+                              placeholder="Photo title for search results..."
+                              maxLength={60}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2 text-xs">
+                              Meta Description
+                              <span className="text-muted-foreground">
+                                ({seoDescription.length}/160)
+                              </span>
+                            </Label>
+                            <Textarea
+                              value={seoDescription}
+                              onChange={(e) => setSeoDescription(e.target.value)}
+                              placeholder="Brief description for search results..."
+                              maxLength={160}
+                              rows={2}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* SEO Preview */}
+                      {(seoTitle || enhancedTitle) && (
+                        <div className="p-3 bg-background rounded border border-border/50">
+                          <p className="text-xs text-muted-foreground mb-2">Search Preview:</p>
+                          <p className="text-sm font-medium text-primary truncate">
+                            {seoTitle || enhancedTitle} | GAAL Photo Contest
+                          </p>
+                          <p className="text-xs text-success truncate">
+                            gaal.app/photo/{selectedSubmission.contest?.title?.toLowerCase().replace(/\s+/g, '-')}/{selectedSubmission.slug || 'photo-slug'}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {seoDescription || enhancedDescription || 'No description available'}
+                          </p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 
