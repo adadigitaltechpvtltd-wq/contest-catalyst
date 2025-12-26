@@ -190,8 +190,8 @@ const Contests = () => {
               </Button>
             </Link>
           ) : status === "soon" ? (
-            <Button variant="outline" className="w-full">
-              Notify Me <ArrowRight className="w-4 h-4 ml-1" />
+            <Button variant="outline" className="w-full" disabled>
+              Coming Soon
             </Button>
           ) : (
             <Link to={`/contest/${contest.slug || contest.id}`}>
