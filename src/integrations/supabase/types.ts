@@ -734,6 +734,7 @@ export type Database = {
       }
     }
     Functions: {
+      auto_complete_expired_contests: { Args: never; Returns: Json }
       cancel_account_deletion: { Args: { _user_id: string }; Returns: Json }
       generate_slug: { Args: { title: string }; Returns: string }
       get_pending_balance: { Args: { _user_id: string }; Returns: number }
