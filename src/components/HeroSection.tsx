@@ -147,6 +147,17 @@ const HeroSection = () => {
             <span className="font-semibold text-foreground">Gaal — Where everyday photos earn.</span> A skill-based photo contest platform where creators compete in short challenges and earn cash, products, and brand recognition — all for free.
           </p>
 
+          {/* Browse All Contests Button - shown when there's an active hero contest */}
+          {!loading && contest && (
+            <div className="mt-8 flex justify-center">
+              <Link to="/contests">
+                <Button variant="outline" size="lg" className="rounded-2xl border-border/60 bg-card/20 hover:bg-card/35 text-foreground">
+                  Browse All Contests
+                </Button>
+              </Link>
+            </div>
+          )}
+
           {/* Featured Contest Card */}
           {loading ? (
             <div className="mt-12 mx-auto max-w-4xl glass-card rounded-3xl p-6 md:p-8">
