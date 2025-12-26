@@ -338,12 +338,15 @@ const PhotoDetail = () => {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Image */}
             <div className="lg:col-span-2">
-              <div className="relative rounded-xl overflow-hidden bg-secondary">
+            <div className="relative rounded-xl overflow-hidden bg-secondary">
                 <img
                   src={photo.image_url}
                   alt={photo.title}
                   className="w-full h-auto max-h-[80vh] object-contain"
                   loading="eager"
+                  fetchPriority="high"
+                  width={1200}
+                  height={800}
                 />
                 
                 {photo.status === 'winner' && (
@@ -479,6 +482,8 @@ const PhotoDetail = () => {
                       alt={related.title}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       loading="lazy"
+                      width={400}
+                      height={400}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="absolute bottom-0 left-0 right-0 p-3">

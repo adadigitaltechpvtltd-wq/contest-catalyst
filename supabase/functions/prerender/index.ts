@@ -42,7 +42,7 @@ serve(async (req) => {
         });
       }
 
-      // Get submission
+      // Get submission - include deleted/rejected status
       const { data: submission } = await supabase
         .from('submissions')
         .select('id, title, description, image_url, slug, status, created_at, user_id, view_count, like_count')
@@ -51,6 +51,22 @@ serve(async (req) => {
         .maybeSingle();
 
       if (!submission) {
+        return new Response(generate404HTML(), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'text/html' },
+        });
+      }
+
+      // Return 410 Gone for permanently removed photos (disqualified)
+      // Return 404 for rejected photos (never should have been public)
+      if (submission.status === 'disqualified') {
+        return new Response(generate410HTML(contest.slug), {
+          status: 410,
+          headers: { ...corsHeaders, 'Content-Type': 'text/html' },
+        });
+      }
+
+      if (submission.status === 'rejected') {
         return new Response(generate404HTML(), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'text/html' },
@@ -415,6 +431,24 @@ function generate404HTML() {
   <h1>Page Not Found</h1>
   <p>The page you're looking for doesn't exist.</p>
   <a href="${BASE_URL}">Go to homepage</a>
+</body>
+</html>`;
+}
+
+function generate410HTML(contestSlug?: string) {
+  const redirectUrl = contestSlug ? `${BASE_URL}/contest/${contestSlug}` : `${BASE_URL}/gallery`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Removed | GAAL</title>
+  <meta name="robots" content="noindex">
+</head>
+<body>
+  <h1>Photo Removed</h1>
+  <p>This photo has been permanently removed and is no longer available.</p>
+  <a href="${redirectUrl}">Browse other photos</a>
 </body>
 </html>`;
 }
