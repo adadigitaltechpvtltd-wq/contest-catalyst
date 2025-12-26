@@ -147,12 +147,28 @@ const AdminPayments = () => {
         variant: 'destructive',
       });
     } else {
-      const actionLabel = selectedTransaction.type === 'prize' ? 'payout' : 'withdrawal';
+      // Create notification for the user
+      const actionLabel = selectedTransaction.type === 'prize' ? 'Prize payout' : 'Withdrawal';
+      const notificationTitle = action === 'complete' 
+        ? `${actionLabel} completed!` 
+        : `${actionLabel} cancelled`;
+      const notificationMessage = action === 'complete'
+        ? `Your ${actionLabel.toLowerCase()} of $${Number(selectedTransaction.amount).toFixed(2)} has been processed and is now available in your wallet.`
+        : `Your ${actionLabel.toLowerCase()} of $${Number(selectedTransaction.amount).toFixed(2)} has been cancelled.`;
+
+      await supabase.from('notifications').insert({
+        user_id: selectedTransaction.user_id,
+        title: notificationTitle,
+        message: notificationMessage,
+        type: action === 'complete' ? 'payment' : 'info',
+        link: '/wallet'
+      });
+
       toast({
-        title: action === 'complete' ? `${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)} completed` : `${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)} cancelled`,
+        title: action === 'complete' ? `${actionLabel} completed` : `${actionLabel} cancelled`,
         description: action === 'complete' 
           ? `$${selectedTransaction.amount} has been marked as paid. User's available balance has been updated.`
-          : `${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)} has been cancelled.`,
+          : `${actionLabel} has been cancelled.`,
       });
       setIsProcessModalOpen(false);
       fetchTransactions();

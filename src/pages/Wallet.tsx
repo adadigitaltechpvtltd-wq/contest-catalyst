@@ -134,6 +134,41 @@ const Wallet = () => {
     fetchWalletData();
   }, [fetchWalletData]);
 
+  // Real-time subscription for wallet updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('wallet-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wallet_transactions',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Wallet transaction update:', payload);
+          // Refetch wallet data when any transaction changes
+          fetchWalletData();
+          
+          // Show toast for completed payments
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            const newTx = payload.new as { status: string; amount: number; type: string };
+            if (newTx.status === 'completed' && newTx.type === 'prize') {
+              toast.success(`Payment of $${newTx.amount} has been processed!`);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchWalletData]);
+
   const { pullDistance, isRefreshing, containerProps } = usePullToRefresh({
     onRefresh: fetchWalletData,
   });
