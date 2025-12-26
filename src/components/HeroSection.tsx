@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Play, Settings, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useVisibilityRefresh } from "@/hooks/useVisibilityRefresh";
 
 interface FeaturedContest {
   id: string;
@@ -22,42 +23,45 @@ const HeroSection = () => {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
   const [participantCount, setParticipantCount] = useState(0);
 
-  useEffect(() => {
-    const fetchFeaturedContest = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("contests")
-          .select("id, slug, title, description, prize_amount, prize_currency, end_date, theme")
-          .eq("featured_in_hero", true)
-          .eq("status", "active")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+  const fetchFeaturedContest = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("contests")
+        .select("id, slug, title, description, prize_amount, prize_currency, end_date, theme")
+        .eq("featured_in_hero", true)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-        if (error) {
-          console.error("Error fetching featured contest:", error);
-          setLoading(false);
-          return;
-        }
-
-        if (data) {
-          setContest(data);
-          // Fetch participant count
-          const { count } = await supabase
-            .from("submissions")
-            .select("*", { count: "exact", head: true })
-            .eq("contest_id", data.id);
-          setParticipantCount(count ?? 0);
-        }
-      } catch (err) {
-        console.error("Error fetching featured contest:", err);
-      } finally {
+      if (error) {
+        console.error("Error fetching featured contest:", error);
         setLoading(false);
+        return;
       }
-    };
 
-    fetchFeaturedContest();
+      if (data) {
+        setContest(data);
+        // Fetch participant count
+        const { count } = await supabase
+          .from("submissions")
+          .select("*", { count: "exact", head: true })
+          .eq("contest_id", data.id);
+        setParticipantCount(count ?? 0);
+      }
+    } catch (err) {
+      console.error("Error fetching featured contest:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchFeaturedContest();
+  }, [fetchFeaturedContest]);
+
+  // Refetch when tab becomes visible again
+  useVisibilityRefresh(fetchFeaturedContest);
 
   // Update countdown timer
   useEffect(() => {
