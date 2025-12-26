@@ -48,7 +48,19 @@ import ForBrands from "./pages/ForBrands";
 import AdminBrandInquiries from "./pages/admin/AdminBrandInquiries";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2, // 2 minutes - data becomes stale
+      gcTime: 1000 * 60 * 10, // 10 minutes - cache garbage collection
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMount: true,
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    },
+  },
+});
 
 const App = () => (
   <HelmetProvider>

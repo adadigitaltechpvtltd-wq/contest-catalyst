@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Clock, Users, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow, isPast, isFuture } from "date-fns";
+import { useVisibilityRefresh } from "@/hooks/useVisibilityRefresh";
 
 interface Contest {
   id: string;
@@ -58,52 +59,55 @@ const ActiveContests = () => {
   const [loading, setLoading] = useState(true);
   const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    const fetchContests = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("contests")
-          .select("id, slug, title, description, prize_amount, prize_currency, start_date, end_date, status, theme, cover_image_url")
-          .in("status", ["active", "voting", "completed"])
-          .eq("featured_in_hero", false)
-          .order("start_date", { ascending: false })
-          .limit(4);
+  const fetchContests = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("contests")
+        .select("id, slug, title, description, prize_amount, prize_currency, start_date, end_date, status, theme, cover_image_url")
+        .in("status", ["active", "voting", "completed"])
+        .eq("featured_in_hero", false)
+        .order("start_date", { ascending: false })
+        .limit(4);
 
-        if (error) {
-          console.error("Error fetching contests:", error);
-          setLoading(false);
-          return;
-        }
-
-        if (data) {
-          setContests(data);
-          
-          // Fetch participant counts for each contest
-          const counts: Record<string, number> = {};
-          await Promise.all(
-            data.map(async (contest) => {
-              try {
-                const { count } = await supabase
-                  .from("submissions")
-                  .select("*", { count: "exact", head: true })
-                  .eq("contest_id", contest.id);
-                counts[contest.id] = count ?? 0;
-              } catch {
-                counts[contest.id] = 0;
-              }
-            })
-          );
-          setParticipantCounts(counts);
-        }
-      } catch (err) {
-        console.error("Error fetching contests:", err);
-      } finally {
+      if (error) {
+        console.error("Error fetching contests:", error);
         setLoading(false);
+        return;
       }
-    };
 
-    fetchContests();
+      if (data) {
+        setContests(data);
+        
+        // Fetch participant counts for each contest
+        const counts: Record<string, number> = {};
+        await Promise.all(
+          data.map(async (contest) => {
+            try {
+              const { count } = await supabase
+                .from("submissions")
+                .select("*", { count: "exact", head: true })
+                .eq("contest_id", contest.id);
+              counts[contest.id] = count ?? 0;
+            } catch {
+              counts[contest.id] = 0;
+            }
+          })
+        );
+        setParticipantCounts(counts);
+      }
+    } catch (err) {
+      console.error("Error fetching contests:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchContests();
+  }, [fetchContests]);
+
+  // Refetch when tab becomes visible again
+  useVisibilityRefresh(fetchContests);
 
   if (loading) {
     return (
