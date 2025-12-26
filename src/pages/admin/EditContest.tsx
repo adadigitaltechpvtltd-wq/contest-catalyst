@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,10 +12,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Loader2, Plus, X, Upload, ImageIcon, Instagram, Twitter, Linkedin, Youtube, ExternalLink } from 'lucide-react';
+import { CalendarIcon, Loader2, Plus, X, Upload, ImageIcon, Instagram, Twitter, Linkedin, Youtube, ExternalLink, Crop } from 'lucide-react';
 import { TimePicker } from '@/components/ui/time-picker';
 import { format, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
+import ImageCropper from '@/components/ImageCropper';
 
 type ContestStatus = 'draft' | 'active' | 'voting' | 'completed' | 'cancelled';
 
@@ -44,6 +45,8 @@ const EditContest = () => {
   const [rules, setRules] = useState<string[]>(['']);
   const [judgingCriteria, setJudgingCriteria] = useState<string[]>(['']);
   const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [rawImageFile, setRawImageFile] = useState<File | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
   
   // SEO fields
   const [seoTitle, setSeoTitle] = useState('');
@@ -118,22 +121,36 @@ const EditContest = () => {
     fetchContest();
   }, [id, navigate, toast]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: 'File too large', description: 'Max 5MB allowed', variant: 'destructive' });
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast({ title: 'Invalid file type', description: 'Please upload JPEG, PNG, or WebP', variant: 'destructive' });
       return;
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Max 10MB allowed', variant: 'destructive' });
+      return;
+    }
+
+    setRawImageFile(file);
+    setShowCropper(true);
+    e.target.value = '';
+  }, [toast]);
+
+  const handleCropComplete = useCallback(async (croppedFile: File) => {
+    setShowCropper(false);
+    setRawImageFile(null);
     setIsUploadingImage(true);
-    const fileExt = file.name.split('.').pop();
+
+    const fileExt = croppedFile.name.split('.').pop() || 'jpg';
     const fileName = `contest-${id}-${Date.now()}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from('submissions')
-      .upload(`contests/${fileName}`, file, { upsert: true });
+      .upload(`contests/${fileName}`, croppedFile, { upsert: true });
 
     if (uploadError) {
       toast({ title: 'Upload failed', description: uploadError.message, variant: 'destructive' });
@@ -147,8 +164,13 @@ const EditContest = () => {
 
     setCoverImageUrl(publicUrl);
     setIsUploadingImage(false);
-    toast({ title: 'Image uploaded', description: 'Cover image uploaded successfully' });
-  };
+    toast({ title: 'Image uploaded', description: `Optimized: ${(croppedFile.size / 1024 / 1024).toFixed(2)} MB` });
+  }, [id, toast]);
+
+  const handleCropCancel = useCallback(() => {
+    setShowCropper(false);
+    setRawImageFile(null);
+  }, []);
 
   const addRule = () => setRules([...rules, '']);
   const removeRule = (index: number) => setRules(rules.filter((_, i) => i !== index));
@@ -341,23 +363,36 @@ const EditContest = () => {
                     <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
                   ) : (
                     <>
-                      <Upload className="h-10 w-10 text-muted-foreground mb-3" />
-                      <p className="text-sm text-muted-foreground">Click to upload cover image</p>
-                      <p className="text-xs text-muted-foreground mt-1">Max 5MB</p>
+                      <Crop className="h-10 w-10 text-muted-foreground mb-3" />
+                      <p className="text-sm text-muted-foreground">Click to upload & crop</p>
+                      <p className="text-xs text-muted-foreground mt-1">Max 10MB • Will be optimized</p>
                     </>
                   )}
                 </div>
                 <input
                   type="file"
                   className="hidden"
-                  accept="image/*"
-                  onChange={handleImageUpload}
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleFileSelect}
                   disabled={isUploadingImage}
                 />
               </label>
             )}
           </CardContent>
         </Card>
+
+        {/* Image Cropper Modal */}
+        {rawImageFile && (
+          <ImageCropper
+            file={rawImageFile}
+            isOpen={showCropper}
+            onClose={handleCropCancel}
+            onCropComplete={handleCropComplete}
+            maxWidth={1920}
+            maxHeight={1080}
+            quality={0.85}
+          />
+        )}
 
         {/* SEO Settings Card */}
         <Card className="glass-card mb-6">
