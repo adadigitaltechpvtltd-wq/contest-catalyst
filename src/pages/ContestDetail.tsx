@@ -16,6 +16,7 @@ import { toast } from "sonner";
 interface Contest {
   id: string;
   slug: string | null;
+  category: string | null;
   title: string;
   description: string | null;
   theme: string | null;
@@ -59,7 +60,8 @@ interface Submission {
 }
 
 const ContestDetail = () => {
-  const { slug } = useParams<{ slug: string }>();
+  // Support both new format (/contest/:category/:slug) and legacy format (/contest/:slug)
+  const { category, slug } = useParams<{ category?: string; slug: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
@@ -315,6 +317,22 @@ const ContestDetail = () => {
       return;
     }
 
+    // Handle legacy URLs without category - redirect to new format
+    if (contestData && !category) {
+      const contestCategory = contestData.category || 'general';
+      navigate(`/contest/${contestCategory}/${contestData.slug || contestData.id}`, { replace: true });
+      return;
+    }
+
+    // Validate category matches - redirect to correct URL if mismatch
+    if (contestData && category) {
+      const contestCategory = contestData.category || 'general';
+      if (category !== contestCategory) {
+        navigate(`/contest/${contestCategory}/${contestData.slug || contestData.id}`, { replace: true });
+        return;
+      }
+    }
+
     setContest(contestData);
 
     if (contestData) {
@@ -379,7 +397,7 @@ const ContestDetail = () => {
 
   useEffect(() => {
     fetchContest();
-  }, [slug, user]);
+  }, [category, slug, user]);
 
   const loadMoreSubmissions = async () => {
     if (!contest?.id || isLoadingMore) return;

@@ -20,10 +20,10 @@ serve(async (req) => {
     
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Fetch active, voting, and completed contests
+    // Fetch active, voting, and completed contests with category
     const { data: contests, error: contestsError } = await supabase
       .from('contests')
-      .select('slug, updated_at, status')
+      .select('slug, category, updated_at, status')
       .in('status', ['active', 'voting', 'completed'])
       .order('updated_at', { ascending: false });
 
@@ -35,11 +35,7 @@ serve(async (req) => {
     // Fetch approved and winner submissions only
     const { data: submissions, error: submissionsError } = await supabase
       .from('submissions')
-      .select(`
-        slug,
-        updated_at,
-        contest_id
-      `)
+      .select('slug, updated_at, contest_id')
       .in('status', ['approved', 'winner'])
       .order('updated_at', { ascending: false })
       .limit(5000);
@@ -49,27 +45,18 @@ serve(async (req) => {
       throw submissionsError;
     }
 
-    // Build a map of contest slugs
-    const contestSlugs = new Map<string, string>();
-    for (const contest of contests || []) {
-      if (contest.slug) {
-        // Use id as key - we need to fetch contest ids too
-        contestSlugs.set(contest.slug, contest.slug);
-      }
-    }
-
-    // Fetch contest info for submissions
+    // Fetch contest info for submissions (with category)
     const contestIds = [...new Set((submissions || []).map(s => s.contest_id))];
     const { data: contestsForSubmissions } = await supabase
       .from('contests')
-      .select('id, slug, status')
+      .select('id, slug, category, status')
       .in('id', contestIds)
       .in('status', ['active', 'voting', 'completed']);
     
-    const contestMap = new Map<string, { slug: string; status: string }>();
+    const contestMap = new Map<string, { slug: string; category: string; status: string }>();
     for (const c of contestsForSubmissions || []) {
       if (c.slug) {
-        contestMap.set(c.id, { slug: c.slug, status: c.status });
+        contestMap.set(c.id, { slug: c.slug, category: c.category || 'general', status: c.status });
       }
     }
 
@@ -105,15 +92,16 @@ serve(async (req) => {
   </url>
 `;
 
-    // Add contest pages
+    // Add contest pages with category in URL
     for (const contest of contests || []) {
       if (!contest.slug) continue;
       
+      const category = contest.category || 'general';
       const priority = contest.status === 'active' ? '0.9' : '0.7';
       const changefreq = contest.status === 'active' ? 'daily' : 'weekly';
       
       xml += `  <url>
-    <loc>${BASE_URL}/contest/${contest.slug}</loc>
+    <loc>${BASE_URL}/contest/${category}/${contest.slug}</loc>
     <lastmod>${new Date(contest.updated_at).toISOString().split('T')[0]}</lastmod>
     <changefreq>${changefreq}</changefreq>
     <priority>${priority}</priority>
@@ -121,7 +109,7 @@ serve(async (req) => {
 `;
     }
 
-    // Add approved photo pages
+    // Add approved gallery pages with category in URL
     for (const submission of submissions || []) {
       if (!submission.slug) continue;
       
@@ -129,7 +117,7 @@ serve(async (req) => {
       if (!contestInfo) continue;
       
       xml += `  <url>
-    <loc>${BASE_URL}/photo/${contestInfo.slug}/${submission.slug}</loc>
+    <loc>${BASE_URL}/gallery/${contestInfo.category}/${contestInfo.slug}/${submission.slug}</loc>
     <lastmod>${new Date(submission.updated_at).toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -139,13 +127,13 @@ serve(async (req) => {
 
     xml += `</urlset>`;
 
-    console.log(`Sitemap generated with ${contests?.length || 0} contests and ${submissions?.length || 0} photos`);
+    console.log(`Sitemap generated with ${contests?.length || 0} contests and ${submissions?.length || 0} gallery items`);
 
     return new Response(xml, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+        'Cache-Control': 'public, max-age=3600',
       },
     });
 
