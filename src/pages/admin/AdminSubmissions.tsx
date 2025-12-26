@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
+import { validateTitle, isTitleBarelyPassing, generateSlugFromTitle } from '@/lib/titleValidation';
 import { 
   Image as ImageIcon, 
   Loader2, 
@@ -29,7 +30,8 @@ import {
   Play,
   Zap,
   Search,
-  FileText
+  FileText,
+  Info
 } from 'lucide-react';
 
 type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
@@ -50,6 +52,7 @@ interface Submission {
   slug: string | null;
   seo_title: string | null;
   meta_description: string | null;
+  title_quality_flag: string | null;
   status: SubmissionStatus;
   originality_confirmed: boolean;
   exif_camera_make: string | null;
@@ -185,6 +188,7 @@ const AdminSubmissions = () => {
           slug,
           seo_title,
           meta_description,
+          title_quality_flag,
           status,
           originality_confirmed,
           exif_camera_make,
@@ -385,6 +389,17 @@ const AdminSubmissions = () => {
     }
 
     try {
+      // Determine if we need to regenerate slug (title was changed)
+      const titleChanged = enhancedTitle && enhancedTitle !== selectedSubmission.title;
+      const newSlug = titleChanged ? generateSlugFromTitle(enhancedTitle) : selectedSubmission.slug;
+      
+      // Check title quality for flagging
+      const titleToCheck = enhancedTitle || selectedSubmission.title;
+      const titleValidation = validateTitle(titleToCheck);
+      const titleQualityFlag = titleValidation.isValid 
+        ? (isTitleBarelyPassing(titleToCheck) ? 'medium' : null)
+        : 'low';
+
       // Update the submission with SEO fields
       const { error: submissionError } = await supabase
         .from('submissions')
@@ -396,8 +411,10 @@ const AdminSubmissions = () => {
           rejection_reason: (newStatus === 'rejected' || newStatus === 'disqualified') ? rejectionReason : null,
           reviewed_by: user.id,
           reviewed_at: new Date().toISOString(),
-          // SEO fields - only update if enhanced
+          // Title and slug - regenerate slug if title changed
           title: enhancedTitle || selectedSubmission.title,
+          slug: newSlug,
+          title_quality_flag: titleQualityFlag,
           description: enhancedDescription || selectedSubmission.description,
           seo_title: seoTitle || null,
           meta_description: seoDescription || null,
@@ -880,6 +897,34 @@ const AdminSubmissions = () => {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      {/* Title Quality Warning */}
+                      {(() => {
+                        const titleValidation = validateTitle(selectedSubmission.title);
+                        const barelyPassing = isTitleBarelyPassing(selectedSubmission.title);
+                        return (
+                          <>
+                            {barelyPassing && (
+                              <div className="flex items-start gap-2 p-2 bg-amber-500/10 rounded border border-amber-500/30">
+                                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                                <div className="text-xs">
+                                  <p className="font-medium text-amber-500">Title barely passes validation</p>
+                                  <p className="text-muted-foreground">Consider improving the title before approving.</p>
+                                </div>
+                              </div>
+                            )}
+                            {!titleValidation.isValid && (
+                              <div className="flex items-start gap-2 p-2 bg-destructive/10 rounded border border-destructive/30">
+                                <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                                <div className="text-xs">
+                                  <p className="font-medium text-destructive">Title does not meet quality standards</p>
+                                  <p className="text-muted-foreground">{titleValidation.errors[0]}</p>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+
                       {/* Original vs Enhanced Title */}
                       <div className="space-y-2">
                         <Label className="text-xs text-muted-foreground">Original Title</Label>
@@ -893,6 +938,9 @@ const AdminSubmissions = () => {
                           <span className="text-xs text-muted-foreground">
                             ({enhancedTitle.length}/100)
                           </span>
+                          {enhancedTitle !== selectedSubmission.title && (
+                            <Badge variant="outline" className="text-xs">Modified</Badge>
+                          )}
                         </Label>
                         <Input
                           value={enhancedTitle}
@@ -900,6 +948,12 @@ const AdminSubmissions = () => {
                           placeholder="Enter SEO-friendly title..."
                           maxLength={100}
                         />
+                        {enhancedTitle !== selectedSubmission.title && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Info className="h-3 w-3" />
+                            Slug will be regenerated: {generateSlugFromTitle(enhancedTitle)}
+                          </p>
+                        )}
                       </div>
 
                       {/* Original vs Enhanced Description */}
