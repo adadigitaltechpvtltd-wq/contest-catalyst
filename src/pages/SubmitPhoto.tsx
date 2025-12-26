@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -163,118 +164,131 @@ const SubmitPhoto = () => {
     return { days, hours, minutes, seconds, isExpired: false };
   }, []);
 
-  useEffect(() => {
-    const fetchContest = async () => {
-      if (!slug) {
-        setIsLoading(false);
-        return;
-      }
+  const fetchContest = useCallback(async () => {
+    if (!slug || !user) return;
 
-      // ProtectedRoute already ensures user exists, but check anyway
-      if (!user) {
-        console.log('SubmitPhoto: No user yet, waiting...');
-        // Don't return early without setting loading to false after a delay
-        const timeout = setTimeout(() => {
-          if (!user) {
-            setIsLoading(false);
-          }
-        }, 3000);
-        return () => clearTimeout(timeout);
-      }
+    setIsLoading(true);
 
-      console.log('SubmitPhoto: Fetching contest:', slug, 'User:', user?.id);
+    console.log('SubmitPhoto: Fetching contest:', slug, 'User:', user?.id);
 
-      // Support both slug and UUID for backward compatibility
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+    // Support both slug and UUID for backward compatibility
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
 
-      try {
-        const { data, error } = await supabase
-          .from('contests')
-          .select('id, title, description, theme, prize_amount, rules, end_date')
-          .eq(isUUID ? 'id' : 'slug', slug)
-          .eq('status', 'active')
-          .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from('contests')
+        .select('id, title, description, theme, prize_amount, rules, end_date')
+        .eq(isUUID ? 'id' : 'slug', slug)
+        .eq('status', 'active')
+        .maybeSingle();
 
-        if (error) {
-          console.error('Error fetching contest:', error);
-          toast({
-            title: 'Error loading contest',
-            description: 'Please try again later.',
-            variant: 'destructive',
-          });
-          navigate('/contests');
-          return;
-        }
-
-        if (!data) {
-          toast({
-            title: 'Contest not found',
-            description: 'This contest may have ended or does not exist.',
-            variant: 'destructive',
-          });
-          navigate('/contests');
-          return;
-        }
-
-        setContest(data);
-        setTimeRemaining(calculateTimeRemaining(data.end_date));
-
-        // Check if user already submitted
-        const { data: submission, error: subError } = await supabase
-          .from('submissions')
-          .select('id')
-          .eq('contest_id', data.id)
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (!subError && submission) {
-          setHasSubmitted(true);
-        }
-      } catch (err) {
-        console.error('Exception in fetchContest:', err);
+      if (error) {
+        console.error('Error fetching contest:', error);
         toast({
           title: 'Error loading contest',
           description: 'Please try again later.',
           variant: 'destructive',
         });
-      } finally {
-        setIsLoading(false);
+        navigate('/contests');
+        return;
       }
-    };
+
+      if (!data) {
+        toast({
+          title: 'Contest not found',
+          description: 'This contest may have ended or does not exist.',
+          variant: 'destructive',
+        });
+        navigate('/contests');
+        return;
+      }
+
+      setContest(data);
+      setTimeRemaining(calculateTimeRemaining(data.end_date));
+
+      // Check if user already submitted
+      const { data: submission, error: subError } = await supabase
+        .from('submissions')
+        .select('id')
+        .eq('contest_id', data.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!subError && submission) {
+        setHasSubmitted(true);
+      }
+    } catch (err) {
+      console.error('Exception in fetchContest:', err);
+      toast({
+        title: 'Error loading contest',
+        description: 'Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [slug, user, navigate, toast, calculateTimeRemaining]);
+
+  useEffect(() => {
+    if (!slug) {
+      setIsLoading(false);
+      return;
+    }
+
+    // ProtectedRoute already ensures user exists, but check anyway
+    if (!user) {
+      console.log('SubmitPhoto: No user yet, waiting...');
+      const timeout = setTimeout(() => {
+        if (!user) {
+          setIsLoading(false);
+        }
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
 
     fetchContest();
-  }, [slug, user, navigate, toast, calculateTimeRemaining]);
+  }, [slug, user, fetchContest]);
+
+
+  const fetchPreviousSubmissions = useCallback(async () => {
+    if (!user) return;
+
+    setIsLoadingGallery(true);
+
+    const { data, error } = await supabase
+      .from('submissions')
+      .select(`
+        id,
+        title,
+        image_url,
+        status,
+        created_at,
+        contest:contests(title)
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(12);
+
+    if (!error && data) {
+      setPreviousSubmissions(data as PreviousSubmission[]);
+    }
+
+    setIsLoadingGallery(false);
+  }, [user]);
 
   // Fetch previous submissions
   useEffect(() => {
-    const fetchPreviousSubmissions = async () => {
-      if (!user) return;
-      
-      setIsLoadingGallery(true);
-      
-      const { data, error } = await supabase
-        .from('submissions')
-        .select(`
-          id,
-          title,
-          image_url,
-          status,
-          created_at,
-          contest:contests(title)
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(12);
-
-      if (!error && data) {
-        setPreviousSubmissions(data as PreviousSubmission[]);
-      }
-      
-      setIsLoadingGallery(false);
-    };
-
     fetchPreviousSubmissions();
-  }, [user, authLoading]);
+  }, [fetchPreviousSubmissions]);
+
+  const handleSubmitPhotoRefresh = useCallback(() => {
+    fetchContest();
+    fetchPreviousSubmissions();
+  }, [fetchContest, fetchPreviousSubmissions]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  useGlobalRefresh(handleSubmitPhotoRefresh);
+
 
   // Update countdown every second
   useEffect(() => {
