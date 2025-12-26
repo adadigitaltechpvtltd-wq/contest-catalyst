@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
@@ -345,6 +346,15 @@ const Gallery = () => {
       fetchPhotos(page);
     }
   }, [page, fetchPhotos]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  const handleGlobalRefresh = useCallback(() => {
+    setPage(0);
+    setHasMore(true);
+    fetchPhotos(0, true);
+  }, [fetchPhotos]);
+
+  useGlobalRefresh(handleGlobalRefresh);
 
   const clearFilters = () => {
     setSearchQuery('');

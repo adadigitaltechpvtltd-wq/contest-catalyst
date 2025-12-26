@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import SubmissionModal from "@/components/SubmissionModal";
 import InlineAuthDialog from "@/components/InlineAuthDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useGlobalRefresh } from "@/hooks/useVisibilityRefresh";
 import { formatDistanceToNow, format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -398,6 +399,9 @@ const ContestDetail = () => {
   useEffect(() => {
     fetchContest();
   }, [category, slug, user]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  useGlobalRefresh(fetchContest);
 
   const loadMoreSubmissions = async () => {
     if (!contest?.id || isLoadingMore) return;
