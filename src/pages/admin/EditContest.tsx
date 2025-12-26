@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Loader2, Plus, X } from 'lucide-react';
+import { CalendarIcon, Loader2, Plus, X, Upload, ImageIcon, Instagram, Twitter, Linkedin, Youtube, ExternalLink } from 'lucide-react';
 import { TimePicker } from '@/components/ui/time-picker';
 import { format, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -26,6 +26,7 @@ const EditContest = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -42,11 +43,23 @@ const EditContest = () => {
   const [featuredInHero, setFeaturedInHero] = useState(false);
   const [rules, setRules] = useState<string[]>(['']);
   const [judgingCriteria, setJudgingCriteria] = useState<string[]>(['']);
+  const [coverImageUrl, setCoverImageUrl] = useState('');
   
   // SEO fields
   const [seoTitle, setSeoTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [keywords, setKeywords] = useState('');
+
+  // Brand fields
+  const [brandName, setBrandName] = useState('');
+  const [brandDescription, setBrandDescription] = useState('');
+  const [brandWebsiteUrl, setBrandWebsiteUrl] = useState('');
+  const [brandInstagramUrl, setBrandInstagramUrl] = useState('');
+  const [brandTwitterUrl, setBrandTwitterUrl] = useState('');
+  const [brandLinkedinUrl, setBrandLinkedinUrl] = useState('');
+  const [brandYoutubeUrl, setBrandYoutubeUrl] = useState('');
+  const [brandCtaLabel, setBrandCtaLabel] = useState('');
+  const [brandCtaUrl, setBrandCtaUrl] = useState('');
 
   useEffect(() => {
     const fetchContest = async () => {
@@ -88,11 +101,54 @@ const EditContest = () => {
       setSeoTitle(data.seo_title ?? '');
       setMetaDescription(data.meta_description ?? '');
       setKeywords(data.keywords?.join(', ') ?? '');
+      // Load cover image and brand fields
+      setCoverImageUrl(data.cover_image_url ?? '');
+      setBrandName(data.brand_name ?? '');
+      setBrandDescription(data.brand_description ?? '');
+      setBrandWebsiteUrl(data.brand_website_url ?? '');
+      setBrandInstagramUrl(data.brand_instagram_url ?? '');
+      setBrandTwitterUrl(data.brand_twitter_url ?? '');
+      setBrandLinkedinUrl(data.brand_linkedin_url ?? '');
+      setBrandYoutubeUrl(data.brand_youtube_url ?? '');
+      setBrandCtaLabel(data.brand_cta_label ?? '');
+      setBrandCtaUrl(data.brand_cta_url ?? '');
       setIsLoading(false);
     };
 
     fetchContest();
   }, [id, navigate, toast]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Max 5MB allowed', variant: 'destructive' });
+      return;
+    }
+
+    setIsUploadingImage(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `contest-${id}-${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('submissions')
+      .upload(`contests/${fileName}`, file, { upsert: true });
+
+    if (uploadError) {
+      toast({ title: 'Upload failed', description: uploadError.message, variant: 'destructive' });
+      setIsUploadingImage(false);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('submissions')
+      .getPublicUrl(`contests/${fileName}`);
+
+    setCoverImageUrl(publicUrl);
+    setIsUploadingImage(false);
+    toast({ title: 'Image uploaded', description: 'Cover image uploaded successfully' });
+  };
 
   const addRule = () => setRules([...rules, '']);
   const removeRule = (index: number) => setRules(rules.filter((_, i) => i !== index));
@@ -167,6 +223,16 @@ const EditContest = () => {
         seo_title: seoTitle || null,
         meta_description: metaDescription || null,
         keywords: keywordsArray.length > 0 ? keywordsArray : null,
+        cover_image_url: coverImageUrl || null,
+        brand_name: brandName || null,
+        brand_description: brandDescription || null,
+        brand_website_url: brandWebsiteUrl || null,
+        brand_instagram_url: brandInstagramUrl || null,
+        brand_twitter_url: brandTwitterUrl || null,
+        brand_linkedin_url: brandLinkedinUrl || null,
+        brand_youtube_url: brandYoutubeUrl || null,
+        brand_cta_label: brandCtaLabel || null,
+        brand_cta_url: brandCtaUrl || null,
       })
       .eq('id', id);
 
@@ -238,6 +304,58 @@ const EditContest = () => {
                 rows={4}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Cover Image Card */}
+        <Card className="glass-card mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5" />
+              Contest Cover Image
+            </CardTitle>
+            <CardDescription>Single image used across listings and contest page</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {coverImageUrl ? (
+              <div className="relative">
+                <img
+                  src={coverImageUrl}
+                  alt="Contest cover"
+                  className="w-full max-w-md h-48 object-contain rounded-lg border border-border bg-muted"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => setCoverImageUrl('')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full max-w-md h-48 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-muted/50">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  {isUploadingImage ? (
+                    <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
+                  ) : (
+                    <>
+                      <Upload className="h-10 w-10 text-muted-foreground mb-3" />
+                      <p className="text-sm text-muted-foreground">Click to upload cover image</p>
+                      <p className="text-xs text-muted-foreground mt-1">Max 5MB</p>
+                    </>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={isUploadingImage}
+                />
+              </label>
+            )}
           </CardContent>
         </Card>
 
@@ -474,6 +592,127 @@ const EditContest = () => {
               <Plus className="h-4 w-4 mr-1" />
               Add Criteria
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Brand / Partner Details */}
+        <Card className="glass-card mb-6">
+          <CardHeader>
+            <CardTitle>Brand / Partner Details (Optional)</CardTitle>
+            <CardDescription>Add optional brand or sponsor information for this contest</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="brandName">Brand Name</Label>
+                <Input
+                  id="brandName"
+                  value={brandName}
+                  onChange={(e) => setBrandName(e.target.value)}
+                  placeholder="e.g., Powered by Acme Co"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="brandWebsiteUrl">Brand Website URL</Label>
+                <Input
+                  id="brandWebsiteUrl"
+                  type="url"
+                  value={brandWebsiteUrl}
+                  onChange={(e) => setBrandWebsiteUrl(e.target.value)}
+                  placeholder="https://example.com"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="brandDescription">Brand Description (max 300 characters)</Label>
+              <Textarea
+                id="brandDescription"
+                value={brandDescription}
+                onChange={(e) => setBrandDescription(e.target.value)}
+                placeholder="Short description about the brand or partner..."
+                maxLength={300}
+                rows={2}
+              />
+              <p className="text-xs text-muted-foreground">
+                {brandDescription.length}/300 characters
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="brandInstagramUrl" className="flex items-center gap-2">
+                  <Instagram className="h-4 w-4" /> Instagram URL
+                </Label>
+                <Input
+                  id="brandInstagramUrl"
+                  type="url"
+                  value={brandInstagramUrl}
+                  onChange={(e) => setBrandInstagramUrl(e.target.value)}
+                  placeholder="https://instagram.com/brand"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="brandTwitterUrl" className="flex items-center gap-2">
+                  <Twitter className="h-4 w-4" /> Twitter / X URL
+                </Label>
+                <Input
+                  id="brandTwitterUrl"
+                  type="url"
+                  value={brandTwitterUrl}
+                  onChange={(e) => setBrandTwitterUrl(e.target.value)}
+                  placeholder="https://twitter.com/brand"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="brandLinkedinUrl" className="flex items-center gap-2">
+                  <Linkedin className="h-4 w-4" /> LinkedIn URL
+                </Label>
+                <Input
+                  id="brandLinkedinUrl"
+                  type="url"
+                  value={brandLinkedinUrl}
+                  onChange={(e) => setBrandLinkedinUrl(e.target.value)}
+                  placeholder="https://linkedin.com/company/brand"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="brandYoutubeUrl" className="flex items-center gap-2">
+                  <Youtube className="h-4 w-4" /> YouTube URL
+                </Label>
+                <Input
+                  id="brandYoutubeUrl"
+                  type="url"
+                  value={brandYoutubeUrl}
+                  onChange={(e) => setBrandYoutubeUrl(e.target.value)}
+                  placeholder="https://youtube.com/@brand"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="brandCtaLabel" className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4" /> CTA Button Label
+                </Label>
+                <Input
+                  id="brandCtaLabel"
+                  value={brandCtaLabel}
+                  onChange={(e) => setBrandCtaLabel(e.target.value)}
+                  placeholder="e.g., Visit Brand"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="brandCtaUrl">CTA Button URL</Label>
+                <Input
+                  id="brandCtaUrl"
+                  type="url"
+                  value={brandCtaUrl}
+                  onChange={(e) => setBrandCtaUrl(e.target.value)}
+                  placeholder="https://example.com/promo"
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 

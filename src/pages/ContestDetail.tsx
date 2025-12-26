@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Clock, Users, Trophy, CheckCircle, Share2, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check, ChevronLeft, ChevronRight, Download, Heart, Facebook, X } from "lucide-react";
+import { Clock, Users, Trophy, CheckCircle, Share2, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check, ChevronLeft, ChevronRight, Download, Heart, Facebook, X, Youtube, ExternalLink, Building2 } from "lucide-react";
 import ContestDetailSkeleton from "@/components/skeletons/ContestDetailSkeleton";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
@@ -30,6 +30,16 @@ interface Contest {
   judging_criteria: string[] | null;
   min_participants: number;
   max_participants: number | null;
+  // Brand fields
+  brand_name: string | null;
+  brand_description: string | null;
+  brand_website_url: string | null;
+  brand_instagram_url: string | null;
+  brand_twitter_url: string | null;
+  brand_linkedin_url: string | null;
+  brand_youtube_url: string | null;
+  brand_cta_label: string | null;
+  brand_cta_url: string | null;
 }
 
 interface Submission {
@@ -666,68 +676,200 @@ const ContestDetail = () => {
             </div>
           </div>
 
-          {/* Contest Details Grid */}
-          <div className="grid md:grid-cols-3 gap-6 mt-6">
-            {/* Prize Details */}
-            <div className="bg-card border border-border rounded-xl p-5">
-              <h2 className="font-display text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-primary" />
-                Prize Details
-              </h2>
-              <ul className="space-y-2">
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle className="w-4 h-4 text-success shrink-0" />
-                  {prizeFormatted} Cash Prize
-                </li>
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle className="w-4 h-4 text-success shrink-0" />
-                  Featured on GAAL Platform
-                </li>
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle className="w-4 h-4 text-success shrink-0" />
-                  Winner Badge on Profile
-                </li>
-              </ul>
-            </div>
+          {/* Two-Column Layout: Contest Content (65%) + Details (35%) */}
+          <div className="grid lg:grid-cols-[1fr_380px] gap-6 mt-6">
+            {/* Left Column - Contest Content */}
+            <div className="space-y-6">
+              {/* Cover Image */}
+              {contest.cover_image_url && (
+                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                  <img
+                    src={contest.cover_image_url}
+                    alt={contest.title}
+                    className="w-full h-64 md:h-80 object-contain bg-muted"
+                  />
+                </div>
+              )}
 
-            {/* Contest Rules */}
-            <div className="bg-card border border-border rounded-xl p-5">
-              <h2 className="font-display text-lg font-bold text-foreground mb-3">
-                Contest Rules
-              </h2>
-              <ol className="space-y-2">
-                {rules.slice(0, 4).map((rule, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-foreground shrink-0 mt-0.5">
-                      {i + 1}
-                    </span>
-                    <span className="line-clamp-2">{rule}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            {/* Judging Criteria */}
-            <div className="bg-card border border-border rounded-xl p-5">
-              <h2 className="font-display text-lg font-bold text-foreground mb-3">
-                Judging Criteria
-              </h2>
-              <div className="space-y-3">
-                {judgingCriteria.map((criteria, i) => (
-                  <div key={i}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-foreground">{criteria.name}</span>
-                      <span className="text-muted-foreground">{criteria.weight}%</span>
-                    </div>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full gradient-primary rounded-full"
-                        style={{ width: `${criteria.weight}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+              {/* Contest Rules */}
+              <div className="bg-card border border-border rounded-xl p-5">
+                <h2 className="font-display text-lg font-bold text-foreground mb-3">
+                  Contest Rules
+                </h2>
+                <ol className="space-y-2">
+                  {rules.map((rule, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-foreground shrink-0 mt-0.5">
+                        {i + 1}
+                      </span>
+                      <span>{rule}</span>
+                    </li>
+                  ))}
+                </ol>
               </div>
+
+              {/* Judging Criteria */}
+              <div className="bg-card border border-border rounded-xl p-5">
+                <h2 className="font-display text-lg font-bold text-foreground mb-3">
+                  Judging Criteria
+                </h2>
+                <div className="space-y-3">
+                  {judgingCriteria.map((criteria, i) => (
+                    <div key={i}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-foreground">{criteria.name}</span>
+                        <span className="text-muted-foreground">{criteria.weight}%</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full gradient-primary rounded-full"
+                          style={{ width: `${criteria.weight}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Contest Details + Brand Info */}
+            <div className="space-y-6">
+              {/* Quick Stats Card */}
+              <div className="bg-card border border-border rounded-xl p-5">
+                <h2 className="font-display text-lg font-bold text-foreground mb-4">
+                  Contest Details
+                </h2>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Prize Pool</span>
+                    <span className="font-bold text-foreground">{prizeFormatted}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Entries</span>
+                    <span className="font-bold text-foreground">{participantCount}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Time Left</span>
+                    <span className="font-bold text-foreground">{formatTimeLeft(contest.end_date)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">End Date</span>
+                    <span className="text-sm text-foreground">{format(new Date(contest.end_date), "MMM d, yyyy")}</span>
+                  </div>
+                </div>
+                
+                {/* What You Win */}
+                <div className="mt-6 pt-4 border-t border-border">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">What You Win</h3>
+                  <ul className="space-y-2">
+                    <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                      {prizeFormatted} Cash Prize
+                    </li>
+                    <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                      Featured on GAAL
+                    </li>
+                    <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                      Winner Badge
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Brand / Partner Info - Only show if brand_name exists */}
+              {contest.brand_name && (
+                <div className="bg-card border border-border rounded-xl p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Building2 className="w-5 h-5 text-muted-foreground" />
+                    <h2 className="font-display text-lg font-bold text-foreground">
+                      {contest.brand_name}
+                    </h2>
+                  </div>
+
+                  {contest.brand_description && (
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {contest.brand_description}
+                    </p>
+                  )}
+
+                  {/* Brand Social Links */}
+                  {(contest.brand_instagram_url || contest.brand_twitter_url || contest.brand_linkedin_url || contest.brand_youtube_url) && (
+                    <div className="flex items-center gap-2 mb-4">
+                      {contest.brand_instagram_url && (
+                        <a
+                          href={contest.brand_instagram_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                          aria-label="Instagram"
+                        >
+                          <Instagram className="w-4 h-4 text-foreground" />
+                        </a>
+                      )}
+                      {contest.brand_twitter_url && (
+                        <a
+                          href={contest.brand_twitter_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                          aria-label="Twitter"
+                        >
+                          <Twitter className="w-4 h-4 text-foreground" />
+                        </a>
+                      )}
+                      {contest.brand_linkedin_url && (
+                        <a
+                          href={contest.brand_linkedin_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                          aria-label="LinkedIn"
+                        >
+                          <Linkedin className="w-4 h-4 text-foreground" />
+                        </a>
+                      )}
+                      {contest.brand_youtube_url && (
+                        <a
+                          href={contest.brand_youtube_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                          aria-label="YouTube"
+                        >
+                          <Youtube className="w-4 h-4 text-foreground" />
+                        </a>
+                      )}
+                      {contest.brand_website_url && (
+                        <a
+                          href={contest.brand_website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                          aria-label="Website"
+                        >
+                          <ExternalLink className="w-4 h-4 text-foreground" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Brand CTA */}
+                  {contest.brand_cta_label && contest.brand_cta_url && (
+                    <a
+                      href={contest.brand_cta_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button variant="outline" className="w-full">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        {contest.brand_cta_label}
+                      </Button>
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -3,17 +3,19 @@ import { Button } from "@/components/ui/button";
 
 interface ContestCardProps {
   theme: string;
-  brand: string;
+  brand?: string;
   prize: string;
   prizeAmount?: number;
   timeLeft: string;
   participants: number;
   image: string;
+  coverImage?: string | null;
   featured?: boolean;
 }
 
-const ContestCard = ({ theme, brand, prize, prizeAmount, timeLeft, participants, image, featured }: ContestCardProps) => {
+const ContestCard = ({ theme, brand, prize, prizeAmount, timeLeft, participants, image, coverImage, featured }: ContestCardProps) => {
   const isFreeContest = prizeAmount === 0;
+  const displayImage = coverImage || image;
   
   return (
     <div 
@@ -24,20 +26,22 @@ const ContestCard = ({ theme, brand, prize, prizeAmount, timeLeft, participants,
       {/* Image */}
       <div className={`relative overflow-hidden ${featured ? 'h-64 lg:h-80' : 'h-48'}`}>
         <img 
-          src={image} 
+          src={displayImage} 
           alt={theme}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent" />
         
-        {/* Brand badge */}
-        <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-card/90 backdrop-blur-sm text-xs font-semibold text-foreground">
-          Sponsored by {brand}
-        </div>
+        {/* Brand badge - only show if brand exists */}
+        {brand && (
+          <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-card/90 backdrop-blur-sm text-xs font-semibold text-foreground">
+            {brand}
+          </div>
+        )}
         
         {/* Free contest badge */}
         {isFreeContest && (
-          <div className="absolute top-14 left-4 px-3 py-1.5 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg">
+          <div className={`absolute ${brand ? 'top-14' : 'top-4'} left-4 px-3 py-1.5 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg`}>
             🎉 FREE
           </div>
         )}
