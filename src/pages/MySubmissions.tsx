@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
@@ -193,7 +194,16 @@ const MySubmissions = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, authLoading, fetchSubmissions, toast]);
+  }, [user, fetchSubmissions, toast]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  const handleGlobalRefresh = useCallback(() => {
+    if (user) {
+      fetchSubmissions(user.id);
+    }
+  }, [user, fetchSubmissions]);
+
+  useGlobalRefresh(handleGlobalRefresh);
 
   const handleDelete = async (submissionId: string, imageUrl: string) => {
     setDeletingId(submissionId);

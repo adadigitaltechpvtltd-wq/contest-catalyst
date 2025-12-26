@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
@@ -168,6 +169,9 @@ const Wallet = () => {
       supabase.removeChannel(channel);
     };
   }, [user, fetchWalletData]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  useGlobalRefresh(fetchWalletData);
 
   const { pullDistance, isRefreshing, containerProps } = usePullToRefresh({
     onRefresh: fetchWalletData,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
@@ -10,6 +10,7 @@ import { Trophy, Clock, Users, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow, isPast, isFuture } from 'date-fns';
+import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
 
 type ContestStatus = 'active' | 'voting' | 'completed';
 
@@ -68,11 +69,7 @@ const Contests = () => {
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
   const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    fetchContests();
-  }, []);
-
-  const fetchContests = async () => {
+  const fetchContests = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -109,7 +106,14 @@ const Contests = () => {
       }
     }
     setIsLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchContests();
+  }, [fetchContests]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  useGlobalRefresh(fetchContests);
 
   const now = new Date();
   const activeContests = contests.filter((c) => 

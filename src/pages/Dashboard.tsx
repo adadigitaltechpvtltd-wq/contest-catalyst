@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
@@ -54,7 +55,7 @@ const Dashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const { unreadCount: notifications } = useRealtimeNotifications();
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     if (!user) return;
 
     setIsLoading(true);
@@ -123,13 +124,16 @@ const Dashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (!authLoading && user) {
       fetchDashboardData();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, fetchDashboardData]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  useGlobalRefresh(fetchDashboardData);
 
   const formatTimeLeft = (endDate: string) => {
     const end = new Date(endDate);
