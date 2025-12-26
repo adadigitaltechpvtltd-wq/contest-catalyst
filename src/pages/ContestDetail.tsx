@@ -245,6 +245,12 @@ const ContestDetail = () => {
 
   const handleDownload = async (imageUrl: string, title: string, submissionId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
+    
+    if (!user) {
+      setIsAuthDialogOpen(true);
+      return;
+    }
+    
     try {
       // Increment download count
       await supabase.rpc('increment_download_count', { submission_id_param: submissionId });
