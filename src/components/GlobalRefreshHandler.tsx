@@ -1,60 +1,70 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 // Global event name for refresh
 export const GLOBAL_REFRESH_EVENT = "gaal:global-refresh";
 
+// Global flag to track refresh state across the app
+let globalRefreshInProgress = false;
+
 /**
  * Dispatch a global refresh event that all components can listen to
  */
 export const dispatchGlobalRefresh = () => {
+  if (globalRefreshInProgress) return;
+  globalRefreshInProgress = true;
+  
+  console.log("[GlobalRefresh] Dispatching global refresh event...");
   window.dispatchEvent(new CustomEvent(GLOBAL_REFRESH_EVENT));
+  
+  // Reset flag after delay
+  setTimeout(() => {
+    globalRefreshInProgress = false;
+  }, 2000);
 };
 
 /**
  * Global component that handles tab visibility and network reconnection.
  * Invalidates all React Query caches and dispatches a custom event when:
- * - Tab becomes visible after being hidden for 10+ seconds
+ * - Tab becomes visible after being hidden for 5+ seconds
  * - Network comes back online
+ * - Window regains focus after being away
  * 
  * This ensures all API data is fresh across the entire application.
  */
 const GlobalRefreshHandler = () => {
   const queryClient = useQueryClient();
   const lastHiddenTime = useRef<number | null>(null);
-  const isRefreshing = useRef(false);
+  const lastBlurTime = useRef<number | null>(null);
+
+  const triggerGlobalRefresh = useCallback(() => {
+    if (globalRefreshInProgress) return;
+
+    console.log("[GlobalRefresh] Triggering global refresh...");
+    
+    // 1. Invalidate all React Query caches - this will refetch all active queries
+    queryClient.invalidateQueries();
+    
+    // 2. Dispatch custom event for non-React Query components
+    dispatchGlobalRefresh();
+  }, [queryClient]);
 
   useEffect(() => {
-    const triggerGlobalRefresh = () => {
-      if (isRefreshing.current) return;
-      isRefreshing.current = true;
-
-      console.log("[GlobalRefresh] Triggering global refresh...");
-      
-      // 1. Invalidate all React Query caches
-      queryClient.invalidateQueries();
-      
-      // 2. Dispatch custom event for non-React Query components
-      dispatchGlobalRefresh();
-      
-      // Reset flag after a delay to prevent rapid re-triggers
-      setTimeout(() => {
-        isRefreshing.current = false;
-      }, 2000);
-    };
-
     const handleVisibilityChange = () => {
       if (document.hidden) {
         // Tab is now hidden, record the time
         lastHiddenTime.current = Date.now();
+        console.log("[GlobalRefresh] Tab hidden");
       } else {
         // Tab is now visible again
         const hiddenDuration = lastHiddenTime.current 
           ? Date.now() - lastHiddenTime.current 
           : 0;
         
-        // If hidden for more than 10 seconds, trigger global refresh
-        if (hiddenDuration > 10000) {
+        console.log(`[GlobalRefresh] Tab visible after ${hiddenDuration}ms`);
+        
+        // If hidden for more than 5 seconds, trigger global refresh
+        if (hiddenDuration > 5000) {
           triggerGlobalRefresh();
         }
         
@@ -63,32 +73,46 @@ const GlobalRefreshHandler = () => {
     };
 
     const handleOnline = () => {
-      console.log("[GlobalRefresh] Network online");
+      console.log("[GlobalRefresh] Network online - refreshing data");
       triggerGlobalRefresh();
     };
 
+    const handleBlur = () => {
+      lastBlurTime.current = Date.now();
+    };
+
     const handleFocus = () => {
-      // Also handle window focus (e.g., switching between browser windows)
+      // Check both visibility hidden time and blur time
       const hiddenDuration = lastHiddenTime.current 
         ? Date.now() - lastHiddenTime.current 
         : 0;
+      const blurDuration = lastBlurTime.current
+        ? Date.now() - lastBlurTime.current
+        : 0;
       
-      if (hiddenDuration > 10000) {
+      const awayDuration = Math.max(hiddenDuration, blurDuration);
+      
+      if (awayDuration > 5000) {
+        console.log(`[GlobalRefresh] Window focused after ${awayDuration}ms away`);
         triggerGlobalRefresh();
       }
+      
+      lastBlurTime.current = null;
     };
 
     // Add event listeners
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("online", handleOnline);
+    window.addEventListener("blur", handleBlur);
     window.addEventListener("focus", handleFocus);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("online", handleOnline);
+      window.removeEventListener("blur", handleBlur);
       window.removeEventListener("focus", handleFocus);
     };
-  }, [queryClient]);
+  }, [triggerGlobalRefresh]);
 
   return null; // This component doesn't render anything
 };
