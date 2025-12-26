@@ -138,7 +138,15 @@ const Contests = () => {
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg overflow-hidden border border-border bg-muted flex items-center justify-center">
-                <span className="text-lg">📷</span>
+                {contest.cover_image_url ? (
+                  <img 
+                    src={contest.cover_image_url} 
+                    alt={contest.title} 
+                    className="w-full h-full object-cover" 
+                  />
+                ) : (
+                  <span className="text-lg">📷</span>
+                )}
               </div>
               <div>
                 <span className="text-xs text-muted-foreground">{contest.theme || "Photography"}</span>
