@@ -541,6 +541,9 @@ const SubmitPhoto = () => {
                     required
                     maxLength={100}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Minimum 5 meaningful words. Include at least 1 descriptive noun (e.g., street, portrait, sunset, festival).
+                  </p>
                 </div>
 
                 {/* Description */}
@@ -548,7 +551,7 @@ const SubmitPhoto = () => {
                   <Label htmlFor="description">Description (Optional)</Label>
                   <Textarea
                     id="description"
-                    placeholder="Tell us about your photo, the story behind it, or the techniques used..."
+                    placeholder="Please use a descriptive title (example: Rainy Street today). Tell us about your photo, the story behind it, or the techniques used..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={4}
