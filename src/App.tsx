@@ -39,6 +39,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSEO from "./pages/admin/AdminSEO";
+import BulkSEOReview from "./pages/admin/BulkSEOReview";
 import WinnerSelection from "./pages/admin/WinnerSelection";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import UserProfilePage from "./pages/UserProfilePage";
@@ -92,6 +93,7 @@ const App = () => (
               <Route path="reports" element={<AdminReports />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="seo" element={<AdminSEO />} />
+              <Route path="seo/bulk" element={<BulkSEOReview />} />
             </Route>
 
             {/* Legal Pages */}
