@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -34,67 +35,70 @@ const AdminDashboard = () => {
   });
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      // Fetch contests
-      const { data: contests } = await supabase.from('contests').select('status');
-      if (contests) {
-        setStats((prev) => ({
-          ...prev,
-          totalContests: contests.length,
-          activeContests: contests.filter((c) => c.status === 'active').length,
-        }));
-      }
+  const fetchStats = useCallback(async () => {
+    // Fetch contests
+    const { data: contests } = await supabase.from('contests').select('status');
+    if (contests) {
+      setStats((prev) => ({
+        ...prev,
+        totalContests: contests.length,
+        activeContests: contests.filter((c) => c.status === 'active').length,
+      }));
+    }
 
-      // Fetch submissions
-      const { data: submissions } = await supabase.from('submissions').select('status');
-      if (submissions) {
-        setStats((prev) => ({
-          ...prev,
-          totalSubmissions: submissions.length,
-          pendingSubmissions: submissions.filter((s) => s.status === 'pending').length,
-        }));
-      }
+    // Fetch submissions
+    const { data: submissions } = await supabase.from('submissions').select('status');
+    if (submissions) {
+      setStats((prev) => ({
+        ...prev,
+        totalSubmissions: submissions.length,
+        pendingSubmissions: submissions.filter((s) => s.status === 'pending').length,
+      }));
+    }
 
-      // Fetch pending payouts
-      const { data: payouts } = await supabase
-        .from('wallet_transactions')
-        .select('id')
-        .eq('status', 'pending');
-      if (payouts) {
-        setStats((prev) => ({ ...prev, pendingPayouts: payouts.length }));
-      }
+    // Fetch pending payouts
+    const { data: payouts } = await supabase
+      .from('wallet_transactions')
+      .select('id')
+      .eq('status', 'pending');
+    if (payouts) {
+      setStats((prev) => ({ ...prev, pendingPayouts: payouts.length }));
+    }
 
-      // Fetch recent submissions for review
-      const { data: recent, error: recentError } = await supabase
-        .from('submissions')
-        .select(
-          `
-          id,
-          title,
-          image_url,
-          status,
-          risk_score,
-          created_at,
-          contest:contests!submissions_contest_id_fkey(title),
-          profile:profiles!submissions_user_id_profiles_fkey(full_name)
+    // Fetch recent submissions for review
+    const { data: recent, error: recentError } = await supabase
+      .from('submissions')
+      .select(
         `
-        )
-        .eq('status', 'pending')
-        .order('risk_score', { ascending: false })
-        .limit(5);
+        id,
+        title,
+        image_url,
+        status,
+        risk_score,
+        created_at,
+        contest:contests!submissions_contest_id_fkey(title),
+        profile:profiles!submissions_user_id_profiles_fkey(full_name)
+      `
+      )
+      .eq('status', 'pending')
+      .order('risk_score', { ascending: false })
+      .limit(5);
 
-      if (recentError) {
-        console.error('Error fetching recent submissions:', recentError);
-      }
+    if (recentError) {
+      console.error('Error fetching recent submissions:', recentError);
+    }
 
-      if (recent) {
-        setRecentSubmissions(recent);
-      }
-    };
-
-    fetchStats();
+    if (recent) {
+      setRecentSubmissions(recent);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  useGlobalRefresh(fetchStats);
 
   return (
     <div>

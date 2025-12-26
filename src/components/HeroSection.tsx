@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useVisibilityRefresh } from "@/hooks/useVisibilityRefresh";
+import { useGlobalRefresh } from "@/hooks/useVisibilityRefresh";
 
 interface FeaturedContest {
   id: string;
@@ -61,7 +61,7 @@ const HeroSection = () => {
   }, [fetchFeaturedContest]);
 
   // Refetch when tab becomes visible again
-  useVisibilityRefresh(fetchFeaturedContest);
+  useGlobalRefresh(fetchFeaturedContest);
 
   // Update countdown timer
   useEffect(() => {

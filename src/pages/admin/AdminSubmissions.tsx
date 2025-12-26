@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -128,54 +129,8 @@ const AdminSubmissions = () => {
   const [batchProgress, setBatchProgress] = useState<AnalysisProgress | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState<Record<string, AnalysisProgress>>({});
 
-  // Subscribe to real-time progress updates
-  useEffect(() => {
-    const channel = supabase.channel('analysis-progress');
-    
-    channel.on('broadcast', { event: 'progress' }, (payload) => {
-      const progress = payload.payload as AnalysisProgress;
-      
-      if (progress.module === 'batch') {
-        setBatchProgress(progress);
-        if (progress.status === 'completed') {
-          setTimeout(() => {
-            setBatchProgress(null);
-            setIsBatchAnalyzing(false);
-            fetchSubmissions();
-          }, 1500);
-        }
-      } else {
-        setAnalysisProgress(prev => ({
-          ...prev,
-          [progress.submission_id]: progress,
-        }));
-        
-        if (progress.status === 'completed' || progress.status === 'error') {
-          setTimeout(() => {
-            setAnalysisProgress(prev => {
-              const next = { ...prev };
-              delete next[progress.submission_id];
-              return next;
-            });
-          }, 2000);
-        }
-      }
-    });
-
-    channel.subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  useEffect(() => {
-    fetchSubmissions();
-  }, [statusFilter]);
-
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = useCallback(async () => {
     setIsLoading(true);
-
 
     try {
       let query = supabase
@@ -244,7 +199,55 @@ const AdminSubmissions = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [statusFilter, toast]);
+
+  // Subscribe to real-time progress updates
+  useEffect(() => {
+    const channel = supabase.channel('analysis-progress');
+    
+    channel.on('broadcast', { event: 'progress' }, (payload) => {
+      const progress = payload.payload as AnalysisProgress;
+      
+      if (progress.module === 'batch') {
+        setBatchProgress(progress);
+        if (progress.status === 'completed') {
+          setTimeout(() => {
+            setBatchProgress(null);
+            setIsBatchAnalyzing(false);
+            fetchSubmissions();
+          }, 1500);
+        }
+      } else {
+        setAnalysisProgress(prev => ({
+          ...prev,
+          [progress.submission_id]: progress,
+        }));
+        
+        if (progress.status === 'completed' || progress.status === 'error') {
+          setTimeout(() => {
+            setAnalysisProgress(prev => {
+              const next = { ...prev };
+              delete next[progress.submission_id];
+              return next;
+            });
+          }, 2000);
+        }
+      }
+    });
+
+    channel.subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchSubmissions]);
+
+  useEffect(() => {
+    fetchSubmissions();
+  }, [fetchSubmissions]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  useGlobalRefresh(fetchSubmissions);
 
   const handleReanalyze = async (submissionId: string) => {
     setAnalyzingSubmissionId(submissionId);

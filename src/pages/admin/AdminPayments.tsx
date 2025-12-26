@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -64,11 +65,7 @@ const AdminPayments = () => {
   const [paymentReference, setPaymentReference] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [statusFilter]);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setIsLoading(true);
     
     let query = supabase
@@ -117,7 +114,14 @@ const AdminPayments = () => {
       setTransactions(transactionsWithPayments);
     }
     setIsLoading(false);
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  useGlobalRefresh(fetchTransactions);
 
   const openProcessModal = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
