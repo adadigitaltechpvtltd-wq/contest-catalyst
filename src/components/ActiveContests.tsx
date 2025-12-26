@@ -1,27 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
 import { Clock, Users, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow, isPast, isFuture } from "date-fns";
-import { useGlobalRefresh } from "@/hooks/useVisibilityRefresh";
+import { useActiveContestsQuery, ContestWithCount } from "@/hooks/useContestsQuery";
 
-interface Contest {
-  id: string;
-  slug: string | null;
-  title: string;
-  description: string | null;
-  prize_amount: number;
-  prize_currency: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  theme: string | null;
-  cover_image_url: string | null;
-}
-
-const getContestStatus = (contest: Contest): "live" | "soon" | "ended" => {
+const getContestStatus = (contest: ContestWithCount): "live" | "soon" | "ended" => {
   const now = new Date();
   const start = new Date(contest.start_date);
   const end = new Date(contest.end_date);
@@ -31,7 +15,7 @@ const getContestStatus = (contest: Contest): "live" | "soon" | "ended" => {
   return "live";
 };
 
-const getTimeDisplay = (contest: Contest, status: "live" | "soon" | "ended"): string => {
+const getTimeDisplay = (contest: ContestWithCount, status: "live" | "soon" | "ended"): string => {
   if (status === "ended") return "Ended";
   if (status === "soon") {
     return `Starts ${formatDistanceToNow(new Date(contest.start_date), { addSuffix: true })}`;
@@ -55,61 +39,9 @@ const gradientBorders = [
 ];
 
 const ActiveContests = () => {
-  const [contests, setContests] = useState<Contest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
+  const { data: contests = [], isLoading } = useActiveContestsQuery(4);
 
-  const fetchContests = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from("contests")
-        .select("id, slug, title, description, prize_amount, prize_currency, start_date, end_date, status, theme, cover_image_url")
-        .in("status", ["active", "voting", "completed"])
-        .eq("featured_in_hero", false)
-        .order("start_date", { ascending: false })
-        .limit(4);
-
-      if (error) {
-        console.error("Error fetching contests:", error);
-        setLoading(false);
-        return;
-      }
-
-      if (data) {
-        setContests(data);
-        
-        // Fetch participant counts for each contest
-        const counts: Record<string, number> = {};
-        await Promise.all(
-          data.map(async (contest) => {
-            try {
-              const { count } = await supabase
-                .from("submissions")
-                .select("*", { count: "exact", head: true })
-                .eq("contest_id", contest.id);
-              counts[contest.id] = count ?? 0;
-            } catch {
-              counts[contest.id] = 0;
-            }
-          })
-        );
-        setParticipantCounts(counts);
-      }
-    } catch (err) {
-      console.error("Error fetching contests:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchContests();
-  }, [fetchContests]);
-
-  // Refetch when tab becomes visible again
-  useGlobalRefresh(fetchContests);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <section id="contests" className="py-20">
         <div className="container mx-auto px-4">
@@ -234,7 +166,7 @@ const ActiveContests = () => {
                       </span>
                       <span className="flex items-center gap-1.5 text-muted-foreground">
                         <Users className="w-4 h-4" />
-                        {participantCounts[contest.id] ?? 0}
+                        {contest.participantCount}
                       </span>
                       <span className="flex items-center gap-1.5 text-muted-foreground">
                         <Clock className="w-4 h-4" />
