@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-
+import { GLOBAL_REFRESH_EVENT } from '@/components/GlobalRefreshHandler';
 type AppRole = 'admin' | 'moderator' | 'user';
 
 interface Profile {
@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data.map((r) => r.role as AppRole);
   };
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (user) {
       const [profileData, paymentData, rolesData] = await Promise.all([
         fetchProfile(user.id),
@@ -103,7 +103,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setPaymentDetails(paymentData);
       setRoles(rolesData);
     }
-  };
+  }, [user]);
+
+  // Listen for global refresh events (tab visibility, network reconnection)
+  useEffect(() => {
+    const handleGlobalRefresh = () => {
+      console.log("[AuthContext] Global refresh triggered, refreshing profile...");
+      refreshProfile();
+    };
+
+    window.addEventListener(GLOBAL_REFRESH_EVENT, handleGlobalRefresh);
+    return () => {
+      window.removeEventListener(GLOBAL_REFRESH_EVENT, handleGlobalRefresh);
+    };
+  }, [refreshProfile]);
 
   useEffect(() => {
     const init = async () => {
