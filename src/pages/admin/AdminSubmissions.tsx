@@ -72,6 +72,8 @@ interface Submission {
     id: string;
     title: string;
     status: string;
+    prize_amount: number;
+    prize_currency: string;
   };
   profile: {
     id: string;
@@ -201,7 +203,7 @@ const AdminSubmissions = () => {
           admin_notes,
           analysis_completed_at,
           created_at,
-          contest:contests!submissions_contest_id_fkey(id, title, status),
+          contest:contests!submissions_contest_id_fkey(id, title, status, prize_amount, prize_currency),
           profile:profiles!submissions_user_id_profiles_fkey(id, full_name, email)
         `)
         .order('risk_score', { ascending: false });
@@ -412,7 +414,7 @@ const AdminSubmissions = () => {
         return;
       }
 
-      // If marking as winner, also update the contest with winner info and set status to completed
+      // If marking as winner, also update the contest with winner info, create wallet transaction, and send notification
       if (newStatus === 'winner' && selectedSubmission.contest?.id) {
         const { error: contestError } = await supabase
           .from('contests')
@@ -429,6 +431,45 @@ const AdminSubmissions = () => {
             title: 'Warning',
             description: 'Submission marked as winner but contest update failed. Please update contest manually.',
             variant: 'destructive',
+          });
+        }
+
+        // Create wallet transaction for prize (pending status)
+        const prizeAmount = selectedSubmission.contest.prize_amount || 0;
+        const prizeCurrency = selectedSubmission.contest.prize_currency || 'USD';
+        
+        if (prizeAmount > 0 && selectedSubmission.profile?.id) {
+          const { error: walletError } = await supabase
+            .from('wallet_transactions')
+            .insert({
+              user_id: selectedSubmission.profile.id,
+              contest_id: selectedSubmission.contest.id,
+              submission_id: selectedSubmission.id,
+              type: 'prize',
+              amount: prizeAmount,
+              currency: prizeCurrency,
+              status: 'pending',
+              notes: `Prize for winning "${selectedSubmission.contest.title}"`,
+            });
+
+          if (walletError) {
+            console.error('Error creating wallet transaction:', walletError);
+            toast({
+              title: 'Warning',
+              description: 'Winner selected but wallet transaction failed. Please add manually.',
+              variant: 'destructive',
+            });
+          }
+        }
+
+        // Create notification for the winner
+        if (selectedSubmission.profile?.id) {
+          await supabase.from('notifications').insert({
+            user_id: selectedSubmission.profile.id,
+            type: 'success',
+            title: '🏆 Congratulations! You Won!',
+            message: `You've won the "${selectedSubmission.contest.title}" contest! Prize: $${prizeAmount}. Your earnings will be transferred soon.`,
+            link: `/contest/${selectedSubmission.contest.id}`,
           });
         }
       }
