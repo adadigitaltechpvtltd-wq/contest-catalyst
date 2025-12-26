@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorMapping';
+import { validateTitle, TitleValidationResult } from '@/lib/titleValidation';
 import { differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds } from 'date-fns';
 import { 
   Upload, 
@@ -24,7 +25,8 @@ import {
   Clock,
   Crop,
   Images,
-  ExternalLink
+  ExternalLink,
+  Info
 } from 'lucide-react';
 import ImageCropper from '@/components/ImageCropper';
 
@@ -48,6 +50,58 @@ interface PreviousSubmission {
     title: string;
   } | null;
 }
+
+// Title input with real-time validation feedback
+const TitleInputWithValidation = ({ 
+  title, 
+  setTitle 
+}: { 
+  title: string; 
+  setTitle: (title: string) => void;
+}) => {
+  const validation = useMemo(() => validateTitle(title), [title]);
+  const showValidation = title.length > 0;
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="title">Photo Title</Label>
+      <Input
+        id="title"
+        placeholder="Give your photo a creative title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        required
+        maxLength={100}
+        className={showValidation && !validation.isValid ? 'border-amber-500/50 focus-visible:ring-amber-500/50' : ''}
+      />
+      
+      {/* Validation feedback */}
+      {showValidation ? (
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-4 text-xs">
+            <span className={`flex items-center gap-1 ${validation.meaningfulWordCount >= 5 ? 'text-success' : 'text-muted-foreground'}`}>
+              {validation.meaningfulWordCount >= 5 ? <CheckCircle className="h-3 w-3" /> : <Info className="h-3 w-3" />}
+              {validation.meaningfulWordCount}/5 meaningful words
+            </span>
+            <span className={`flex items-center gap-1 ${validation.hasDescriptiveNoun ? 'text-success' : 'text-muted-foreground'}`}>
+              {validation.hasDescriptiveNoun ? <CheckCircle className="h-3 w-3" /> : <Info className="h-3 w-3" />}
+              {validation.hasDescriptiveNoun ? `Noun: ${validation.foundNouns[0]}` : 'Needs descriptive noun'}
+            </span>
+          </div>
+          {!validation.isValid && (
+            <p className="text-xs text-amber-500">
+              Example: "Rainy Street Reflections at Dusk"
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Minimum 5 meaningful words. Include at least 1 descriptive noun (e.g., street, portrait, sunset, festival).
+        </p>
+      )}
+    </div>
+  );
+};
 
 const SubmitPhoto = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -293,11 +347,12 @@ const SubmitPhoto = () => {
 
     if (!user || !contest || !photoFile) return;
 
-    // Basic title validation
-    if (title.trim().length < 3) {
+    // Title validation with quality requirements
+    const titleValidation = validateTitle(title);
+    if (!titleValidation.isValid) {
       toast({
-        title: 'Title required',
-        description: 'Please enter a title for your photo.',
+        title: 'Title needs improvement',
+        description: titleValidation.errors[0],
         variant: 'destructive',
       });
       return;
@@ -531,20 +586,10 @@ const SubmitPhoto = () => {
                 </div>
 
                 {/* Title */}
-                <div className="space-y-2">
-                  <Label htmlFor="title">Photo Title</Label>
-                  <Input
-                    id="title"
-                    placeholder="Give your photo a creative title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                    maxLength={100}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Minimum 5 meaningful words. Include at least 1 descriptive noun (e.g., street, portrait, sunset, festival).
-                  </p>
-                </div>
+                <TitleInputWithValidation 
+                  title={title} 
+                  setTitle={setTitle} 
+                />
 
                 {/* Description */}
                 <div className="space-y-2">
