@@ -201,6 +201,22 @@ async function analyzeSubmission(supabase: any, submission_id: string) {
   // Broadcast: Saving
   await broadcastProgress(supabase, submission_id, 'saving', 90, 'running', 'Saving results...');
 
+  // Helper to parse EXIF date format (YYYY:MM:DD HH:MM:SS) to ISO format
+  const parseExifDate = (exifDate: string | null): string | null => {
+    if (!exifDate) return null;
+    try {
+      // EXIF format: "2025:12:17 13:24:59" -> "2025-12-17T13:24:59"
+      const match = exifDate.match(/^(\d{4}):(\d{2}):(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/);
+      if (match) {
+        const [, year, month, day, hour, minute, second] = match;
+        return `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+      }
+      return null; // Invalid format, return null instead of invalid date
+    } catch {
+      return null;
+    }
+  };
+
   // Update the submission with analysis results
   const { error: updateError } = await supabase
     .from('submissions')
@@ -214,7 +230,7 @@ async function analyzeSubmission(supabase: any, submission_id: string) {
       // EXIF data
       exif_camera_make: exifAnalysis.cameraMake,
       exif_camera_model: exifAnalysis.cameraModel,
-      exif_date_taken: exifAnalysis.dateTaken,
+      exif_date_taken: parseExifDate(exifAnalysis.dateTaken),
       exif_software: exifAnalysis.software,
       exif_has_anomalies: exifAnalysis.hasAnomalies,
       exif_anomaly_reasons: exifAnalysis.anomalyReasons,
