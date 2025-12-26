@@ -86,8 +86,8 @@ export function validateTitle(title: string): TitleValidationResult {
   const hasDescriptiveNoun = foundNouns.length > 0;
   
   // Validation rules
-  if (meaningfulWordCount < 5) {
-    errors.push(`Title needs at least 5 meaningful words (currently ${meaningfulWordCount})`);
+  if (meaningfulWordCount < 3) {
+    errors.push(`Title needs at least 3 meaningful words (currently ${meaningfulWordCount})`);
   }
   
   if (!hasDescriptiveNoun) {
@@ -96,9 +96,9 @@ export function validateTitle(title: string): TitleValidationResult {
   
   // Calculate quality score
   let qualityScore: 'low' | 'medium' | 'high' = 'low';
-  if (meaningfulWordCount >= 5 && hasDescriptiveNoun) {
-    qualityScore = meaningfulWordCount >= 7 && foundNouns.length >= 2 ? 'high' : 'medium';
-  } else if (meaningfulWordCount >= 3 || hasDescriptiveNoun) {
+  if (meaningfulWordCount >= 3 && hasDescriptiveNoun) {
+    qualityScore = meaningfulWordCount >= 5 && foundNouns.length >= 2 ? 'high' : 'medium';
+  } else if (meaningfulWordCount >= 2 || hasDescriptiveNoun) {
     qualityScore = 'low';
   }
   

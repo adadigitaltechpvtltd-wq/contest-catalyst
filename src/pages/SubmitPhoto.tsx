@@ -81,9 +81,9 @@ const TitleInputWithValidation = ({
       {showValidation ? (
         <div className="space-y-1.5">
           <div className="flex items-center gap-4 text-xs">
-            <span className={`flex items-center gap-1 ${validation.meaningfulWordCount >= 5 ? 'text-success' : 'text-muted-foreground'}`}>
-              {validation.meaningfulWordCount >= 5 ? <CheckCircle className="h-3 w-3" /> : <Info className="h-3 w-3" />}
-              {validation.meaningfulWordCount}/5 meaningful words
+            <span className={`flex items-center gap-1 ${validation.meaningfulWordCount >= 3 ? 'text-success' : 'text-muted-foreground'}`}>
+              {validation.meaningfulWordCount >= 3 ? <CheckCircle className="h-3 w-3" /> : <Info className="h-3 w-3" />}
+              {validation.meaningfulWordCount}/3 meaningful words
             </span>
             <span className={`flex items-center gap-1 ${validation.hasDescriptiveNoun ? 'text-success' : 'text-muted-foreground'}`}>
               {validation.hasDescriptiveNoun ? <CheckCircle className="h-3 w-3" /> : <Info className="h-3 w-3" />}
@@ -98,7 +98,7 @@ const TitleInputWithValidation = ({
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Minimum 5 meaningful words. Include at least 1 descriptive noun (e.g., street, portrait, sunset, festival).
+          Minimum 3 meaningful words. Include at least 1 descriptive noun (e.g., street, portrait, sunset, festival).
         </p>
       )}
     </div>
