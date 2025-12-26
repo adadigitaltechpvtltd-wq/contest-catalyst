@@ -6,7 +6,9 @@ import {
   RotateCcw, 
   SwitchCamera, 
   Loader2,
-  AlertCircle 
+  AlertCircle,
+  Zap,
+  ZapOff
 } from 'lucide-react';
 import { useCameraCapture } from '@/hooks/useCameraCapture';
 
@@ -24,6 +26,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
     capturePhoto,
     closeCamera,
     switchCamera,
+    toggleTorch,
     facingMode,
   } = useCameraCapture();
 
@@ -74,15 +77,28 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
           <X className="h-6 w-6" />
         </Button>
         <span className="text-white font-medium">Take Photo</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={switchCamera}
-          disabled={state.isLoading}
-          className="text-white hover:bg-white/20"
-        >
-          <SwitchCamera className="h-6 w-6" />
-        </Button>
+        <div className="flex gap-2">
+          {/* Torch toggle - only show when supported and on rear camera */}
+          {state.torchSupported && facingMode === 'environment' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTorch}
+              className={`text-white hover:bg-white/20 ${state.torchEnabled ? 'bg-white/20' : ''}`}
+            >
+              {state.torchEnabled ? <Zap className="h-6 w-6 text-yellow-400" /> : <ZapOff className="h-6 w-6" />}
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={switchCamera}
+            disabled={state.isLoading}
+            className="text-white hover:bg-white/20"
+          >
+            <SwitchCamera className="h-6 w-6" />
+          </Button>
+        </div>
       </div>
 
       {/* Camera View */}
