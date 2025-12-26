@@ -1,9 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
-import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
+import { useDashboardStatsQuery, useDashboardContestsQuery } from '@/hooks/useDashboardQuery';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
@@ -22,118 +20,27 @@ import {
   ArrowRight,
   TrendingUp
 } from 'lucide-react';
-import { toast } from 'sonner';
-
-interface DashboardStats {
-  totalSubmissions: number;
-  approvedSubmissions: number;
-  pendingSubmissions: number;
-  winCount: number;
-  walletBalance: number;
-}
-
-interface ActiveContest {
-  id: string;
-  slug: string | null;
-  title: string;
-  prize_amount: number;
-  end_date: string;
-  hasSubmitted: boolean;
-}
 
 const Dashboard = () => {
   const { user, profile, isAdmin, isLoading: authLoading } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalSubmissions: 0,
-    approvedSubmissions: 0,
-    pendingSubmissions: 0,
-    winCount: 0,
-    walletBalance: 0,
-  });
-  const [activeContests, setActiveContests] = useState<ActiveContest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { unreadCount: notifications } = useRealtimeNotifications();
+  
+  const { 
+    data: stats, 
+    isLoading: statsLoading, 
+    error: statsError,
+    refetch: refetchStats 
+  } = useDashboardStatsQuery(user?.id);
+  
+  const { 
+    data: activeContests = [], 
+    isLoading: contestsLoading,
+    error: contestsError,
+    refetch: refetchContests 
+  } = useDashboardContestsQuery(user?.id);
 
-  const fetchDashboardData = useCallback(async () => {
-    if (!user) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Fetch submissions stats
-      const { data: submissions, error: submissionsError } = await supabase
-        .from('submissions')
-        .select('status')
-        .eq('user_id', user.id);
-
-      if (submissionsError) throw submissionsError;
-
-      if (submissions) {
-        setStats((prev) => ({
-          ...prev,
-          totalSubmissions: submissions.length,
-          approvedSubmissions: submissions.filter((s) => s.status === 'approved' || s.status === 'winner').length,
-          pendingSubmissions: submissions.filter((s) => s.status === 'pending').length,
-          winCount: submissions.filter((s) => s.status === 'winner').length,
-        }));
-      }
-
-      // Fetch wallet balance (total earned = available + pending)
-      const { data: totalEarned, error: totalEarnedError } = await supabase.rpc('get_total_earned', {
-        _user_id: user.id,
-      });
-
-      if (totalEarnedError) throw totalEarnedError;
-
-      if (totalEarned !== null) {
-        setStats((prev) => ({ ...prev, walletBalance: totalEarned }));
-      }
-
-      // Fetch active contests
-      const { data: contests, error: contestsError } = await supabase
-        .from('contests')
-        .select('id, slug, title, prize_amount, end_date')
-        .eq('status', 'active')
-        .order('end_date', { ascending: true })
-        .limit(5);
-
-      if (contestsError) throw contestsError;
-
-      if (contests) {
-        // Check which contests user has already submitted to
-        const { data: userSubmissions } = await supabase
-          .from('submissions')
-          .select('contest_id')
-          .eq('user_id', user.id);
-
-        const submittedContestIds = new Set(userSubmissions?.map((s) => s.contest_id) || []);
-
-        setActiveContests(
-          contests.map((c) => ({
-            ...c,
-            hasSubmitted: submittedContestIds.has(c.id),
-          }))
-        );
-      }
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data');
-      toast.error('Failed to load dashboard data. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!authLoading && user) {
-      fetchDashboardData();
-    }
-  }, [user, authLoading, fetchDashboardData]);
-
-  // Listen for global refresh events (tab visibility, network reconnection)
-  useGlobalRefresh(fetchDashboardData);
+  const isLoading = authLoading || statsLoading || contestsLoading;
+  const error = statsError || contestsError;
 
   const formatTimeLeft = (endDate: string) => {
     const end = new Date(endDate);
@@ -147,6 +54,11 @@ const Dashboard = () => {
 
     if (days > 0) return `${days}d ${hours}h left`;
     return `${hours}h left`;
+  };
+
+  const handleRetry = () => {
+    refetchStats();
+    refetchContests();
   };
 
   return (
@@ -163,8 +75,8 @@ const Dashboard = () => {
         ) : error ? (
           <ErrorState
             title="Failed to Load Dashboard"
-            message={error}
-            onRetry={fetchDashboardData}
+            message="Failed to load dashboard data"
+            onRetry={handleRetry}
           />
         ) : (
           <>
@@ -202,7 +114,7 @@ const Dashboard = () => {
                   <ImageIcon className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.totalSubmissions}</p>
+                  <p className="text-2xl font-bold">{stats?.totalSubmissions ?? 0}</p>
                   <p className="text-sm text-muted-foreground">Total Submissions</p>
                 </div>
               </div>
@@ -216,7 +128,7 @@ const Dashboard = () => {
                   <TrendingUp className="h-6 w-6 text-success" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.approvedSubmissions}</p>
+                  <p className="text-2xl font-bold">{stats?.approvedSubmissions ?? 0}</p>
                   <p className="text-sm text-muted-foreground">Approved</p>
                 </div>
               </div>
@@ -230,7 +142,7 @@ const Dashboard = () => {
                   <Trophy className="h-6 w-6 text-accent" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.winCount}</p>
+                  <p className="text-2xl font-bold">{stats?.winCount ?? 0}</p>
                   <p className="text-sm text-muted-foreground">Wins</p>
                 </div>
               </div>
@@ -244,7 +156,7 @@ const Dashboard = () => {
                   <Wallet className="h-6 w-6 text-warm-pink" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">${stats.walletBalance}</p>
+                  <p className="text-2xl font-bold">${stats?.walletBalance ?? 0}</p>
                   <p className="text-sm text-muted-foreground">Wallet Balance</p>
                 </div>
               </div>

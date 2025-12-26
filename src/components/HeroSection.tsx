@@ -1,74 +1,20 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Play, Settings, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGlobalRefresh } from "@/hooks/useVisibilityRefresh";
-
-interface FeaturedContest {
-  id: string;
-  slug: string | null;
-  title: string;
-  description: string | null;
-  prize_amount: number;
-  prize_currency: string;
-  end_date: string;
-  theme: string | null;
-}
+import { useFeaturedContestQuery } from "@/hooks/useContestsQuery";
 
 const HeroSection = () => {
-  const [contest, setContest] = useState<FeaturedContest | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: contestData, isLoading } = useFeaturedContestQuery();
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
-  const [participantCount, setParticipantCount] = useState(0);
-
-  const fetchFeaturedContest = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from("contests")
-        .select("id, slug, title, description, prize_amount, prize_currency, end_date, theme")
-        .eq("featured_in_hero", true)
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching featured contest:", error);
-        setLoading(false);
-        return;
-      }
-
-      if (data) {
-        setContest(data);
-        // Fetch participant count
-        const { count } = await supabase
-          .from("submissions")
-          .select("*", { count: "exact", head: true })
-          .eq("contest_id", data.id);
-        setParticipantCount(count ?? 0);
-      }
-    } catch (err) {
-      console.error("Error fetching featured contest:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchFeaturedContest();
-  }, [fetchFeaturedContest]);
-
-  // Refetch when tab becomes visible again
-  useGlobalRefresh(fetchFeaturedContest);
 
   // Update countdown timer
   useEffect(() => {
-    if (!contest?.end_date) return;
+    if (!contestData?.end_date) return;
 
     const updateCountdown = () => {
-      const endTime = new Date(contest.end_date).getTime();
+      const endTime = new Date(contestData.end_date).getTime();
       const now = Date.now();
       const diff = Math.max(0, endTime - now);
 
@@ -83,7 +29,7 @@ const HeroSection = () => {
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [contest?.end_date]);
+  }, [contestData?.end_date]);
 
   const formatPrize = (amount: number, currency: string) => {
     if (currency === "USD") return `$${amount.toLocaleString()}`;
@@ -129,7 +75,7 @@ const HeroSection = () => {
           <div className="flex justify-center mb-7">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/15 border border-primary/25 text-primary text-sm font-semibold">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              {contest ? "Contest Live" : "New Contest Coming"}
+              {contestData ? "Contest Live" : "New Contest Coming"}
             </div>
           </div>
 
@@ -152,7 +98,7 @@ const HeroSection = () => {
           </p>
 
           {/* Browse All Contests Button - shown when there's an active hero contest */}
-          {!loading && contest && (
+          {!isLoading && contestData && (
             <div className="mt-8 flex justify-center">
               <Link to="/contests">
                 <Button variant="outline" size="lg" className="rounded-2xl border-border/60 bg-card/20 hover:bg-card/35 text-foreground">
@@ -163,7 +109,7 @@ const HeroSection = () => {
           )}
 
           {/* Featured Contest Card */}
-          {loading ? (
+          {isLoading ? (
             <div className="mt-12 mx-auto max-w-4xl glass-card rounded-3xl p-6 md:p-8">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
@@ -185,7 +131,7 @@ const HeroSection = () => {
                 <Skeleton className="h-12 w-32 rounded-2xl" />
               </div>
             </div>
-          ) : contest ? (
+          ) : contestData ? (
             <div className="mt-12 mx-auto max-w-4xl glass-card rounded-3xl">
               <div className="p-6 md:p-8">
                 {/* Top row */}
@@ -196,7 +142,7 @@ const HeroSection = () => {
                     </div>
                     <div className="text-left">
                       <div className="text-sm text-muted-foreground">This Week's Challenge</div>
-                      <div className="font-display text-2xl font-bold text-foreground">"{contest.title}"</div>
+                      <div className="font-display text-2xl font-bold text-foreground">"{contestData.title}"</div>
                     </div>
                   </div>
                   <span className="px-4 py-2 rounded-full bg-primary/90 text-primary-foreground text-sm font-semibold">
@@ -205,7 +151,7 @@ const HeroSection = () => {
                 </div>
 
                 <p className="mt-4 text-left text-muted-foreground">
-                  {contest.description || contest.theme || "Join this exciting photography challenge!"}
+                  {contestData.description || contestData.theme || "Join this exciting photography challenge!"}
                 </p>
 
                 {/* Countdown row */}
@@ -230,19 +176,19 @@ const HeroSection = () => {
                   <div className="flex items-center gap-6 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4" />
-                      <span>{participantCount.toLocaleString()} entries</span>
+                      <span>{contestData.participantCount.toLocaleString()} entries</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Trophy className="w-4 h-4" />
-                      {contest.prize_amount === 0 ? (
+                      {contestData.prize_amount === 0 ? (
                         <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold">🎉 FREE CONTEST</span>
                       ) : (
-                        <span>Up to {formatPrize(contest.prize_amount, contest.prize_currency)} in rewards</span>
+                        <span>Up to {formatPrize(contestData.prize_amount, contestData.prize_currency)} in rewards</span>
                       )}
                     </div>
                   </div>
 
-                  <Link to={`/contest/${contest.slug || contest.id}`}>
+                  <Link to={`/contest/${contestData.slug || contestData.id}`}>
                     <Button size="lg" className="rounded-2xl px-10">
                       Enter Now
                     </Button>

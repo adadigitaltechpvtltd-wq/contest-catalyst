@@ -1,33 +1,14 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ErrorState from '@/components/ErrorState';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Clock, Users, ArrowRight } from 'lucide-react';
-import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow, isPast, isFuture } from 'date-fns';
-import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
-
-type ContestStatus = 'active' | 'voting' | 'completed';
-
-interface Contest {
-  id: string;
-  slug: string | null;
-  title: string;
-  description: string | null;
-  theme: string | null;
-  cover_image_url: string | null;
-  prize_amount: number;
-  prize_currency: string;
-  min_participants: number;
-  start_date: string;
-  end_date: string;
-  status: ContestStatus;
-}
+import { useContestsQuery, ContestWithCount } from '@/hooks/useContestsQuery';
 
 const gradientBorders = [
   "from-orange-500 via-red-500 to-pink-500",
@@ -38,7 +19,7 @@ const gradientBorders = [
   "from-indigo-500 via-purple-500 to-pink-500",
 ];
 
-const getContestDisplayStatus = (contest: Contest): "live" | "soon" | "ended" => {
+const getContestDisplayStatus = (contest: ContestWithCount): "live" | "soon" | "ended" => {
   const now = new Date();
   const start = new Date(contest.start_date);
   const end = new Date(contest.end_date);
@@ -48,7 +29,7 @@ const getContestDisplayStatus = (contest: Contest): "live" | "soon" | "ended" =>
   return "live";
 };
 
-const getTimeDisplay = (contest: Contest, status: "live" | "soon" | "ended"): string => {
+const getTimeDisplay = (contest: ContestWithCount, status: "live" | "soon" | "ended"): string => {
   if (status === "ended") return "Ended";
   if (status === "soon") {
     return `Starts ${formatDistanceToNow(new Date(contest.start_date), { addSuffix: true })}`;
@@ -63,57 +44,8 @@ const formatPrize = (amount: number, currency: string) => {
 };
 
 const Contests = () => {
-  const [contests, setContests] = useState<Contest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
-  const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
-
-  const fetchContests = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    const { data, error } = await supabase
-      .from('contests')
-      .select('*')
-      .in('status', ['active', 'voting', 'completed'])
-      .order('start_date', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching contests:', error);
-      setError('Failed to load contests');
-      toast.error('Failed to load contests. Please try again.');
-    } else {
-      setContests(data as Contest[]);
-      
-      // Fetch participant counts for each contest
-      if (data) {
-        const counts: Record<string, number> = {};
-        await Promise.all(
-          data.map(async (contest) => {
-            try {
-              const { count } = await supabase
-                .from("submissions")
-                .select("*", { count: "exact", head: true })
-                .eq("contest_id", contest.id);
-              counts[contest.id] = count ?? 0;
-            } catch {
-              counts[contest.id] = 0;
-            }
-          })
-        );
-        setParticipantCounts(counts);
-      }
-    }
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    fetchContests();
-  }, [fetchContests]);
-
-  // Listen for global refresh events (tab visibility, network reconnection)
-  useGlobalRefresh(fetchContests);
+  const { data: contests = [], isLoading, error, refetch } = useContestsQuery();
 
   const now = new Date();
   const activeContests = contests.filter((c) => 
@@ -123,7 +55,7 @@ const Contests = () => {
     c.status === 'completed' || new Date(c.end_date) <= now
   );
 
-  const ContestCard = ({ contest, index }: { contest: Contest; index: number }) => {
+  const ContestCard = ({ contest, index }: { contest: ContestWithCount; index: number }) => {
     const status = getContestDisplayStatus(contest);
     const timeDisplay = getTimeDisplay(contest, status);
     const gradientBorder = gradientBorders[index % gradientBorders.length];
@@ -186,7 +118,7 @@ const Contests = () => {
             </span>
             <span className="flex items-center gap-1.5 text-muted-foreground">
               <Users className="w-4 h-4" />
-              {participantCounts[contest.id] ?? 0}
+              {contest.participantCount}
             </span>
             <span className="flex items-center gap-1.5 text-muted-foreground">
               <Clock className="w-4 h-4" />
@@ -273,8 +205,8 @@ const Contests = () => {
           ) : error ? (
             <ErrorState
               title="Failed to Load Contests"
-              message={error}
-              onRetry={fetchContests}
+              message="Failed to load contests"
+              onRetry={() => refetch()}
             />
           ) : (
             <>
