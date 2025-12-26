@@ -1,4 +1,5 @@
 import { Check, TrendingUp, Users, Share2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const benefits = [
@@ -60,9 +61,11 @@ const BrandsSection = () => {
               ))}
             </div>
 
-            <Button size="lg">
-              Partner With Us
-            </Button>
+            <Link to="/for-brands">
+              <Button size="lg">
+                Partner With Us
+              </Button>
+            </Link>
           </div>
 
           {/* Right Card */}

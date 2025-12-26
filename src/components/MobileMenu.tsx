@@ -43,7 +43,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
     { label: "Gallery", href: "/gallery", isLink: true },
     { label: "How It Works", href: "/#how-it-works", isLink: false },
     { label: "Leaderboard", href: "/leaderboard", isLink: true },
-    { label: "For Brands", href: "/#brands", isLink: false },
+    { label: "For Brands", href: "/for-brands", isLink: true },
   ];
 
   const userLinks = user ? [

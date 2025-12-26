@@ -44,6 +44,8 @@ import WinnerSelection from "./pages/admin/WinnerSelection";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import Gallery from "./pages/Gallery";
+import ForBrands from "./pages/ForBrands";
+import AdminBrandInquiries from "./pages/admin/AdminBrandInquiries";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,6 +72,7 @@ const App = () => (
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/user/:username" element={<UserProfilePage />} />
+              <Route path="/for-brands" element={<ForBrands />} />
             
             {/* Protected User Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -90,6 +93,7 @@ const App = () => (
               <Route path="submissions" element={<AdminSubmissions />} />
               <Route path="payments" element={<AdminPayments />} />
               <Route path="users" element={<AdminUsers />} />
+              <Route path="brand-inquiries" element={<AdminBrandInquiries />} />
               <Route path="reports" element={<AdminReports />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="seo" element={<AdminSEO />} />

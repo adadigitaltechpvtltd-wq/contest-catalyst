@@ -25,7 +25,8 @@ import {
   Search,
   Home,
   LogOut,
-  FileEdit
+  FileEdit,
+  Building2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -36,6 +37,7 @@ const adminNavItems = [
   { title: 'Submissions', url: '/admin/submissions', icon: ImageIcon },
   { title: 'Payments', url: '/admin/payments', icon: CreditCard },
   { title: 'Users', url: '/admin/users', icon: Users },
+  { title: 'Brand Inquiries', url: '/admin/brand-inquiries', icon: Building2 },
   { title: 'Reports', url: '/admin/reports', icon: Flag },
   { title: 'Analytics', url: '/admin/analytics', icon: BarChart3 },
   { title: 'SEO Health', url: '/admin/seo', icon: Search },
