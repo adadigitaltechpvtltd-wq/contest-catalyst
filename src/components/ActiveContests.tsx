@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow, isPast, isFuture } from "date-fns";
-import { useVisibilityRefresh } from "@/hooks/useVisibilityRefresh";
+import { useGlobalRefresh } from "@/hooks/useVisibilityRefresh";
 
 interface Contest {
   id: string;
@@ -107,7 +107,7 @@ const ActiveContests = () => {
   }, [fetchContests]);
 
   // Refetch when tab becomes visible again
-  useVisibilityRefresh(fetchContests);
+  useGlobalRefresh(fetchContests);
 
   if (loading) {
     return (
