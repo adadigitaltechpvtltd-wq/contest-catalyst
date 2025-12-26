@@ -29,6 +29,7 @@ import {
   Crown,
   CheckCircle2,
   XCircle,
+  RotateCcw,
 } from 'lucide-react';
 
 type ContestStatus = 'draft' | 'active' | 'voting' | 'completed' | 'cancelled';
@@ -58,6 +59,9 @@ const AdminContests = () => {
   const [cancelContest, setCancelContest] = useState<Contest | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const [notifyParticipants, setNotifyParticipants] = useState(true);
+  const [reactivateContest, setReactivateContest] = useState<Contest | null>(null);
+  const [isReactivating, setIsReactivating] = useState(false);
+  const [notifyOnReactivate, setNotifyOnReactivate] = useState(true);
 
   const fetchContests = async () => {
     setIsLoading(true);
@@ -305,6 +309,98 @@ const AdminContests = () => {
     return contest.status === 'active' || contest.status === 'draft' || contest.status === 'voting';
   };
 
+  // Check if reactivate should be visible
+  const canReactivate = (contest: Contest) => {
+    return contest.status === 'cancelled';
+  };
+
+  const handleReactivateContest = async () => {
+    if (!reactivateContest || !user) return;
+
+    setIsReactivating(true);
+
+    try {
+      // Update contest status to active
+      const { error: updateError } = await supabase
+        .from('contests')
+        .update({
+          status: 'active',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', reactivateContest.id);
+
+      if (updateError) throw updateError;
+
+      // If notify participants is enabled, send notifications
+      if (notifyOnReactivate && reactivateContest.submission_count > 0) {
+        const { data: submissions, error: submissionsError } = await supabase
+          .from('submissions')
+          .select('user_id')
+          .eq('contest_id', reactivateContest.id);
+
+        if (submissionsError) {
+          console.error('Error fetching participants:', submissionsError);
+        } else if (submissions && submissions.length > 0) {
+          const uniqueUserIds = [...new Set(submissions.map(s => s.user_id))];
+          
+          const notifications = uniqueUserIds.map(userId => ({
+            user_id: userId,
+            type: 'success',
+            title: 'Contest Reactivated!',
+            message: `Great news! The contest "${reactivateContest.title}" has been reactivated and is now accepting submissions again.`,
+            link: `/contest/${reactivateContest.slug || reactivateContest.id}`,
+          }));
+
+          const { error: notifyError } = await supabase
+            .from('notifications')
+            .insert(notifications);
+
+          if (notifyError) {
+            console.error('Error sending notifications:', notifyError);
+          }
+        }
+      }
+
+      // Log admin action for audit trail
+      const { error: logError } = await supabase
+        .from('admin_activity_logs')
+        .insert({
+          admin_id: user.id,
+          action_type: 'reactivate_contest',
+          entity_type: 'contest',
+          entity_id: reactivateContest.id,
+          details: {
+            contest_title: reactivateContest.title,
+            submission_count: reactivateContest.submission_count,
+            notified_participants: notifyOnReactivate,
+            reactivated_at: new Date().toISOString(),
+          },
+        });
+
+      if (logError) {
+        console.error('Error logging admin action:', logError);
+      }
+
+      toast({
+        title: 'Contest Reactivated',
+        description: `"${reactivateContest.title}" is now active again.${notifyOnReactivate && reactivateContest.submission_count > 0 ? ' Participants have been notified.' : ''}`,
+      });
+
+      fetchContests();
+    } catch (error: any) {
+      console.error('Error reactivating contest:', error);
+      toast({
+        title: 'Failed to reactivate contest',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsReactivating(false);
+      setReactivateContest(null);
+      setNotifyOnReactivate(true);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
@@ -344,6 +440,7 @@ const AdminContests = () => {
             const needsWinner = isEnded && !contest.winner_id && contest.status !== 'cancelled';
             const showForceComplete = canForceComplete(contest);
             const showCancel = canCancel(contest);
+            const showReactivate = canReactivate(contest);
             
             return (
               <Card key={contest.id} className={`glass-card ${needsWinner ? 'border-amber-500/50' : ''} ${contest.status === 'cancelled' ? 'opacity-60' : ''}`}>
@@ -420,6 +517,17 @@ const AdminContests = () => {
                         >
                           <XCircle className="h-4 w-4 mr-1" />
                           Cancel
+                        </Button>
+                      )}
+                      {showReactivate && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="border-green-500 text-green-500 hover:bg-green-500/10"
+                          onClick={() => setReactivateContest(contest)}
+                        >
+                          <RotateCcw className="h-4 w-4 mr-1" />
+                          Reactivate
                         </Button>
                       )}
                       {needsWinner ? (
@@ -544,6 +652,66 @@ const AdminContests = () => {
                 <XCircle className="h-4 w-4 mr-2" />
               )}
               Yes, Cancel Contest
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reactivate Contest Confirmation Dialog */}
+      <AlertDialog open={!!reactivateContest} onOpenChange={(open) => { if (!open) { setReactivateContest(null); setNotifyOnReactivate(true); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reactivate Contest?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p>This will restore the contest "{reactivateContest?.title}" to active status.</p>
+                <ul className="list-disc ml-6 space-y-1 text-sm">
+                  <li>New submissions will be allowed</li>
+                  <li>The contest will appear as active to users</li>
+                  <li>All existing submissions will be preserved</li>
+                </ul>
+                {reactivateContest && new Date(reactivateContest.end_date) <= new Date() && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-md p-3 text-amber-200 text-sm">
+                    <strong>Warning:</strong> The end date ({formatDate(reactivateContest.end_date)}) has already passed. 
+                    Consider editing the contest to extend the end date after reactivation.
+                  </div>
+                )}
+                {reactivateContest && reactivateContest.submission_count > 0 && (
+                  <div className="bg-muted/50 border border-border rounded-md p-3 space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      This contest has {reactivateContest.submission_count} existing submission{reactivateContest.submission_count !== 1 ? 's' : ''}.
+                    </p>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="notify-reactivate" 
+                        checked={notifyOnReactivate}
+                        onCheckedChange={(checked) => setNotifyOnReactivate(checked as boolean)}
+                      />
+                      <Label 
+                        htmlFor="notify-reactivate" 
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        Notify participants about reactivation
+                      </Label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isReactivating}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReactivateContest}
+              disabled={isReactivating}
+              className="bg-green-500 hover:bg-green-600"
+            >
+              {isReactivating ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <RotateCcw className="h-4 w-4 mr-2" />
+              )}
+              Yes, Reactivate Contest
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
