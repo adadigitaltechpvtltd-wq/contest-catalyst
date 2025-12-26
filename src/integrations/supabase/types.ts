@@ -55,6 +55,15 @@ export type Database = {
       }
       contests: {
         Row: {
+          brand_cta_label: string | null
+          brand_cta_url: string | null
+          brand_description: string | null
+          brand_instagram_url: string | null
+          brand_linkedin_url: string | null
+          brand_name: string | null
+          brand_twitter_url: string | null
+          brand_website_url: string | null
+          brand_youtube_url: string | null
           cover_image_url: string | null
           created_at: string
           created_by: string | null
@@ -82,6 +91,15 @@ export type Database = {
           winning_submission_id: string | null
         }
         Insert: {
+          brand_cta_label?: string | null
+          brand_cta_url?: string | null
+          brand_description?: string | null
+          brand_instagram_url?: string | null
+          brand_linkedin_url?: string | null
+          brand_name?: string | null
+          brand_twitter_url?: string | null
+          brand_website_url?: string | null
+          brand_youtube_url?: string | null
           cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
@@ -109,6 +127,15 @@ export type Database = {
           winning_submission_id?: string | null
         }
         Update: {
+          brand_cta_label?: string | null
+          brand_cta_url?: string | null
+          brand_description?: string | null
+          brand_instagram_url?: string | null
+          brand_linkedin_url?: string | null
+          brand_name?: string | null
+          brand_twitter_url?: string | null
+          brand_website_url?: string | null
+          brand_youtube_url?: string | null
           cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
