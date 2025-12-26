@@ -32,6 +32,9 @@ interface PhotoData {
   description: string | null;
   image_url: string;
   slug: string;
+  seo_title: string | null;
+  meta_description: string | null;
+  title_quality_flag: string | null;
   view_count: number;
   download_count: number;
   like_count: number;
@@ -52,6 +55,7 @@ interface PhotoData {
   profile: {
     full_name: string | null;
     avatar_url: string | null;
+    username: string | null;
   } | null;
 }
 
@@ -98,6 +102,9 @@ const PhotoDetail = () => {
           description,
           image_url,
           slug,
+          seo_title,
+          meta_description,
+          title_quality_flag,
           view_count,
           download_count,
           like_count,
@@ -118,7 +125,7 @@ const PhotoDetail = () => {
       // Fetch photographer profile
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name, avatar_url')
+        .select('full_name, avatar_url, username')
         .eq('id', submission.user_id)
         .maybeSingle();
 
@@ -271,16 +278,26 @@ const PhotoDetail = () => {
     return null;
   }
 
-  const photographerName = photo.profile?.full_name || 'Anonymous';
+  const photographerName = photo.profile?.full_name || photo.profile?.username || 'Anonymous';
   const isApproved = photo.status === 'approved' || photo.status === 'winner';
   
-  // Auto-generate SEO from contest SEO fields + user content (no user SEO input)
+  // Check if title quality is flagged as low (should not be indexed)
+  const hasTitleQualityIssue = photo.title_quality_flag === 'low';
+  
+  // Use stored SEO fields if available, otherwise auto-generate
   const contestSeoTitle = photo.contest.seo_title || photo.contest.title;
-  const seoTitle = `${photo.title} - ${contestSeoTitle}`;
-  const seoDescription = photo.description 
-    ? `${photo.description.slice(0, 100)}... Photo from ${photo.contest.title} contest on GAAL.`
-    : `${photo.title} - Photography submission for ${contestSeoTitle}. ${photo.contest.meta_description || ''}`.slice(0, 160);
+  const seoTitle = photo.seo_title 
+    ? photo.seo_title 
+    : `${photo.title} - ${contestSeoTitle}`;
+  const seoDescription = photo.meta_description
+    ? photo.meta_description
+    : photo.description 
+      ? `${photo.description.slice(0, 100)}... Photo from ${photo.contest.title} contest on GAAL.`
+      : `${photo.title} - Photography submission for ${contestSeoTitle}. ${photo.contest.meta_description || ''}`.slice(0, 160);
   const canonicalUrl = `https://gaal.app/photo/${photo.contest.slug}/${photo.slug}`;
+  
+  // Only index if approved AND title passes quality validation
+  const shouldNoIndex = !isApproved || hasTitleQualityIssue;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -290,7 +307,7 @@ const PhotoDetail = () => {
         canonicalUrl={canonicalUrl}
         ogImage={photo.image_url}
         ogType="article"
-        noIndex={!isApproved}
+        noIndex={shouldNoIndex}
       />
       
       <Navbar />
