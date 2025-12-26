@@ -123,6 +123,7 @@ const SubmitPhoto = () => {
   const [rawPhotoFile, setRawPhotoFile] = useState<File | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [isFromCamera, setIsFromCamera] = useState(false);
   const [originalityConfirmed, setOriginalityConfirmed] = useState(false);
   const [noAiConfirmed, setNoAiConfirmed] = useState(false);
   const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
@@ -312,6 +313,7 @@ const SubmitPhoto = () => {
 
     // Set the file directly without forcing crop
     setPhotoFile(file);
+    setIsFromCamera(false); // File uploads are not from camera
     const reader = new FileReader();
     reader.onload = (e) => {
       setPhotoPreview(e.target?.result as string);
@@ -346,6 +348,14 @@ const SubmitPhoto = () => {
   const handleRemovePhoto = () => {
     setPhotoFile(null);
     setPhotoPreview(null);
+    setIsFromCamera(false);
+  };
+
+  const handleRetakePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setIsFromCamera(false);
+    setShowCamera(true);
   };
 
   // Handle camera capture - same validation as file upload
@@ -361,7 +371,8 @@ const SubmitPhoto = () => {
       return;
     }
 
-    // Set raw file and open cropper for camera captures
+    // Mark as camera capture and set raw file for cropper
+    setIsFromCamera(true);
     setRawPhotoFile(file);
     setShowCropper(true);
     setShowCamera(false);
@@ -560,6 +571,19 @@ const SubmitPhoto = () => {
                         className="w-full rounded-lg max-h-96 object-contain bg-secondary"
                       />
                       <div className="absolute top-2 right-2 flex gap-2">
+                        {/* Retake button - only for camera captures */}
+                        {isFromCamera && isCameraAvailable && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={handleRetakePhoto}
+                            className="gap-1.5"
+                          >
+                            <Camera className="h-4 w-4" />
+                            Retake
+                          </Button>
+                        )}
                         <Button
                           type="button"
                           variant="secondary"

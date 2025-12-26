@@ -40,6 +40,8 @@ interface CameraState {
   stream: MediaStream | null;
   error: string | null;
   isLoading: boolean;
+  torchSupported: boolean;
+  torchEnabled: boolean;
 }
 
 interface UseCameraCaptureReturn {
@@ -49,6 +51,7 @@ interface UseCameraCaptureReturn {
   capturePhoto: () => File | null;
   closeCamera: () => void;
   switchCamera: () => Promise<void>;
+  toggleTorch: () => Promise<void>;
   facingMode: 'user' | 'environment';
 }
 
@@ -64,6 +67,8 @@ export function useCameraCapture(): UseCameraCaptureReturn {
     stream: null,
     error: null,
     isLoading: false,
+    torchSupported: false,
+    torchEnabled: false,
   });
 
   const stopStream = useCallback(() => {
@@ -91,11 +96,21 @@ export function useCameraCapture(): UseCameraCaptureReturn {
         await videoRef.current.play();
       }
 
+      // Check if torch is supported
+      const videoTrack = stream.getVideoTracks()[0];
+      let torchSupported = false;
+      if (videoTrack) {
+        const capabilities = videoTrack.getCapabilities?.() as MediaTrackCapabilities & { torch?: boolean };
+        torchSupported = !!capabilities?.torch;
+      }
+
       setState({
         isOpen: true,
         stream,
         error: null,
         isLoading: false,
+        torchSupported,
+        torchEnabled: false,
       });
     } catch (err) {
       let errorMessage = 'Failed to access camera';
@@ -117,6 +132,8 @@ export function useCameraCapture(): UseCameraCaptureReturn {
         stream: null,
         error: errorMessage,
         isLoading: false,
+        torchSupported: false,
+        torchEnabled: false,
       });
     }
   }, [facingMode]);
@@ -128,8 +145,28 @@ export function useCameraCapture(): UseCameraCaptureReturn {
       stream: null,
       error: null,
       isLoading: false,
+      torchSupported: false,
+      torchEnabled: false,
     });
   }, [stopStream]);
+
+  const toggleTorch = useCallback(async () => {
+    if (!state.stream || !state.torchSupported) return;
+
+    const videoTrack = state.stream.getVideoTracks()[0];
+    if (!videoTrack) return;
+
+    const newTorchState = !state.torchEnabled;
+
+    try {
+      await videoTrack.applyConstraints({
+        advanced: [{ torch: newTorchState } as MediaTrackConstraintSet & { torch: boolean }]
+      });
+      setState(prev => ({ ...prev, torchEnabled: newTorchState }));
+    } catch (err) {
+      console.warn('Failed to toggle torch:', err);
+    }
+  }, [state.stream, state.torchSupported, state.torchEnabled]);
 
   const switchCamera = useCallback(async () => {
     const newMode = facingMode === 'user' ? 'environment' : 'user';
@@ -155,11 +192,21 @@ export function useCameraCapture(): UseCameraCaptureReturn {
         await videoRef.current.play();
       }
 
+      // Check if torch is supported
+      const videoTrack = stream.getVideoTracks()[0];
+      let torchSupported = false;
+      if (videoTrack) {
+        const capabilities = videoTrack.getCapabilities?.() as MediaTrackCapabilities & { torch?: boolean };
+        torchSupported = !!capabilities?.torch;
+      }
+
       setState({
         isOpen: true,
         stream,
         error: null,
         isLoading: false,
+        torchSupported,
+        torchEnabled: false,
       });
     } catch (err) {
       setState(prev => ({
@@ -231,6 +278,7 @@ export function useCameraCapture(): UseCameraCaptureReturn {
     capturePhoto,
     closeCamera,
     switchCamera,
+    toggleTorch,
     facingMode,
   };
 }
