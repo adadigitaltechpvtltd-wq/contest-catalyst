@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -26,6 +28,7 @@ import {
   Loader2,
   Crown,
   CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 
 type ContestStatus = 'draft' | 'active' | 'voting' | 'completed' | 'cancelled';
@@ -52,6 +55,9 @@ const AdminContests = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [forceCompleteContest, setForceCompleteContest] = useState<Contest | null>(null);
   const [isForceCompleting, setIsForceCompleting] = useState(false);
+  const [cancelContest, setCancelContest] = useState<Contest | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [notifyParticipants, setNotifyParticipants] = useState(true);
 
   const fetchContests = async () => {
     setIsLoading(true);
@@ -158,7 +164,6 @@ const AdminContests = () => {
 
       if (logError) {
         console.error('Error logging admin action:', logError);
-        // Don't throw - the main action succeeded
       }
 
       toast({
@@ -166,7 +171,6 @@ const AdminContests = () => {
         description: `"${forceCompleteContest.title}" has been marked as completed. You can now select a winner.`,
       });
 
-      // Refresh contests list
       fetchContests();
     } catch (error: any) {
       console.error('Error force completing contest:', error);
@@ -178,6 +182,96 @@ const AdminContests = () => {
     } finally {
       setIsForceCompleting(false);
       setForceCompleteContest(null);
+    }
+  };
+
+  const handleCancelContest = async () => {
+    if (!cancelContest || !user) return;
+
+    setIsCancelling(true);
+
+    try {
+      // Update contest status to cancelled
+      const { error: updateError } = await supabase
+        .from('contests')
+        .update({
+          status: 'cancelled',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', cancelContest.id);
+
+      if (updateError) throw updateError;
+
+      // If notify participants is enabled, send notifications
+      if (notifyParticipants && cancelContest.submission_count > 0) {
+        // Get unique user IDs from submissions
+        const { data: submissions, error: submissionsError } = await supabase
+          .from('submissions')
+          .select('user_id')
+          .eq('contest_id', cancelContest.id);
+
+        if (submissionsError) {
+          console.error('Error fetching participants:', submissionsError);
+        } else if (submissions && submissions.length > 0) {
+          // Get unique user IDs
+          const uniqueUserIds = [...new Set(submissions.map(s => s.user_id))];
+          
+          // Create notifications for each participant
+          const notifications = uniqueUserIds.map(userId => ({
+            user_id: userId,
+            type: 'warning',
+            title: 'Contest Cancelled',
+            message: `The contest "${cancelContest.title}" has been cancelled. We apologize for any inconvenience.`,
+            link: `/contests`,
+          }));
+
+          const { error: notifyError } = await supabase
+            .from('notifications')
+            .insert(notifications);
+
+          if (notifyError) {
+            console.error('Error sending notifications:', notifyError);
+          }
+        }
+      }
+
+      // Log admin action for audit trail
+      const { error: logError } = await supabase
+        .from('admin_activity_logs')
+        .insert({
+          admin_id: user.id,
+          action_type: 'cancel_contest',
+          entity_type: 'contest',
+          entity_id: cancelContest.id,
+          details: {
+            contest_title: cancelContest.title,
+            submission_count: cancelContest.submission_count,
+            notified_participants: notifyParticipants,
+            cancelled_at: new Date().toISOString(),
+          },
+        });
+
+      if (logError) {
+        console.error('Error logging admin action:', logError);
+      }
+
+      toast({
+        title: 'Contest Cancelled',
+        description: `"${cancelContest.title}" has been cancelled.${notifyParticipants && cancelContest.submission_count > 0 ? ' Participants have been notified.' : ''}`,
+      });
+
+      fetchContests();
+    } catch (error: any) {
+      console.error('Error cancelling contest:', error);
+      toast({
+        title: 'Failed to cancel contest',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCancelling(false);
+      setCancelContest(null);
+      setNotifyParticipants(true);
     }
   };
 
@@ -203,8 +297,12 @@ const AdminContests = () => {
 
   // Check if force complete should be visible
   const canForceComplete = (contest: Contest) => {
-    // Only show for active contests that are not completed/cancelled
     return contest.status === 'active';
+  };
+
+  // Check if cancel should be visible
+  const canCancel = (contest: Contest) => {
+    return contest.status === 'active' || contest.status === 'draft' || contest.status === 'voting';
   };
 
   return (
@@ -245,9 +343,10 @@ const AdminContests = () => {
             const isEnded = new Date(contest.end_date) <= new Date();
             const needsWinner = isEnded && !contest.winner_id && contest.status !== 'cancelled';
             const showForceComplete = canForceComplete(contest);
+            const showCancel = canCancel(contest);
             
             return (
-              <Card key={contest.id} className={`glass-card ${needsWinner ? 'border-amber-500/50' : ''}`}>
+              <Card key={contest.id} className={`glass-card ${needsWinner ? 'border-amber-500/50' : ''} ${contest.status === 'cancelled' ? 'opacity-60' : ''}`}>
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex-1">
@@ -293,12 +392,14 @@ const AdminContests = () => {
                           View
                         </Link>
                       </Button>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to={`/admin/contests/${contest.id}/edit`}>
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Link>
-                      </Button>
+                      {contest.status !== 'cancelled' && (
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/admin/contests/${contest.id}/edit`}>
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Link>
+                        </Button>
+                      )}
                       {showForceComplete && (
                         <Button 
                           size="sm" 
@@ -308,6 +409,17 @@ const AdminContests = () => {
                         >
                           <CheckCircle2 className="h-4 w-4 mr-1" />
                           Force Complete
+                        </Button>
+                      )}
+                      {showCancel && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="border-destructive text-destructive hover:bg-destructive/10"
+                          onClick={() => setCancelContest(contest)}
+                        >
+                          <XCircle className="h-4 w-4 mr-1" />
+                          Cancel
                         </Button>
                       )}
                       {needsWinner ? (
@@ -324,13 +436,13 @@ const AdminContests = () => {
                             Select Winner
                           </Link>
                         </Button>
-                      ) : (
+                      ) : contest.status !== 'cancelled' ? (
                         <Button size="sm" asChild>
                           <Link to="/admin/submissions">
                             Review ({contest.submission_count})
                           </Link>
                         </Button>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </CardContent>
@@ -376,6 +488,62 @@ const AdminContests = () => {
                 <CheckCircle2 className="h-4 w-4 mr-2" />
               )}
               Yes, Complete Contest
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Contest Confirmation Dialog */}
+      <AlertDialog open={!!cancelContest} onOpenChange={(open) => { if (!open) { setCancelContest(null); setNotifyParticipants(true); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Contest?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p>This will permanently cancel the contest "{cancelContest?.title}".</p>
+                <ul className="list-disc ml-6 space-y-1 text-sm">
+                  <li>No new submissions will be allowed</li>
+                  <li>No winner can be selected</li>
+                  <li>No prizes will be awarded</li>
+                  <li>The contest will be marked as cancelled</li>
+                </ul>
+                {cancelContest && cancelContest.submission_count > 0 && (
+                  <div className="bg-muted/50 border border-border rounded-md p-3 space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      This contest has {cancelContest.submission_count} submission{cancelContest.submission_count !== 1 ? 's' : ''}.
+                    </p>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="notify-participants" 
+                        checked={notifyParticipants}
+                        onCheckedChange={(checked) => setNotifyParticipants(checked as boolean)}
+                      />
+                      <Label 
+                        htmlFor="notify-participants" 
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        Notify all participants about cancellation
+                      </Label>
+                    </div>
+                  </div>
+                )}
+                <p className="font-semibold text-destructive">This action cannot be undone.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCancelling}>Go Back</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelContest}
+              disabled={isCancelling}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isCancelling ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <XCircle className="h-4 w-4 mr-2" />
+              )}
+              Yes, Cancel Contest
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
