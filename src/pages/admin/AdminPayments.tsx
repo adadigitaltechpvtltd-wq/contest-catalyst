@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -120,8 +120,6 @@ const AdminPayments = () => {
     fetchTransactions();
   }, [fetchTransactions]);
 
-  // Listen for global refresh events (tab visibility, network reconnection)
-  useGlobalRefresh(fetchTransactions);
 
   const openProcessModal = (transaction: Transaction) => {
     setSelectedTransaction(transaction);

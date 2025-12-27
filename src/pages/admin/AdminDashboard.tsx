@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -97,8 +97,6 @@ const AdminDashboard = () => {
     fetchStats();
   }, [fetchStats]);
 
-  // Listen for global refresh events (tab visibility, network reconnection)
-  useGlobalRefresh(fetchStats);
 
   return (
     <div>

@@ -8,7 +8,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import OfflineBanner from "@/components/OfflineBanner";
-import GlobalRefreshHandler from "@/components/GlobalRefreshHandler";
 import AdminLayout from "@/components/AdminLayout";
 import Index from "./pages/Index";
 import PhotoDetail from "./pages/PhotoDetail";
@@ -66,7 +65,7 @@ const queryClient = new QueryClient({
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
-      <GlobalRefreshHandler />
+      
       <TooltipProvider>
         <Toaster />
         <Sonner />

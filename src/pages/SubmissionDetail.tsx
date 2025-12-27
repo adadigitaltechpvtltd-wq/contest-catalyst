@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
+
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -169,8 +169,6 @@ const SubmissionDetail = () => {
     };
   }, [id, fetchSubmission]);
 
-  // Listen for global refresh events (tab visibility, network reconnection)
-  useGlobalRefresh(fetchSubmission);
 
 
   const getStatusBadge = (status: SubmissionStatus) => {

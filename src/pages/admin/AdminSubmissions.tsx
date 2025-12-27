@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -246,8 +246,6 @@ const AdminSubmissions = () => {
     fetchSubmissions();
   }, [fetchSubmissions]);
 
-  // Listen for global refresh events (tab visibility, network reconnection)
-  useGlobalRefresh(fetchSubmissions);
 
   const handleReanalyze = async (submissionId: string) => {
     setAnalyzingSubmissionId(submissionId);
