@@ -37,6 +37,8 @@ const Auth = () => {
   const location = useLocation();
   const { toast } = useToast();
 
+  const redirectTo = (location.state as any)?.from?.pathname || '/dashboard';
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Determine active tab from URL
@@ -188,7 +190,7 @@ const Auth = () => {
   }
 
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -209,7 +211,7 @@ const Auth = () => {
         title: 'Welcome back!',
         description: 'You have successfully logged in.',
       });
-      navigate('/dashboard');
+      navigate(redirectTo, { replace: true });
     }
 
     setIsSubmitting(false);
