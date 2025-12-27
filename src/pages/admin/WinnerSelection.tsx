@@ -1,12 +1,15 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { useWinnerSelectionQuery, WinnerSubmission } from '@/hooks/useWinnerSelectionQuery';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import ErrorState from '@/components/ErrorState';
 import {
   Trophy,
   Medal,
@@ -16,7 +19,6 @@ import {
   Crown,
   Camera,
   User,
-  Star,
   CheckCircle,
 } from 'lucide-react';
 import {
@@ -30,101 +32,22 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-interface Submission {
-  id: string;
-  title: string;
-  image_url: string;
-  combined_score: number | null;
-  system_score: number | null;
-  admin_score: number | null;
-  status: string;
-  created_at: string;
-  profile: {
-    id: string;
-    full_name: string | null;
-    avatar_url: string | null;
-  };
-}
-
-interface Contest {
-  id: string;
-  title: string;
-  theme: string | null;
-  prize_amount: number;
-  prize_currency: string;
-  end_date: string;
-  status: string;
-  winner_id: string | null;
-  winning_submission_id: string | null;
-}
-
 const WinnerSelection = () => {
   const { contestId } = useParams<{ contestId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [contest, setContest] = useState<Contest | null>(null);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const { data, isLoading, isError, refetch } = useWinnerSelectionQuery(contestId);
+  const contest = data?.contest ?? null;
+  const submissions = data?.submissions ?? [];
+
+  const [selectedSubmission, setSelectedSubmission] = useState<WinnerSubmission | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    if (!contestId) return;
-
-    setIsLoading(true);
-
-    try {
-      // Fetch contest
-      const { data: contestData, error: contestError } = await supabase
-        .from('contests')
-        .select('*')
-        .eq('id', contestId)
-        .single();
-
-      if (contestError) throw contestError;
-      setContest(contestData);
-
-      // Fetch approved submissions ranked by combined_score
-      const { data: submissionsData, error: submissionsError } = await supabase
-        .from('submissions')
-        .select(`
-          id,
-          title,
-          image_url,
-          combined_score,
-          system_score,
-          admin_score,
-          status,
-          created_at,
-          profile:profiles!submissions_user_id_profiles_fkey(id, full_name, avatar_url)
-        `)
-        .eq('contest_id', contestId)
-        .in('status', ['approved', 'winner'])
-        .order('combined_score', { ascending: false, nullsFirst: false });
-
-      if (submissionsError) throw submissionsError;
-      setSubmissions(submissionsData as unknown as Submission[]);
-    } catch (error: any) {
-      console.error('Error fetching data:', error);
-      toast({
-        title: 'Failed to load data',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [contestId, toast]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-
-  const handleSelectWinner = (submission: Submission) => {
+  const handleSelectWinner = (submission: WinnerSubmission) => {
     setSelectedSubmission(submission);
     setIsConfirmOpen(true);
   };
@@ -193,7 +116,7 @@ const WinnerSelection = () => {
       });
 
       // Refresh data
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['winner-selection', contestId] });
     } catch (error: any) {
       console.error('Error selecting winner:', error);
       toast({
@@ -238,6 +161,16 @@ const WinnerSelection = () => {
       <div className="flex justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorState 
+        title="Failed to load data" 
+        message="Could not load contest data." 
+        onRetry={refetch} 
+      />
     );
   }
 

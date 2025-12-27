@@ -1,7 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAdminPaymentsQuery, Transaction } from '@/hooks/useAdminPaymentsQuery';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorMapping';
+import ErrorState from '@/components/ErrorState';
 import { 
   CreditCard, 
   Loader2, 
@@ -26,100 +29,19 @@ import {
 type TransactionStatus = 'pending' | 'completed' | 'failed' | 'cancelled';
 type TransactionType = 'prize' | 'withdrawal' | 'bonus';
 
-interface Transaction {
-  id: string;
-  type: TransactionType;
-  amount: number;
-  currency: string;
-  status: TransactionStatus;
-  payment_method: string | null;
-  payment_reference: string | null;
-  notes: string | null;
-  created_at: string;
-  user_id: string;
-  profile: {
-    id: string;
-    full_name: string | null;
-    email: string | null;
-  };
-  payment_details: {
-    upi_id: string | null;
-    bank_account_number: string | null;
-    bank_ifsc: string | null;
-  } | null;
-  contest: {
-    title: string;
-  } | null;
-}
-
 const AdminPayments = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFilter = searchParams.get('status') || 'pending';
 
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: transactions = [], isLoading, isError, refetch } = useAdminPaymentsQuery(statusFilter);
+
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isProcessModalOpen, setIsProcessModalOpen] = useState(false);
   const [paymentReference, setPaymentReference] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const fetchTransactions = useCallback(async () => {
-    setIsLoading(true);
-    
-    let query = supabase
-      .from('wallet_transactions')
-      .select(`
-        id,
-        type,
-        amount,
-        currency,
-        status,
-        payment_method,
-        payment_reference,
-        notes,
-        created_at,
-        user_id,
-        profile:profiles!wallet_transactions_user_id_profiles_fkey(id, full_name, email),
-        contest:contests(title)
-      `)
-      .order('created_at', { ascending: false });
-
-    if (statusFilter !== 'all' && ['pending', 'completed', 'failed', 'cancelled'].includes(statusFilter)) {
-      query = query.eq('status', statusFilter as TransactionStatus);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching transactions:', error);
-      setTransactions([]);
-    } else {
-      // Fetch payment details for each transaction
-      const transactionsWithPayments = await Promise.all(
-        (data || []).map(async (tx: any) => {
-          const { data: paymentData } = await supabase
-            .from('payment_details')
-            .select('upi_id, bank_account_number, bank_ifsc')
-            .eq('user_id', tx.user_id)
-            .maybeSingle();
-          
-          return {
-            ...tx,
-            payment_details: paymentData,
-          } as Transaction;
-        })
-      );
-      setTransactions(transactionsWithPayments);
-    }
-    setIsLoading(false);
-  }, [statusFilter]);
-
-  useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
-
 
   const openProcessModal = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
@@ -173,7 +95,7 @@ const AdminPayments = () => {
           : `${actionLabel} has been cancelled.`,
       });
       setIsProcessModalOpen(false);
-      fetchTransactions();
+      queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
     }
 
     setIsProcessing(false);
@@ -232,6 +154,16 @@ const AdminPayments = () => {
     const now = new Date();
     return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
   }).length;
+
+  if (isError) {
+    return (
+      <ErrorState 
+        title="Failed to load payments" 
+        message="Could not load payment data." 
+        onRetry={refetch} 
+      />
+    );
+  }
 
   return (
     <div>
@@ -453,29 +385,23 @@ const AdminPayments = () => {
                   />
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-3 pt-4">
                   <Button
-                    variant="destructive"
+                    variant="outline"
                     onClick={() => processPayment('cancel')}
                     disabled={isProcessing}
                     className="flex-1"
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Cancel
+                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                    Cancel Payment
                   </Button>
                   <Button
                     onClick={() => processPayment('complete')}
                     disabled={isProcessing}
-                    className="flex-1 bg-success hover:bg-success/90"
+                    className="flex-1"
                   >
-                    {isProcessing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Mark as Paid
-                      </>
-                    )}
+                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                    Mark as Paid
                   </Button>
                 </div>
               </div>

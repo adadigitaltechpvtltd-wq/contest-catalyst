@@ -1,7 +1,9 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAdminSubmissionsQuery, AdminSubmission } from '@/hooks/useAdminSubmissionsQuery';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { validateTitle, isTitleBarelyPassing, generateSlugFromTitle } from '@/lib/titleValidation';
+import ErrorState from '@/components/ErrorState';
 import { 
   Image as ImageIcon, 
   Loader2, 
@@ -28,7 +31,6 @@ import {
   Calendar,
   Eye,
   RefreshCw,
-  Play,
   Zap,
   Search,
   FileText,
@@ -43,47 +45,6 @@ interface AnalysisProgress {
   progress: number;
   status: 'running' | 'completed' | 'error';
   details?: string;
-}
-
-interface Submission {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string;
-  slug: string | null;
-  seo_title: string | null;
-  meta_description: string | null;
-  title_quality_flag: string | null;
-  status: SubmissionStatus;
-  originality_confirmed: boolean;
-  exif_camera_make: string | null;
-  exif_camera_model: string | null;
-  exif_date_taken: string | null;
-  exif_has_anomalies: boolean;
-  exif_anomaly_reasons: string[] | null;
-  visual_anomaly_score: number;
-  duplicate_similarity_score: number;
-  image_quality_score: number;
-  risk_score: number;
-  system_score: number;
-  combined_score: number | null;
-  report_count: number;
-  admin_score: number | null;
-  admin_notes: string | null;
-  analysis_completed_at: string | null;
-  created_at: string;
-  contest: {
-    id: string;
-    title: string;
-    status: string;
-    prize_amount: number;
-    prize_currency: string;
-  };
-  profile: {
-    id: string;
-    full_name: string | null;
-    email: string | null;
-  };
 }
 
 const MODULE_LABELS: Record<string, string> = {
@@ -102,12 +63,13 @@ const MODULE_LABELS: Record<string, string> = {
 const AdminSubmissions = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFilter = searchParams.get('status') || 'pending';
 
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const { data: submissions = [], isLoading, isError, refetch } = useAdminSubmissionsQuery(statusFilter);
+
+  const [selectedSubmission, setSelectedSubmission] = useState<AdminSubmission | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   // Review form state
@@ -129,78 +91,6 @@ const AdminSubmissions = () => {
   const [batchProgress, setBatchProgress] = useState<AnalysisProgress | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState<Record<string, AnalysisProgress>>({});
 
-  const fetchSubmissions = useCallback(async () => {
-    setIsLoading(true);
-
-    try {
-      let query = supabase
-        .from('submissions')
-        .select(`
-          id,
-          title,
-          description,
-          image_url,
-          slug,
-          seo_title,
-          meta_description,
-          title_quality_flag,
-          status,
-          originality_confirmed,
-          exif_camera_make,
-          exif_camera_model,
-          exif_date_taken,
-          exif_has_anomalies,
-          exif_anomaly_reasons,
-          visual_anomaly_score,
-          duplicate_similarity_score,
-          image_quality_score,
-          risk_score,
-          system_score,
-          combined_score,
-          report_count,
-          admin_score,
-          admin_notes,
-          analysis_completed_at,
-          created_at,
-          contest:contests!submissions_contest_id_fkey(id, title, status, prize_amount, prize_currency),
-          profile:profiles!submissions_user_id_profiles_fkey(id, full_name, email)
-        `)
-        .order('risk_score', { ascending: false });
-
-      if (
-        statusFilter !== 'all' &&
-        ['pending', 'approved', 'rejected', 'winner', 'disqualified'].includes(statusFilter)
-      ) {
-        query = query.eq('status', statusFilter as SubmissionStatus);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching submissions:', error);
-        toast({
-          title: 'Failed to load submissions',
-          description: error.message,
-          variant: 'destructive',
-        });
-        setSubmissions([]);
-        return;
-      }
-
-      setSubmissions((data as unknown as Submission[]) ?? []);
-    } catch (err: any) {
-      console.error('Exception fetching submissions:', err);
-      toast({
-        title: 'Failed to load submissions',
-        description: err?.message ?? 'Unexpected error',
-        variant: 'destructive',
-      });
-      setSubmissions([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [statusFilter, toast]);
-
   // Subscribe to real-time progress updates
   useEffect(() => {
     const channel = supabase.channel('analysis-progress');
@@ -214,7 +104,7 @@ const AdminSubmissions = () => {
           setTimeout(() => {
             setBatchProgress(null);
             setIsBatchAnalyzing(false);
-            fetchSubmissions();
+            queryClient.invalidateQueries({ queryKey: ['admin-submissions'] });
           }, 1500);
         }
       } else {
@@ -240,12 +130,7 @@ const AdminSubmissions = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchSubmissions]);
-
-  useEffect(() => {
-    fetchSubmissions();
-  }, [fetchSubmissions]);
-
+  }, [queryClient]);
 
   const handleReanalyze = async (submissionId: string) => {
     setAnalyzingSubmissionId(submissionId);
@@ -271,7 +156,7 @@ const AdminSubmissions = () => {
       });
 
       // Refresh the submissions list
-      fetchSubmissions();
+      queryClient.invalidateQueries({ queryKey: ['admin-submissions'] });
       
       // Update selected submission if it's the one being analyzed
       if (selectedSubmission?.id === submissionId) {
@@ -282,7 +167,7 @@ const AdminSubmissions = () => {
           .single();
         
         if (updated) {
-          setSelectedSubmission(updated as unknown as Submission);
+          setSelectedSubmission(updated as unknown as AdminSubmission);
         }
       }
     } catch (err) {
@@ -354,7 +239,7 @@ const AdminSubmissions = () => {
 
   const pendingAnalysisCount = submissions.filter(s => !s.analysis_completed_at || s.status === 'pending').length;
 
-  const openReviewModal = (submission: Submission) => {
+  const openReviewModal = (submission: AdminSubmission) => {
     setSelectedSubmission(submission);
     setReviewScore(submission.admin_score?.toString() || '');
     setReviewNotes(submission.admin_notes || '');
@@ -497,7 +382,7 @@ const AdminSubmissions = () => {
         description: `Submission ${newStatus === 'approved' ? 'approved' : newStatus === 'winner' ? 'selected as winner' : 'rejected'}.`,
       });
       setIsReviewModalOpen(false);
-      fetchSubmissions();
+      queryClient.invalidateQueries({ queryKey: ['admin-submissions'] });
     } catch (err) {
       console.error('Review submission error:', err);
       toast({
@@ -534,6 +419,16 @@ const AdminSubmissions = () => {
     );
   };
 
+  if (isError) {
+    return (
+      <ErrorState 
+        title="Failed to load submissions" 
+        message="Could not load submissions data." 
+        onRetry={refetch} 
+      />
+    );
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
@@ -544,7 +439,7 @@ const AdminSubmissions = () => {
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
-            onClick={fetchSubmissions}
+            onClick={() => refetch()}
             disabled={isLoading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
