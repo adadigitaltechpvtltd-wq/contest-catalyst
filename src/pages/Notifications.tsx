@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ErrorState from '@/components/ErrorState';
+import NotificationsSkeleton from '@/components/skeletons/NotificationsSkeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +17,6 @@ import {
   Image as ImageIcon, 
   AlertCircle,
   Info,
-  Loader2,
   Check
 } from 'lucide-react';
 
@@ -33,7 +34,7 @@ const Notifications = () => {
   const { user } = useAuth();
   const { markAsRead, markAllAsRead, unreadCount } = useRealtimeNotifications();
 
-  const { data: notifications = [], isLoading } = useQuery({
+  const { data: notifications = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
       if (!user) return [];
@@ -117,9 +118,13 @@ const Notifications = () => {
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <NotificationsSkeleton />
+          ) : isError ? (
+            <ErrorState
+              title="Failed to Load Notifications"
+              message="We couldn't load your notifications. Please try again."
+              onRetry={() => refetch()}
+            />
           ) : notifications.length === 0 ? (
             <Card className="glass-card">
               <CardContent className="p-12 text-center">

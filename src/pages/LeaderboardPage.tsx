@@ -1,11 +1,13 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ErrorState from "@/components/ErrorState";
+import LeaderboardSkeleton from "@/components/skeletons/LeaderboardSkeleton";
 import { Trophy, Camera, Users, Award } from "lucide-react";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import LeaderboardTable from "@/components/LeaderboardTable";
 
 const LeaderboardPage = () => {
-  const { data: leaders, isLoading } = useLeaderboard({ limit: 50 });
+  const { data: leaders, isLoading, isError, refetch } = useLeaderboard({ limit: 50 });
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,39 +29,51 @@ const LeaderboardPage = () => {
             </p>
           </div>
 
-          {/* Stats Summary */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-            {[
-              { label: "Total Winners", value: leaders?.filter((l) => l.wins > 0).length || 0, icon: Trophy },
-              { label: "Active Photographers", value: leaders?.length || 0, icon: Camera },
-              {
-                label: "Total Submissions",
-                value: leaders?.reduce((acc, l) => acc + l.total_submissions, 0) || 0,
-                icon: Users,
-              },
-              {
-                label: "Contests Participated",
-                value: leaders?.reduce((acc, l) => acc + l.contests_entered, 0) || 0,
-                icon: Award,
-              },
-            ].map((stat, i) => (
-              <div key={i} className="bg-card border border-border rounded-xl p-4 text-center">
-                <stat.icon className="w-6 h-6 text-primary mx-auto mb-2" />
-                <p className="text-2xl font-bold text-foreground">{stat.value.toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Leaderboard Table */}
-          <div className="max-w-4xl mx-auto">
-            <LeaderboardTable
-              leaders={leaders}
-              isLoading={isLoading}
-              showViewAll={false}
-              title="Full Rankings"
+          {isLoading ? (
+            <LeaderboardSkeleton />
+          ) : isError ? (
+            <ErrorState
+              title="Failed to Load Leaderboard"
+              message="We couldn't load the leaderboard data. Please try again."
+              onRetry={() => refetch()}
             />
-          </div>
+          ) : (
+            <>
+              {/* Stats Summary */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+                {[
+                  { label: "Total Winners", value: leaders?.filter((l) => l.wins > 0).length || 0, icon: Trophy },
+                  { label: "Active Photographers", value: leaders?.length || 0, icon: Camera },
+                  {
+                    label: "Total Submissions",
+                    value: leaders?.reduce((acc, l) => acc + l.total_submissions, 0) || 0,
+                    icon: Users,
+                  },
+                  {
+                    label: "Contests Participated",
+                    value: leaders?.reduce((acc, l) => acc + l.contests_entered, 0) || 0,
+                    icon: Award,
+                  },
+                ].map((stat, i) => (
+                  <div key={i} className="bg-card border border-border rounded-xl p-4 text-center">
+                    <stat.icon className="w-6 h-6 text-primary mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-foreground">{stat.value.toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Leaderboard Table */}
+              <div className="max-w-4xl mx-auto">
+                <LeaderboardTable
+                  leaders={leaders}
+                  isLoading={false}
+                  showViewAll={false}
+                  title="Full Rankings"
+                />
+              </div>
+            </>
+          )}
         </div>
       </main>
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Clock, Users, Trophy, CheckCircle, Share2, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check, ChevronLeft, ChevronRight, Download, Heart, Facebook, X, Youtube, ExternalLink, Building2 } from "lucide-react";
 import ContestDetailSkeleton from "@/components/skeletons/ContestDetailSkeleton";
+import ErrorState from "@/components/ErrorState";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -42,7 +43,7 @@ const ContestDetail = () => {
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   // React Query hooks
-  const { data: contest, isLoading: contestLoading } = useContestDetailQuery(slug);
+  const { data: contest, isLoading: contestLoading, isError: contestError, refetch: refetchContest } = useContestDetailQuery(slug);
   const { data: participantCount = 0 } = useContestParticipantCount(contest?.id);
   const { data: userSubmission } = useUserContestSubmission(contest?.id, user?.id);
   const { data: totalApproved = 0 } = useContestApprovedCount(contest?.id);
@@ -349,6 +350,22 @@ const ContestDetail = () => {
     );
   }
 
+  if (contestError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-20">
+          <ErrorState
+            title="Failed to Load Contest"
+            message="We couldn't load the contest details. Please try again."
+            onRetry={() => refetchContest()}
+          />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   if (!contest) {
     return (
       <div className="min-h-screen bg-background">
@@ -360,6 +377,7 @@ const ContestDetail = () => {
             <Button>Back to Contests</Button>
           </Link>
         </div>
+        <Footer />
       </div>
     );
   }

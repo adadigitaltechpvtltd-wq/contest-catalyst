@@ -6,6 +6,7 @@ import { useMySubmissionsQuery, useDeleteSubmission, Submission } from '@/hooks/
 import { useQueryClient } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ErrorState from '@/components/ErrorState';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { MySubmissionsSkeleton } from '@/components/skeletons/SubmissionSkeleton';
@@ -46,7 +47,7 @@ const MySubmissions = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
-  const { data: submissions = [], isLoading, refetch } = useMySubmissionsQuery(user?.id);
+  const { data: submissions = [], isLoading, isError, refetch } = useMySubmissionsQuery(user?.id);
   const deleteSubmission = useDeleteSubmission();
 
   // Real-time subscription for user's submissions
@@ -177,6 +178,12 @@ const MySubmissions = () => {
 
           {showLoading ? (
             <MySubmissionsSkeleton />
+          ) : isError ? (
+            <ErrorState
+              title="Failed to Load Submissions"
+              message="We couldn't load your submissions. Please try again."
+              onRetry={() => refetch()}
+            />
           ) : filteredSubmissions.length === 0 ? (
             <Card className="glass-card">
               <CardContent className="p-12 text-center">
