@@ -42,8 +42,8 @@ export const useContestsQuery = () => {
         data.map(async (contest) => {
           const { count } = await supabase
             .from("submissions")
-            .select("*", { count: "exact", head: true })
-            .eq("contest_id", contest.id);
+            .select("*", { count: "exact" })
+            .eq("contest_id", contest.id).limit(0);
           return {
             ...contest,
             participantCount: count ?? 0,
@@ -76,8 +76,8 @@ export const useFeaturedContestQuery = () => {
       // Fetch participant count
       const { count } = await supabase
         .from("submissions")
-        .select("*", { count: "exact", head: true })
-        .eq("contest_id", data.id);
+        .select("*", { count: "exact" })
+        .eq("contest_id", data.id).limit(0);
 
       return {
         ...data,
@@ -108,8 +108,8 @@ export const useActiveContestsQuery = (limit = 4) => {
         data.map(async (contest) => {
           const { count } = await supabase
             .from("submissions")
-            .select("*", { count: "exact", head: true })
-            .eq("contest_id", contest.id);
+            .select("*", { count: "exact" })
+            .eq("contest_id", contest.id).limit(0);
           return {
             ...contest,
             participantCount: count ?? 0,
