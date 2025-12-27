@@ -281,12 +281,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    setPaymentDetails(null);
-    setRoles([]);
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Sign out failed (clearing local session anyway):', err);
+    } finally {
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setPaymentDetails(null);
+      setRoles([]);
+    }
   };
 
   const isAdmin = roles.includes('admin');

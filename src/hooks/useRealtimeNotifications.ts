@@ -23,14 +23,18 @@ export const useRealtimeNotifications = () => {
 
   // Fetch initial unread count
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
 
     const fetchUnreadCount = async () => {
       const { count, error } = await supabase
         .from("notifications")
-        .select("*", { count: "exact", head: true })
+        .select("*", { count: "exact" })
         .eq("user_id", user.id)
-        .eq("is_read", false);
+        .eq("is_read", false)
+        .limit(0);
 
       if (!error && count !== null) {
         setUnreadCount(count);
@@ -47,7 +51,7 @@ export const useRealtimeNotifications = () => {
     console.log("Setting up realtime notifications for user:", user.id);
 
     const channel = supabase
-      .channel("notifications-realtime")
+      .channel(`notifications-realtime-${user.id}`)
       .on(
         "postgres_changes",
         {
@@ -60,16 +64,12 @@ export const useRealtimeNotifications = () => {
           console.log("New notification received:", payload);
           const notification = payload.new as Notification;
 
-          // Show toast for new notification
           toast({
             title: notification.title,
             description: notification.message,
           });
 
-          // Update unread count
           setUnreadCount((prev) => prev + 1);
-
-          // Invalidate notifications query to refresh the list
           queryClient.invalidateQueries({ queryKey: ["notifications"] });
         }
       )
@@ -86,7 +86,6 @@ export const useRealtimeNotifications = () => {
           const notification = payload.new as Notification;
           const oldNotification = payload.old as Notification;
 
-          // Update unread count if read status changed
           if (!oldNotification.is_read && notification.is_read) {
             setUnreadCount((prev) => Math.max(0, prev - 1));
           }
