@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
+
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -286,8 +286,6 @@ const SubmitPhoto = () => {
     fetchPreviousSubmissions();
   }, [fetchContest, fetchPreviousSubmissions]);
 
-  // Listen for global refresh events (tab visibility, network reconnection)
-  useGlobalRefresh(handleSubmitPhotoRefresh);
 
 
   // Update countdown every second

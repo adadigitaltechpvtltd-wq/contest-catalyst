@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
+
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -188,8 +188,6 @@ const PhotoDetail = () => {
     fetchPhoto();
   }, [fetchPhoto]);
 
-  // Listen for global refresh events (tab visibility, network reconnection)
-  useGlobalRefresh(fetchPhoto);
 
 
   // Check if user has liked
