@@ -8,10 +8,26 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+const DEFAULT_FETCH_TIMEOUT_MS = 20000;
+
+const fetchWithTimeout: typeof fetch = (input, init) => {
+  const timeout = new Promise<Response>((_resolve, reject) => {
+    const id = setTimeout(() => {
+      clearTimeout(id);
+      reject(new Error('Network request timed out'));
+    }, DEFAULT_FETCH_TIMEOUT_MS);
+  });
+
+  return Promise.race([fetch(input, init), timeout]);
+};
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  global: {
+    fetch: fetchWithTimeout,
+  },
   auth: {
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+  },
 });
