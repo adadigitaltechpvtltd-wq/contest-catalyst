@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useSubmissionDetailQuery, SubmissionDetail as SubmissionDetailType } from '@/hooks/useSubmissionDetailQuery';
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -21,6 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import ErrorState from '@/components/ErrorState';
 import { 
   ArrowLeft,
   Clock, 
@@ -56,35 +59,20 @@ import {
 
 type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
 
-interface Submission {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string;
-  status: SubmissionStatus;
-  admin_score: number | null;
-  admin_notes: string | null;
-  rejection_reason: string | null;
-  created_at: string;
-  updated_at: string;
-  reviewed_at: string | null;
-  contest: {
-    id: string;
-    slug: string | null;
-    title: string;
-    prize_amount: number;
-    prize_currency: string;
-    status: string;
-    end_date: string;
-  };
-}
-
 const SubmissionDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [submission, setSubmission] = useState<Submission | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const { 
+    data: submission, 
+    isLoading, 
+    isError,
+    refetch 
+  } = useSubmissionDetailQuery(id, user?.id);
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -96,55 +84,19 @@ const SubmissionDetail = () => {
   const [showCropper, setShowCropper] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
-  const { toast } = useToast();
 
-  const fetchSubmission = useCallback(async () => {
-    if (!user || !id) return;
+  // Local state for submission data (for optimistic updates)
+  const [localSubmission, setLocalSubmission] = useState<SubmissionDetailType | null>(null);
 
-    setIsLoading(true);
-
-    try {
-      const { data, error } = await supabase
-        .from('submissions')
-        .select(`
-          id,
-          title,
-          description,
-          image_url,
-          status,
-          admin_score,
-          admin_notes,
-          rejection_reason,
-          created_at,
-          updated_at,
-          reviewed_at,
-          contest:contests(id, slug, title, prize_amount, prize_currency, status, end_date)
-        `)
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching submission:', error);
-        navigate('/submissions');
-        return;
-      }
-
-      if (!data) {
-        navigate('/submissions');
-        return;
-      }
-
-      setSubmission(data as unknown as Submission);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id, user, navigate]);
-
+  // Sync local state with query data
   useEffect(() => {
-    fetchSubmission();
+    if (submission) {
+      setLocalSubmission(submission);
+    }
+  }, [submission]);
 
-    // Real-time subscription for this submission
+  // Subscribe to real-time updates
+  useEffect(() => {
     if (!id) return;
 
     const channel = supabase
@@ -157,9 +109,8 @@ const SubmissionDetail = () => {
           table: 'submissions',
           filter: `id=eq.${id}`
         },
-        (payload) => {
-          console.log('Submission updated:', payload);
-          fetchSubmission();
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['submission-detail', id] });
         }
       )
       .subscribe();
@@ -167,9 +118,14 @@ const SubmissionDetail = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [id, fetchSubmission]);
+  }, [id, queryClient]);
 
-
+  // Redirect if no submission found
+  useEffect(() => {
+    if (!isLoading && !submission && id) {
+      navigate('/submissions');
+    }
+  }, [isLoading, submission, id, navigate]);
 
   const getStatusBadge = (status: SubmissionStatus) => {
     switch (status) {
@@ -189,36 +145,36 @@ const SubmissionDetail = () => {
   };
 
   const getStatusTimeline = () => {
-    if (!submission) return [];
+    if (!localSubmission) return [];
 
     const timeline = [
       {
         label: 'Submitted',
-        date: submission.created_at,
+        date: localSubmission.created_at,
         completed: true,
         icon: ImageIcon
       }
     ];
 
-    if (submission.reviewed_at) {
+    if (localSubmission.reviewed_at) {
       timeline.push({
-        label: submission.status === 'approved' || submission.status === 'winner' ? 'Approved' : 'Reviewed',
-        date: submission.reviewed_at,
+        label: localSubmission.status === 'approved' || localSubmission.status === 'winner' ? 'Approved' : 'Reviewed',
+        date: localSubmission.reviewed_at,
         completed: true,
-        icon: submission.status === 'approved' || submission.status === 'winner' ? CheckCircle : XCircle
+        icon: localSubmission.status === 'approved' || localSubmission.status === 'winner' ? CheckCircle : XCircle
       });
     }
 
-    if (submission.status === 'winner') {
+    if (localSubmission.status === 'winner') {
       timeline.push({
         label: 'Selected as Winner',
-        date: submission.updated_at,
+        date: localSubmission.updated_at,
         completed: true,
         icon: Trophy
       });
     }
 
-    if (submission.status === 'pending') {
+    if (localSubmission.status === 'pending') {
       timeline.push({
         label: 'Awaiting Review',
         date: null,
@@ -231,12 +187,12 @@ const SubmissionDetail = () => {
   };
 
   const handleDelete = async () => {
-    if (!submission) return;
+    if (!localSubmission) return;
     
     setIsDeleting(true);
     try {
       // Extract file path from URL for storage deletion
-      const urlParts = submission.image_url.split('/submissions/');
+      const urlParts = localSubmission.image_url.split('/submissions/');
       if (urlParts[1]) {
         const filePath = urlParts[1];
         await supabase.storage.from('submissions').remove([filePath]);
@@ -245,7 +201,7 @@ const SubmissionDetail = () => {
       const { error } = await supabase
         .from('submissions')
         .delete()
-        .eq('id', submission.id);
+        .eq('id', localSubmission.id);
 
       if (error) throw error;
 
@@ -254,6 +210,7 @@ const SubmissionDetail = () => {
         description: 'Your submission has been removed.',
       });
       
+      queryClient.invalidateQueries({ queryKey: ['my-submissions'] });
       navigate('/submissions');
     } catch (error) {
       console.error('Error deleting submission:', error);
@@ -267,14 +224,14 @@ const SubmissionDetail = () => {
   };
 
   const openEditDialog = () => {
-    if (!submission) return;
-    setEditTitle(submission.title);
-    setEditDescription(submission.description || '');
+    if (!localSubmission) return;
+    setEditTitle(localSubmission.title);
+    setEditDescription(localSubmission.description || '');
     setIsEditing(true);
   };
 
   const handleSaveEdit = async () => {
-    if (!submission) return;
+    if (!localSubmission) return;
     
     const trimmedTitle = editTitle.trim();
     if (!trimmedTitle) {
@@ -303,12 +260,12 @@ const SubmissionDetail = () => {
           title: trimmedTitle,
           description: editDescription.trim() || null,
         })
-        .eq('id', submission.id);
+        .eq('id', localSubmission.id);
 
       if (error) throw error;
 
-      setSubmission({
-        ...submission,
+      setLocalSubmission({
+        ...localSubmission,
         title: trimmedTitle,
         description: editDescription.trim() || null,
       });
@@ -318,6 +275,7 @@ const SubmissionDetail = () => {
         description: 'Your submission has been updated.',
       });
       
+      queryClient.invalidateQueries({ queryKey: ['submission-detail', id] });
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating submission:', error);
@@ -387,13 +345,13 @@ const SubmissionDetail = () => {
   };
 
   const handleReplaceImage = async () => {
-    if (!submission || !newPhotoFile || !user) return;
+    if (!localSubmission || !newPhotoFile || !user) return;
 
     setIsUploadingImage(true);
     try {
       // Upload new image
       const fileExt = newPhotoFile.name.split('.').pop();
-      const fileName = `${user.id}/${submission.contest.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${localSubmission.contest.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('submissions')
@@ -407,7 +365,7 @@ const SubmissionDetail = () => {
         .getPublicUrl(fileName);
 
       // Delete old image from storage
-      const oldUrlParts = submission.image_url.split('/submissions/');
+      const oldUrlParts = localSubmission.image_url.split('/submissions/');
       if (oldUrlParts[1]) {
         const oldFilePath = oldUrlParts[1];
         await supabase.storage.from('submissions').remove([oldFilePath]);
@@ -417,12 +375,12 @@ const SubmissionDetail = () => {
       const { error: updateError } = await supabase
         .from('submissions')
         .update({ image_url: publicUrl })
-        .eq('id', submission.id);
+        .eq('id', localSubmission.id);
 
       if (updateError) throw updateError;
 
-      setSubmission({
-        ...submission,
+      setLocalSubmission({
+        ...localSubmission,
         image_url: publicUrl,
       });
 
@@ -431,6 +389,7 @@ const SubmissionDetail = () => {
         description: 'Your submission photo has been updated.',
       });
 
+      queryClient.invalidateQueries({ queryKey: ['submission-detail', id] });
       handleCancelImageReplace();
     } catch (error) {
       console.error('Error replacing image:', error);
@@ -451,7 +410,23 @@ const SubmissionDetail = () => {
     );
   }
 
-  if (!submission) {
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-4 py-8 pt-24 flex items-center justify-center">
+          <ErrorState 
+            title="Failed to load submission" 
+            message="Could not load submission data." 
+            onRetry={refetch} 
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!localSubmission) {
     return null;
   }
 
@@ -468,7 +443,7 @@ const SubmissionDetail = () => {
             Back to Submissions
           </Button>
           
-          {submission.status === 'pending' && (
+          {localSubmission.status === 'pending' && (
             <div className="flex items-center gap-2">
               <Dialog open={isEditing} onOpenChange={setIsEditing}>
                 <DialogTrigger asChild>
@@ -549,7 +524,7 @@ const SubmissionDetail = () => {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently delete your submission "{submission.title}". This action cannot be undone.
+                      This will permanently delete your submission "{localSubmission.title}". This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -581,20 +556,20 @@ const SubmissionDetail = () => {
                   />
                 ) : (
                   <img
-                    src={submission.image_url}
-                    alt={submission.title}
+                    src={localSubmission.image_url}
+                    alt={localSubmission.title}
                     className="w-full max-h-[600px] object-contain bg-secondary"
                   />
                 )}
                 <div className="absolute top-4 right-4">
-                  {getStatusBadge(submission.status)}
+                  {getStatusBadge(localSubmission.status)}
                 </div>
-                {submission.status === 'winner' && (
+                {localSubmission.status === 'winner' && (
                   <div className="absolute inset-0 bg-gradient-to-t from-accent/20 to-transparent pointer-events-none" />
                 )}
                 
                 {/* Replace image button for pending submissions */}
-                {submission.status === 'pending' && !isReplacingImage && (
+                {localSubmission.status === 'pending' && !isReplacingImage && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -608,7 +583,7 @@ const SubmissionDetail = () => {
               </div>
               
               {/* Image replacement UI */}
-              {submission.status === 'pending' && isReplacingImage && (
+              {localSubmission.status === 'pending' && isReplacingImage && (
                 <div className="p-4 border-t border-border bg-secondary/30">
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
@@ -679,15 +654,15 @@ const SubmissionDetail = () => {
               )}
               
               <CardContent className="p-6">
-                <h1 className="text-2xl font-display font-bold mb-2">{submission.title}</h1>
-                {submission.description && (
-                  <p className="text-muted-foreground">{submission.description}</p>
+                <h1 className="text-2xl font-display font-bold mb-2">{localSubmission.title}</h1>
+                {localSubmission.description && (
+                  <p className="text-muted-foreground">{localSubmission.description}</p>
                 )}
               </CardContent>
             </Card>
 
             {/* Admin Feedback */}
-            {(submission.admin_notes || submission.rejection_reason || submission.admin_score !== null) && (
+            {(localSubmission.admin_notes || localSubmission.rejection_reason || localSubmission.admin_score !== null) && (
               <Card className="glass-card">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -696,27 +671,27 @@ const SubmissionDetail = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {submission.admin_score !== null && (
+                  {localSubmission.admin_score !== null && (
                     <div className="flex items-center gap-3">
                       <Star className="h-5 w-5 text-primary" />
                       <div>
                         <p className="text-sm text-muted-foreground">Score</p>
-                        <p className="text-xl font-bold text-primary">{submission.admin_score}/100</p>
+                        <p className="text-xl font-bold text-primary">{localSubmission.admin_score}/100</p>
                       </div>
                     </div>
                   )}
 
-                  {submission.rejection_reason && (
+                  {localSubmission.rejection_reason && (
                     <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
                       <p className="text-sm font-medium text-destructive mb-1">Rejection Reason</p>
-                      <p className="text-sm">{submission.rejection_reason}</p>
+                      <p className="text-sm">{localSubmission.rejection_reason}</p>
                     </div>
                   )}
 
-                  {submission.admin_notes && (
+                  {localSubmission.admin_notes && (
                     <div className="p-4 bg-secondary rounded-lg">
                       <p className="text-sm font-medium mb-1">Notes</p>
-                      <p className="text-sm text-muted-foreground">{submission.admin_notes}</p>
+                      <p className="text-sm text-muted-foreground">{localSubmission.admin_notes}</p>
                     </div>
                   )}
                 </CardContent>
@@ -734,17 +709,17 @@ const SubmissionDetail = () => {
               <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Contest</p>
-                  <p className="font-medium">{submission.contest.title}</p>
+                  <p className="font-medium">{localSubmission.contest.title}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Prize</p>
                   <p className="font-bold text-primary text-lg">
-                    ${submission.contest.prize_amount.toLocaleString()}
+                    ${localSubmission.contest.prize_amount.toLocaleString()}
                   </p>
                 </div>
                 <Separator />
                 <Button asChild variant="outline" className="w-full">
-                  <Link to={`/contest/${submission.contest.slug || submission.contest.id}`}>
+                  <Link to={`/contest/${localSubmission.contest.slug || localSubmission.contest.id}`}>
                     <Eye className="h-4 w-4 mr-2" />
                     View Contest
                   </Link>
@@ -797,17 +772,17 @@ const SubmissionDetail = () => {
               <CardContent className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Submitted</span>
-                  <span>{new Date(submission.created_at).toLocaleDateString()}</span>
+                  <span>{new Date(localSubmission.created_at).toLocaleDateString()}</span>
                 </div>
-                {submission.reviewed_at && (
+                {localSubmission.reviewed_at && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Reviewed</span>
-                    <span>{new Date(submission.reviewed_at).toLocaleDateString()}</span>
+                    <span>{new Date(localSubmission.reviewed_at).toLocaleDateString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Status</span>
-                  <span className="capitalize">{submission.status}</span>
+                  <span className="capitalize">{localSubmission.status}</span>
                 </div>
               </CardContent>
             </Card>

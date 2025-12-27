@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useSubmitPhotoQuery, usePreviousSubmissionsQuery } from '@/hooks/useSubmitPhotoQuery';
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -15,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorMapping';
 import { validateTitle, TitleValidationResult } from '@/lib/titleValidation';
 import { differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds } from 'date-fns';
+import ErrorState from '@/components/ErrorState';
 import { 
   Upload, 
   Camera, 
@@ -32,27 +35,6 @@ import {
 import ImageCropper from '@/components/ImageCropper';
 import CameraCapture from '@/components/CameraCapture';
 import { useIsCameraAvailable } from '@/hooks/useCameraCapture';
-
-interface Contest {
-  id: string;
-  title: string;
-  description: string | null;
-  theme: string | null;
-  prize_amount: number;
-  rules: string[] | null;
-  end_date: string;
-}
-
-interface PreviousSubmission {
-  id: string;
-  title: string;
-  image_url: string;
-  status: string;
-  created_at: string;
-  contest: {
-    title: string;
-  } | null;
-}
 
 // Title input with real-time validation feedback
 const TitleInputWithValidation = ({ 
@@ -111,9 +93,24 @@ const SubmitPhoto = () => {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [contest, setContest] = useState<Contest | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Use React Query hooks
+  const { 
+    data: contestData, 
+    isLoading: isLoadingContest, 
+    isError: isContestError,
+    refetch: refetchContest 
+  } = useSubmitPhotoQuery(slug, user?.id);
+  
+  const { 
+    data: previousSubmissions = [], 
+    isLoading: isLoadingGallery 
+  } = usePreviousSubmissionsQuery(user?.id);
+
+  const contest = contestData?.contest ?? null;
+  const hasSubmitted = contestData?.hasSubmitted ?? false;
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
@@ -131,13 +128,6 @@ const SubmitPhoto = () => {
 
   // Camera availability
   const isCameraAvailable = useIsCameraAvailable();
-
-  // Check if user already submitted
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-  
-  // Previous submissions gallery
-  const [previousSubmissions, setPreviousSubmissions] = useState<PreviousSubmission[]>([]);
-  const [isLoadingGallery, setIsLoadingGallery] = useState(false);
 
   // Time remaining state
   const [timeRemaining, setTimeRemaining] = useState<{
@@ -164,129 +154,24 @@ const SubmitPhoto = () => {
     return { days, hours, minutes, seconds, isExpired: false };
   }, []);
 
-  const fetchContest = useCallback(async () => {
-    if (!slug || !user) return;
+  // Update time remaining when contest loads
+  useEffect(() => {
+    if (contest?.end_date) {
+      setTimeRemaining(calculateTimeRemaining(contest.end_date));
+    }
+  }, [contest?.end_date, calculateTimeRemaining]);
 
-    setIsLoading(true);
-
-    console.log('SubmitPhoto: Fetching contest:', slug, 'User:', user?.id);
-
-    // Support both slug and UUID for backward compatibility
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
-
-    try {
-      const { data, error } = await supabase
-        .from('contests')
-        .select('id, title, description, theme, prize_amount, rules, end_date')
-        .eq(isUUID ? 'id' : 'slug', slug)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching contest:', error);
-        toast({
-          title: 'Error loading contest',
-          description: 'Please try again later.',
-          variant: 'destructive',
-        });
-        navigate('/contests');
-        return;
-      }
-
-      if (!data) {
-        toast({
-          title: 'Contest not found',
-          description: 'This contest may have ended or does not exist.',
-          variant: 'destructive',
-        });
-        navigate('/contests');
-        return;
-      }
-
-      setContest(data);
-      setTimeRemaining(calculateTimeRemaining(data.end_date));
-
-      // Check if user already submitted
-      const { data: submission, error: subError } = await supabase
-        .from('submissions')
-        .select('id')
-        .eq('contest_id', data.id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!subError && submission) {
-        setHasSubmitted(true);
-      }
-    } catch (err) {
-      console.error('Exception in fetchContest:', err);
+  // Redirect if no contest found
+  useEffect(() => {
+    if (!isLoadingContest && !contest && slug) {
       toast({
-        title: 'Error loading contest',
-        description: 'Please try again later.',
+        title: 'Contest not found',
+        description: 'This contest may have ended or does not exist.',
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
+      navigate('/contests');
     }
-  }, [slug, user, navigate, toast, calculateTimeRemaining]);
-
-  useEffect(() => {
-    if (!slug) {
-      setIsLoading(false);
-      return;
-    }
-
-    // ProtectedRoute already ensures user exists, but check anyway
-    if (!user) {
-      console.log('SubmitPhoto: No user yet, waiting...');
-      const timeout = setTimeout(() => {
-        if (!user) {
-          setIsLoading(false);
-        }
-      }, 3000);
-      return () => clearTimeout(timeout);
-    }
-
-    fetchContest();
-  }, [slug, user, fetchContest]);
-
-
-  const fetchPreviousSubmissions = useCallback(async () => {
-    if (!user) return;
-
-    setIsLoadingGallery(true);
-
-    const { data, error } = await supabase
-      .from('submissions')
-      .select(`
-        id,
-        title,
-        image_url,
-        status,
-        created_at,
-        contest:contests(title)
-      `)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(12);
-
-    if (!error && data) {
-      setPreviousSubmissions(data as PreviousSubmission[]);
-    }
-
-    setIsLoadingGallery(false);
-  }, [user]);
-
-  // Fetch previous submissions
-  useEffect(() => {
-    fetchPreviousSubmissions();
-  }, [fetchPreviousSubmissions]);
-
-  const handleSubmitPhotoRefresh = useCallback(() => {
-    fetchContest();
-    fetchPreviousSubmissions();
-  }, [fetchContest, fetchPreviousSubmissions]);
-
-
+  }, [isLoadingContest, contest, slug, navigate, toast]);
 
   // Update countdown every second
   useEffect(() => {
@@ -325,7 +210,7 @@ const SubmitPhoto = () => {
 
     // Set the file directly without forcing crop
     setPhotoFile(file);
-    setIsFromCamera(false); // File uploads are not from camera
+    setIsFromCamera(false);
     const reader = new FileReader();
     reader.onload = (e) => {
       setPhotoPreview(e.target?.result as string);
@@ -370,7 +255,7 @@ const SubmitPhoto = () => {
     setShowCamera(true);
   };
 
-  // Handle camera capture - same validation as file upload
+  // Handle camera capture
   const handleCameraCapture = useCallback((file: File) => {
     // Validate file size (8MB max)
     if (file.size > 8 * 1024 * 1024) {
@@ -463,6 +348,10 @@ const SubmitPhoto = () => {
         });
       }
 
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['previous-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ['my-submissions'] });
+
       navigate('/submissions');
     } catch (error: unknown) {
       console.error('Submission error:', error);
@@ -476,10 +365,28 @@ const SubmitPhoto = () => {
     setIsSubmitting(false);
   };
 
+  const isLoading = isLoadingContest || authLoading;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isContestError) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-4 py-8 pt-24 flex items-center justify-center">
+          <ErrorState 
+            title="Failed to load contest" 
+            message="Could not load contest data." 
+            onRetry={refetchContest} 
+          />
+        </main>
+        <Footer />
       </div>
     );
   }
