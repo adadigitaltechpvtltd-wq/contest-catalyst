@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
+import { useMySubmissionsQuery, useDeleteSubmission, Submission } from '@/hooks/useMySubmissionsQuery';
+import { useQueryClient } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
@@ -38,125 +39,20 @@ import {
 
 type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
 
-interface Submission {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string;
-  status: SubmissionStatus;
-  admin_score: number | null;
-  rejection_reason: string | null;
-  created_at: string;
-  contest_id: string;
-  contest: {
-    id: string;
-    title: string;
-    prize_amount: number;
-    status: string;
-  } | null;
-}
-
 const MySubmissions = () => {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
-  const fetchSubmissions = useCallback(async (userId: string) => {
-    try {
-      const { data: subs, error } = await supabase
-        .from('submissions')
-        .select(
-          [
-            'id',
-            'title',
-            'description',
-            'image_url',
-            'status',
-            'admin_score',
-            'rejection_reason',
-            'created_at',
-            'contest_id',
-          ].join(',')
-        )
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+  const { data: submissions = [], isLoading, refetch } = useMySubmissionsQuery(user?.id);
+  const deleteSubmission = useDeleteSubmission();
 
-      if (error) {
-        console.error('Error fetching submissions:', error);
-        toast({
-          title: 'Error loading submissions',
-          description: error.message || 'Please try refreshing the page.',
-          variant: 'destructive',
-        });
-        setSubmissions([]);
-        return;
-      }
-
-      const submissionRows = (subs ?? []) as unknown as Array<
-        Omit<Submission, 'contest'> & { contest: never }
-      >;
-
-      const contestIds = Array.from(
-        new Set(submissionRows.map((s) => s.contest_id).filter(Boolean))
-      );
-
-      let contestsById = new Map<string, Submission['contest']>();
-
-      if (contestIds.length > 0) {
-        const { data: contests, error: contestError } = await supabase
-          .from('contests')
-          .select('id, title, prize_amount, status')
-          .in('id', contestIds);
-
-        if (contestError) {
-          console.error('Error fetching contests for submissions:', contestError);
-        } else {
-          (contests ?? []).forEach((c) => {
-            contestsById.set(c.id, c as any);
-          });
-        }
-      }
-
-      const merged: Submission[] = submissionRows.map((s) => ({
-        ...(s as any),
-        contest: contestsById.get(s.contest_id) ?? null,
-      }));
-
-      setSubmissions(merged);
-    } catch (err) {
-      console.error('Exception fetching submissions:', err);
-      toast({
-        title: 'Error loading submissions',
-        description: 'Please try refreshing the page.',
-        variant: 'destructive',
-      });
-      setSubmissions([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
+  // Real-time subscription for user's submissions
   useEffect(() => {
-    // Wait for auth to finish loading before fetching
-    if (authLoading) {
-      console.log('MySubmissions: Auth still loading');
-      return;
-    }
-    
-    if (!user) {
-      console.log('MySubmissions: No user after auth loaded');
-      setIsLoading(false);
-      return;
-    }
+    if (!user) return;
 
-    console.log('MySubmissions: Fetching submissions for:', user.id);
-    setIsLoading(true);
-    fetchSubmissions(user.id);
-
-    // Real-time subscription for user's submissions
     const channel = supabase
       .channel('my-submissions')
       .on(
@@ -186,7 +82,7 @@ const MySubmissions = () => {
             }
           }
           
-          fetchSubmissions(user.id);
+          queryClient.invalidateQueries({ queryKey: ['my-submissions'] });
         }
       )
       .subscribe();
@@ -194,40 +90,16 @@ const MySubmissions = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, fetchSubmissions, toast]);
-
-  // Listen for global refresh events (tab visibility, network reconnection)
-  const handleGlobalRefresh = useCallback(() => {
-    if (user) {
-      fetchSubmissions(user.id);
-    }
-  }, [user, fetchSubmissions]);
-
-  useGlobalRefresh(handleGlobalRefresh);
+  }, [user, toast, queryClient]);
 
   const handleDelete = async (submissionId: string, imageUrl: string) => {
     setDeletingId(submissionId);
     try {
-      // Extract file path from URL for storage deletion
-      const urlParts = imageUrl.split('/submissions/');
-      if (urlParts[1]) {
-        const filePath = urlParts[1];
-        await supabase.storage.from('submissions').remove([filePath]);
-      }
-
-      const { error } = await supabase
-        .from('submissions')
-        .delete()
-        .eq('id', submissionId);
-
-      if (error) throw error;
-
+      await deleteSubmission.mutateAsync({ submissionId, imageUrl });
       toast({
         title: 'Submission deleted',
         description: 'Your submission has been removed.',
       });
-      
-      setSubmissions(prev => prev.filter(s => s.id !== submissionId));
     } catch (error) {
       console.error('Error deleting submission:', error);
       toast({
@@ -269,14 +141,14 @@ const MySubmissions = () => {
   const rejectedCount = submissions.filter((s) => s.status === 'rejected' || s.status === 'disqualified').length;
 
   const handleRefresh = useCallback(async () => {
-    if (user) {
-      await fetchSubmissions(user.id);
-    }
-  }, [user, fetchSubmissions]);
+    await refetch();
+  }, [refetch]);
 
   const { pullDistance, isRefreshing, containerProps } = usePullToRefresh({
     onRefresh: handleRefresh,
   });
+
+  const showLoading = authLoading || isLoading;
 
   return (
     <div className="min-h-screen bg-background flex flex-col" {...containerProps}>
@@ -303,7 +175,7 @@ const MySubmissions = () => {
             <TabsTrigger value="rejected">Rejected ({rejectedCount})</TabsTrigger>
           </TabsList>
 
-          {isLoading ? (
+          {showLoading ? (
             <MySubmissionsSkeleton />
           ) : filteredSubmissions.length === 0 ? (
             <Card className="glass-card">

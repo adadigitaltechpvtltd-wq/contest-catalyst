@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
+import { useWalletBalances, useWalletTransactions, Transaction } from '@/hooks/useWalletQuery';
+import { useQueryClient } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
@@ -27,113 +28,19 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Link } from 'react-router-dom';
 
 type TransactionType = 'prize' | 'withdrawal' | 'bonus';
 type TransactionStatus = 'pending' | 'completed' | 'failed' | 'cancelled';
 
-interface Transaction {
-  id: string;
-  type: TransactionType;
-  amount: number;
-  currency: string;
-  status: TransactionStatus;
-  notes: string | null;
-  payment_reference: string | null;
-  created_at: string;
-  contest: {
-    title: string;
-  } | null;
-}
-
-interface WalletBalances {
-  available: number;
-  pending: number;
-  totalEarned: number;
-}
-
 const Wallet = () => {
   const { user, isLoading: authLoading, paymentDetails } = useAuth();
-  const [balances, setBalances] = useState<WalletBalances>({
-    available: 0,
-    pending: 0,
-    totalEarned: 0
-  });
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchWalletData = useCallback(async () => {
-    if (authLoading && !user) return;
+  const { data: balances = { available: 0, pending: 0, totalEarned: 0 }, isLoading: balancesLoading } = useWalletBalances(user?.id);
+  const { data: transactions = [], isLoading: transactionsLoading } = useWalletTransactions(user?.id);
 
-    if (!user) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Fetch all three balance values in parallel
-      const [availableResult, pendingResult, totalEarnedResult] = await Promise.all([
-        supabase.rpc('get_wallet_balance', { _user_id: user.id }),
-        supabase.rpc('get_pending_balance', { _user_id: user.id }),
-        supabase.rpc('get_total_earned', { _user_id: user.id })
-      ]);
-
-      if (availableResult.error) {
-        console.error('Error fetching available balance:', availableResult.error);
-        toast.error('Failed to load wallet balance');
-      }
-      if (pendingResult.error) {
-        console.error('Error fetching pending balance:', pendingResult.error);
-      }
-      if (totalEarnedResult.error) {
-        console.error('Error fetching total earned:', totalEarnedResult.error);
-      }
-
-      setBalances({
-        available: Number(availableResult.data) || 0,
-        pending: Number(pendingResult.data) || 0,
-        totalEarned: Number(totalEarnedResult.data) || 0
-      });
-
-      // Fetch transactions
-      const { data: txData, error: txError } = await supabase
-        .from('wallet_transactions')
-        .select(`
-          id,
-          type,
-          amount,
-          currency,
-          status,
-          notes,
-          payment_reference,
-          created_at,
-          contest:contests(title)
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (txError) {
-        console.error('Error fetching transactions:', txError);
-        toast.error('Failed to load transactions');
-        setTransactions([]);
-      } else {
-        setTransactions((txData as unknown as Transaction[]) || []);
-      }
-    } catch (e) {
-      console.error('Exception fetching wallet data:', e);
-      toast.error('Failed to load wallet data');
-      setTransactions([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, authLoading]);
-
-  useEffect(() => {
-    fetchWalletData();
-  }, [fetchWalletData]);
+  const isLoading = authLoading || balancesLoading || transactionsLoading;
 
   // Real-time subscription for wallet updates
   useEffect(() => {
@@ -151,10 +58,9 @@ const Wallet = () => {
         },
         (payload) => {
           console.log('Wallet transaction update:', payload);
-          // Refetch wallet data when any transaction changes
-          fetchWalletData();
+          queryClient.invalidateQueries({ queryKey: ['wallet-balances'] });
+          queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
           
-          // Show toast for completed payments
           if (payload.eventType === 'UPDATE' && payload.new) {
             const newTx = payload.new as { status: string; amount: number; type: string };
             if (newTx.status === 'completed' && newTx.type === 'prize') {
@@ -168,15 +74,18 @@ const Wallet = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, fetchWalletData]);
+  }, [user, queryClient]);
 
-  // Listen for global refresh events (tab visibility, network reconnection)
-  useGlobalRefresh(fetchWalletData);
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['wallet-balances'] }),
+      queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] }),
+    ]);
+  }, [queryClient]);
 
   const { pullDistance, isRefreshing, containerProps } = usePullToRefresh({
-    onRefresh: fetchWalletData,
+    onRefresh: handleRefresh,
   });
-
 
   const getTransactionIcon = (type: TransactionType, status: TransactionStatus) => {
     if (status === 'cancelled' || status === 'failed') {
@@ -442,10 +351,12 @@ const Wallet = () => {
               <CardContent>
                 {transactions.length === 0 ? (
                   <div className="text-center py-8">
-                    <WalletIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                      <WalletIcon className="h-8 w-8 text-muted-foreground" />
+                    </div>
                     <h3 className="font-semibold mb-2">No Transactions Yet</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Win a contest to see your first transaction here!
+                    <p className="text-muted-foreground text-sm">
+                      Win a contest to start earning rewards!
                     </p>
                   </div>
                 ) : (
@@ -453,39 +364,35 @@ const Wallet = () => {
                     {transactions.map((tx) => (
                       <div
                         key={tx.id}
-                        className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                        className="flex items-center justify-between p-4 rounded-lg hover:bg-secondary/50 transition-colors"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="p-2 rounded-full bg-background">
+                          <div className="p-2 rounded-full bg-secondary">
                             {getTransactionIcon(tx.type, tx.status)}
                           </div>
                           <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-semibold">{getTransactionLabel(tx.type, tx.status)}</span>
-                              {getStatusBadge(tx.status)}
-                            </div>
+                            <p className="font-medium">
+                              {getTransactionLabel(tx.type, tx.status)}
+                            </p>
                             {tx.contest && (
-                              <p className="text-sm text-muted-foreground">{tx.contest.title}</p>
-                            )}
-                            {tx.notes && (
-                              <p className="text-xs text-muted-foreground">{tx.notes}</p>
-                            )}
-                            {tx.payment_reference && tx.status === 'completed' && (
-                              <p className="text-xs text-muted-foreground">Ref: {tx.payment_reference}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {tx.contest.title}
+                              </p>
                             )}
                             <p className="text-xs text-muted-foreground">
                               {new Date(tx.created_at).toLocaleDateString('en-US', {
                                 day: 'numeric',
                                 month: 'short',
                                 year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
                               })}
                             </p>
                           </div>
                         </div>
-                        <div className={`text-lg font-bold ${getAmountColor(tx.type, tx.status)}`}>
-                          {tx.type === 'withdrawal' ? '-' : '+'}${Number(tx.amount).toFixed(2)}
+                        <div className="text-right">
+                          <p className={`font-bold ${getAmountColor(tx.type, tx.status)}`}>
+                            {tx.type === 'withdrawal' ? '-' : '+'}${Number(tx.amount).toFixed(2)}
+                          </p>
+                          {getStatusBadge(tx.status)}
                         </div>
                       </div>
                     ))}
