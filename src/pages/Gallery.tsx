@@ -4,6 +4,7 @@ import { useGalleryPhotos, useGalleryFilterOptions, GalleryPhoto, SortOption } f
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
+import ErrorState from '@/components/ErrorState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -100,6 +101,8 @@ const Gallery = () => {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    isError,
+    refetch,
   } = useGalleryPhotos(filters);
 
   // Flatten all pages into single photos array
@@ -356,6 +359,12 @@ const Gallery = () => {
                 </div>
               ))}
             </div>
+          ) : isError ? (
+            <ErrorState
+              title="Failed to Load Gallery"
+              message="We couldn't load the photos. Please try again."
+              onRetry={() => refetch()}
+            />
           ) : photos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">

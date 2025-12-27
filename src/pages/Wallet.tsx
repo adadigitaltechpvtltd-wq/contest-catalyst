@@ -5,6 +5,7 @@ import { useWalletBalances, useWalletTransactions, Transaction } from '@/hooks/u
 import { useQueryClient } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ErrorState from '@/components/ErrorState';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import WalletSkeleton from '@/components/skeletons/WalletSkeleton';
@@ -37,10 +38,11 @@ const Wallet = () => {
   const { user, isLoading: authLoading, paymentDetails } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: balances = { available: 0, pending: 0, totalEarned: 0 }, isLoading: balancesLoading } = useWalletBalances(user?.id);
-  const { data: transactions = [], isLoading: transactionsLoading } = useWalletTransactions(user?.id);
+  const { data: balances = { available: 0, pending: 0, totalEarned: 0 }, isLoading: balancesLoading, isError: balancesError, refetch: refetchBalances } = useWalletBalances(user?.id);
+  const { data: transactions = [], isLoading: transactionsLoading, isError: transactionsError, refetch: refetchTransactions } = useWalletTransactions(user?.id);
 
   const isLoading = authLoading || balancesLoading || transactionsLoading;
+  const isError = balancesError || transactionsError;
 
   // Real-time subscription for wallet updates
   useEffect(() => {
@@ -150,6 +152,15 @@ const Wallet = () => {
 
         {isLoading ? (
           <WalletSkeleton />
+        ) : isError ? (
+          <ErrorState
+            title="Failed to Load Wallet"
+            message="We couldn't load your wallet data. Please try again."
+            onRetry={() => {
+              refetchBalances();
+              refetchTransactions();
+            }}
+          />
         ) : (
           <>
             {/* Balance Cards */}
