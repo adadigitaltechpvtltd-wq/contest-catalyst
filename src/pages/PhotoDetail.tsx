@@ -1,13 +1,15 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-
 import { useAuth } from '@/contexts/AuthContext';
+import { usePhotoDetailQuery } from '@/hooks/usePhotoDetailQuery';
+
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
 import InlineAuthDialog from '@/components/InlineAuthDialog';
 import DownloadConfirmModal from '@/components/DownloadConfirmModal';
+import ErrorState from '@/components/ErrorState';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,40 +30,6 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { getGalleryCanonicalUrl } from '@/lib/seoUtils';
 
-interface PhotoData {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string;
-  slug: string;
-  seo_title: string | null;
-  meta_description: string | null;
-  title_quality_flag: string | null;
-  view_count: number;
-  download_count: number;
-  like_count: number;
-  created_at: string;
-  status: string;
-  user_id: string;
-  contest: {
-    id: string;
-    title: string;
-    slug: string;
-    category: string | null;
-    theme: string | null;
-    prize_amount: number;
-    prize_currency: string;
-    seo_title: string | null;
-    meta_description: string | null;
-    keywords: string[] | null;
-  };
-  profile: {
-    full_name: string | null;
-    avatar_url: string | null;
-    username: string | null;
-  } | null;
-}
-
 const PhotoDetail = () => {
   // Support both new format (/gallery/:category/:contestSlug/:photoSlug) and legacy format (/photo/:contestSlug/:photoSlug)
   const { category, contestSlug, photoSlug } = useParams<{ category?: string; contestSlug: string; photoSlug: string }>();
@@ -69,126 +37,47 @@ const PhotoDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [photo, setPhoto] = useState<PhotoData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data, isLoading, isError, refetch } = usePhotoDetailQuery(contestSlug, photoSlug);
+  const photo = data?.photo ?? null;
+  const relatedPhotos = data?.relatedPhotos ?? [];
+
   const [hasLiked, setHasLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
-  const [relatedPhotos, setRelatedPhotos] = useState<{ id: string; title: string; image_url: string; slug: string }[]>([]);
 
-  const fetchPhoto = useCallback(async () => {
-    setIsLoading(true);
-
-    try {
-      if (!contestSlug || !photoSlug) {
-        navigate('/contests');
-        return;
-      }
-
-      // First find the contest by slug with SEO fields and category
-      const { data: contest, error: contestError } = await supabase
-        .from('contests')
-        .select('id, title, slug, category, theme, prize_amount, prize_currency, seo_title, meta_description, keywords')
-        .eq('slug', contestSlug)
-        .maybeSingle();
-
-      if (contestError || !contest) {
-        console.error('Contest not found:', contestError);
-        navigate('/contests');
-        return;
-      }
-
-      // Handle legacy /photo/ URLs - redirect to /gallery/ with category
-      const currentPath = window.location.pathname;
-      if (currentPath.startsWith('/photo/')) {
-        const contestCategory = contest.category || 'general';
-        navigate(`/gallery/${contestCategory}/${contestSlug}/${photoSlug}`, { replace: true });
-        return;
-      }
-
-      // Validate category matches - redirect to correct URL if mismatch
-      const contestCategory = contest.category || 'general';
-      if (category && category !== contestCategory) {
-        navigate(`/gallery/${contestCategory}/${contestSlug}/${photoSlug}`, { replace: true });
-        return;
-      }
-
-      // Then find the submission by slug within that contest
-      const { data: submission, error: subError } = await supabase
-        .from('submissions')
-        .select(`
-          id,
-          title,
-          description,
-          image_url,
-          slug,
-          seo_title,
-          meta_description,
-          title_quality_flag,
-          view_count,
-          download_count,
-          like_count,
-          created_at,
-          status,
-          user_id
-        `)
-        .eq('contest_id', contest.id)
-        .eq('slug', photoSlug)
-        .maybeSingle();
-
-      if (subError || !submission) {
-        console.error('Submission not found:', subError);
-        navigate(`/contest/${contestCategory}/${contestSlug}`);
-        return;
-      }
-
-      // Fetch photographer profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url, username')
-        .eq('id', submission.user_id)
-        .maybeSingle();
-
-      setPhoto({
-        ...submission,
-        contest,
-        profile: profile || null,
-      });
-      setLocalLikeCount(submission.like_count);
-
-      // Increment view count only for approved/winner
-      if (submission.status === 'approved' || submission.status === 'winner') {
-        await supabase.rpc('increment_view_count', { submission_id_param: submission.id });
-      }
-
-      // Fetch related photos from same contest
-      const { data: related } = await supabase
-        .from('submissions')
-        .select('id, title, image_url, slug')
-        .eq('contest_id', contest.id)
-        .neq('id', submission.id)
-        .in('status', ['approved', 'winner'])
-        .limit(4);
-
-      setRelatedPhotos(related || []);
-    } catch (error) {
-      console.error('[PhotoDetail] fetchPhoto failed:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load photo. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [category, contestSlug, photoSlug, navigate, toast]);
-
+  // Handle redirects for category mismatch or legacy URLs
   useEffect(() => {
-    fetchPhoto();
-  }, [fetchPhoto]);
+    if (!photo) return;
 
+    const contestCategory = photo.contest.category || 'general';
+    const currentPath = window.location.pathname;
 
+    // Handle legacy /photo/ URLs - redirect to /gallery/ with category
+    if (currentPath.startsWith('/photo/')) {
+      navigate(`/gallery/${contestCategory}/${contestSlug}/${photoSlug}`, { replace: true });
+      return;
+    }
+
+    // Validate category matches - redirect to correct URL if mismatch
+    if (category && category !== contestCategory) {
+      navigate(`/gallery/${contestCategory}/${contestSlug}/${photoSlug}`, { replace: true });
+    }
+  }, [photo, category, contestSlug, photoSlug, navigate]);
+
+  // Update local like count when photo loads
+  useEffect(() => {
+    if (photo) {
+      setLocalLikeCount(photo.like_count);
+    }
+  }, [photo]);
+
+  // Increment view count
+  useEffect(() => {
+    if (photo && (photo.status === 'approved' || photo.status === 'winner')) {
+      supabase.rpc('increment_view_count', { submission_id_param: photo.id });
+    }
+  }, [photo]);
 
   // Check if user has liked
   useEffect(() => {
@@ -207,6 +96,13 @@ const PhotoDetail = () => {
 
     checkLike();
   }, [user, photo]);
+
+  // Redirect if no photo found
+  useEffect(() => {
+    if (!isLoading && !photo && contestSlug && photoSlug) {
+      navigate('/gallery');
+    }
+  }, [isLoading, photo, contestSlug, photoSlug, navigate]);
 
   const handleLike = async () => {
     if (!user) {
@@ -303,6 +199,22 @@ const PhotoDetail = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-4 py-8 pt-24 flex items-center justify-center">
+          <ErrorState 
+            title="Failed to load photo" 
+            message="Could not load photo data." 
+            onRetry={refetch} 
+          />
+        </main>
+        <Footer />
       </div>
     );
   }
