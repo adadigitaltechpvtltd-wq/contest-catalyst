@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useGlobalRefresh } from '@/hooks/useVisibilityRefresh';
+import { useGalleryPhotos, useGalleryFilterOptions, GalleryPhoto, SortOption } from '@/hooks/useGalleryQuery';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
@@ -39,49 +38,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 
-interface GalleryPhoto {
-  id: string;
-  title: string;
-  image_url: string;
-  slug: string;
-  view_count: number;
-  like_count: number;
-  status: string;
-  created_at: string;
-  user_id: string;
-  contest: {
-    id: string;
-    title: string;
-    slug: string;
-  };
-  profile: {
-    id: string;
-    full_name: string | null;
-    avatar_url: string | null;
-  } | null;
-}
-
-interface ContestOption {
-  id: string;
-  title: string;
-  slug: string;
-}
-
-interface PhotographerOption {
-  id: string;
-  full_name: string | null;
-}
-
-type SortOption = 'newest' | 'oldest' | 'most_liked' | 'most_viewed';
-
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'newest', label: 'Newest first' },
   { value: 'oldest', label: 'Oldest first' },
   { value: 'most_liked', label: 'Most liked' },
   { value: 'most_viewed', label: 'Most viewed' },
 ];
-
-const ITEMS_PER_PAGE = 24;
 
 const formatCount = (count: number): string => {
   if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
@@ -94,11 +56,6 @@ const MASONRY_HEIGHTS = ['aspect-[3/4]', 'aspect-square', 'aspect-[4/5]', 'aspec
 
 const Gallery = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(0);
   const loadingRef = useRef<HTMLDivElement>(null);
 
   // Layout state
@@ -121,10 +78,34 @@ const Gallery = () => {
     return undefined;
   });
 
-  // Filter options
-  const [contests, setContests] = useState<ContestOption[]>([]);
-  const [photographers, setPhotographers] = useState<PhotographerOption[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+
+  // Fetch filter options using React Query
+  const { contests, photographers } = useGalleryFilterOptions();
+
+  // Build stable filters object for query key
+  const filters = useMemo(() => ({
+    searchQuery,
+    selectedContest,
+    selectedPhotographer,
+    sortBy,
+    dateFrom: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : null,
+    dateTo: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : null,
+  }), [searchQuery, selectedContest, selectedPhotographer, sortBy, dateRange]);
+
+  // Fetch photos using React Query infinite query
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useGalleryPhotos(filters);
+
+  // Flatten all pages into single photos array
+  const photos = useMemo(() => {
+    return data?.pages.flatMap(page => page.photos) || [];
+  }, [data]);
 
   // Track active filters count
   const activeFiltersCount = useMemo(() => {
@@ -136,181 +117,8 @@ const Gallery = () => {
     return count;
   }, [searchQuery, selectedContest, selectedPhotographer, dateRange]);
 
-  // Fetch filter options
+  // Update URL params when filters change
   useEffect(() => {
-    const fetchFilterOptions = async () => {
-      // Fetch contests
-      const { data: contestsData } = await supabase
-        .from('contests')
-        .select('id, title, slug')
-        .in('status', ['active', 'voting', 'completed'])
-        .order('title');
-      
-      if (contestsData) setContests(contestsData);
-
-      // Fetch photographers who have approved submissions
-      const { data: submissionsWithUsers } = await supabase
-        .from('submissions')
-        .select('user_id')
-        .in('status', ['approved', 'winner']);
-
-      if (submissionsWithUsers) {
-        const uniqueUserIds = [...new Set(submissionsWithUsers.map(s => s.user_id))];
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', uniqueUserIds)
-          .order('full_name');
-        
-        if (profilesData) setPhotographers(profilesData);
-      }
-    };
-
-    fetchFilterOptions();
-  }, []);
-
-  const fetchPhotos = useCallback(async (pageNum: number, reset = false) => {
-    if (reset) {
-      setIsLoading(true);
-    } else {
-      setIsLoadingMore(true);
-    }
-
-    try {
-      // Determine sort column and direction
-      let orderColumn: 'created_at' | 'like_count' | 'view_count' = 'created_at';
-      let ascending = false;
-      
-      switch (sortBy) {
-        case 'oldest':
-          orderColumn = 'created_at';
-          ascending = true;
-          break;
-        case 'most_liked':
-          orderColumn = 'like_count';
-          ascending = false;
-          break;
-        case 'most_viewed':
-          orderColumn = 'view_count';
-          ascending = false;
-          break;
-        case 'newest':
-        default:
-          orderColumn = 'created_at';
-          ascending = false;
-      }
-
-      let query = supabase
-        .from('submissions')
-        .select(`
-          id,
-          title,
-          image_url,
-          slug,
-          view_count,
-          like_count,
-          status,
-          created_at,
-          contest_id,
-          user_id
-        `)
-        .in('status', ['approved', 'winner'])
-        .order(orderColumn, { ascending });
-
-      // Apply search filter
-      if (searchQuery) {
-        query = query.ilike('title', `%${searchQuery}%`);
-      }
-
-      // Apply contest filter
-      if (selectedContest && selectedContest !== 'all') {
-        query = query.eq('contest_id', selectedContest);
-      }
-
-      // Apply photographer filter
-      if (selectedPhotographer && selectedPhotographer !== 'all') {
-        query = query.eq('user_id', selectedPhotographer);
-      }
-
-      // Apply date range filter
-      if (dateRange?.from) {
-        query = query.gte('created_at', dateRange.from.toISOString());
-      }
-      if (dateRange?.to) {
-        const endDate = new Date(dateRange.to);
-        endDate.setHours(23, 59, 59, 999);
-        query = query.lte('created_at', endDate.toISOString());
-      }
-
-      // Pagination
-      query = query.range(pageNum * ITEMS_PER_PAGE, (pageNum + 1) * ITEMS_PER_PAGE - 1);
-
-      const { data: submissions, error } = await query;
-
-      if (error) throw error;
-
-      if (!submissions || submissions.length === 0) {
-        setHasMore(false);
-        if (reset) setPhotos([]);
-        return;
-      }
-
-      // Fetch contest info
-      const contestIds = [...new Set(submissions.map(s => s.contest_id))];
-      const { data: contestsData } = await supabase
-        .from('contests')
-        .select('id, title, slug')
-        .in('id', contestIds);
-
-      const contestMap = new Map(contestsData?.map(c => [c.id, c]) || []);
-
-      // Fetch profile info
-      const userIds = [...new Set(submissions.map(s => s.user_id))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .in('id', userIds);
-
-      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-
-      const photosWithData: GalleryPhoto[] = submissions
-        .filter(s => contestMap.has(s.contest_id))
-        .map(s => ({
-          id: s.id,
-          title: s.title,
-          image_url: s.image_url,
-          slug: s.slug || '',
-          view_count: s.view_count,
-          like_count: s.like_count,
-          status: s.status,
-          created_at: s.created_at,
-          user_id: s.user_id,
-          contest: contestMap.get(s.contest_id)!,
-          profile: profileMap.get(s.user_id) || null,
-        }));
-
-      if (reset) {
-        setPhotos(photosWithData);
-      } else {
-        setPhotos(prev => [...prev, ...photosWithData]);
-      }
-
-      setHasMore(submissions.length === ITEMS_PER_PAGE);
-    } catch (error) {
-      console.error('Error fetching gallery photos:', error);
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
-    }
-  }, [searchQuery, selectedContest, selectedPhotographer, dateRange, sortBy]);
-
-  // Reset and fetch when filters change
-  useEffect(() => {
-    setPage(0);
-    setHasMore(true);
-    fetchPhotos(0, true);
-
-    // Update URL params
     const params = new URLSearchParams();
     if (searchQuery) params.set('q', searchQuery);
     if (selectedContest !== 'all') params.set('contest', selectedContest);
@@ -320,14 +128,14 @@ const Gallery = () => {
     if (dateRange?.to) params.set('to', format(dateRange.to, 'yyyy-MM-dd'));
     
     setSearchParams(params, { replace: true });
-  }, [searchQuery, selectedContest, selectedPhotographer, dateRange, sortBy, fetchPhotos, setSearchParams]);
+  }, [searchQuery, selectedContest, selectedPhotographer, dateRange, sortBy, setSearchParams]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore) {
-          setPage(prev => prev + 1);
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
         }
       },
       { threshold: 0.1 }
@@ -338,23 +146,7 @@ const Gallery = () => {
     }
 
     return () => observer.disconnect();
-  }, [hasMore, isLoading, isLoadingMore]);
-
-  // Load more when page changes
-  useEffect(() => {
-    if (page > 0) {
-      fetchPhotos(page);
-    }
-  }, [page, fetchPhotos]);
-
-  // Listen for global refresh events (tab visibility, network reconnection)
-  const handleGlobalRefresh = useCallback(() => {
-    setPage(0);
-    setHasMore(true);
-    fetchPhotos(0, true);
-  }, [fetchPhotos]);
-
-  useGlobalRefresh(handleGlobalRefresh);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -711,7 +503,7 @@ const Gallery = () => {
 
               {/* Loading more indicator */}
               <div ref={loadingRef} className="flex justify-center py-8">
-                {isLoadingMore && (
+                {isFetchingNextPage && (
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 )}
               </div>
