@@ -57,8 +57,43 @@ const Profile = () => {
       setInstagramUrl((profile as any).instagram_url || '');
       setTwitterUrl((profile as any).twitter_url || '');
       setIsLoading(false);
+    } else if (user) {
+      // Fallback: fetch profile directly if not available from context
+      console.log('Profile not in context, fetching directly');
+      const fetchProfile = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id, email, full_name, avatar_url, bio, date_of_birth, is_adult, phone, kyc_verified, username, is_deleted, scheduled_deletion_at')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          if (!error && data) {
+            setFullName(data.full_name || '');
+            setBio(data.bio || '');
+            setPhone(data.phone || '');
+            setInstagramUrl((data as any).instagram_url || '');
+            setTwitterUrl((data as any).twitter_url || '');
+          }
+          setIsLoading(false);
+        } catch (err) {
+          console.error('Error fetching profile:', err);
+          setIsLoading(false);
+        }
+      };
+      
+      fetchProfile();
     }
-  }, [profile]);
+  }, [profile, user]);
+
+  // Hard timeout to prevent infinite skeleton display
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 4000);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     if (paymentDetails) {

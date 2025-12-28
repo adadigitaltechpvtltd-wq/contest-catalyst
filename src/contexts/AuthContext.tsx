@@ -53,10 +53,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     try {
-      // Add timeout
+      // Add timeout - increased to 3 seconds
       const timeoutId = setTimeout(() => {
         console.warn('Profile fetch timeout');
-      }, 2000);
+      }, 3000);
 
       const { data, error } = await supabase
         .from('profiles')
@@ -79,9 +79,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchPaymentDetails = async (userId: string) => {
     try {
-      // Add timeout
+      // Add timeout - increased to 3 seconds
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
 
       const { data, error } = await supabase
         .from('payment_details')
@@ -104,10 +104,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchRoles = async (userId: string) => {
     try {
-      // Add timeout
+      // Add timeout - increased to 3 seconds
       const timeoutId = setTimeout(() => {
         console.warn('Roles fetch timeout');
-      }, 2000);
+      }, 3000);
 
       const { data, error } = await supabase
         .from('user_roles')
