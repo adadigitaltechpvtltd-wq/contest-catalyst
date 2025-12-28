@@ -175,7 +175,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             rolesPromise,
           ]);
 
-          const profileData = profileRes.status === 'fulfilled' ? profileRes.value : null;
+          const profileData = profileRes.status === 'fulfilled' ? profileRes.value as Profile | null : null;
+          const paymentData = paymentRes.status === 'fulfilled' ? paymentRes.value as PaymentDetails | null : null;
+          const rolesData = rolesRes.status === 'fulfilled' ? rolesRes.value as AppRole[] : [];
           
           // Check if account is deleted - sign them out
           if (profileData?.is_deleted) {
@@ -190,8 +192,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
 
           setProfile(profileData);
-          setPaymentDetails(paymentRes.status === 'fulfilled' ? paymentRes.value : null);
-          setRoles(rolesRes.status === 'fulfilled' ? rolesRes.value : []);
+          setPaymentDetails(paymentData);
+          setRoles(rolesData);
         } else {
           setProfile(null);
           setPaymentDetails(null);
@@ -236,15 +238,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             new Promise((_, reject) => setTimeout(() => reject(new Error('Roles fetch timeout')), 3000))
           ]);
 
-          const [profileData, paymentData, rolesData] = await Promise.allSettled([
+          const results = await Promise.allSettled([
             profilePromise,
             paymentPromise,
             rolesPromise,
-          ]).then(results => [
-            results[0].status === 'fulfilled' ? results[0].value : null,
-            results[1].status === 'fulfilled' ? results[1].value : null,
-            results[2].status === 'fulfilled' ? results[2].value : [],
           ]);
+          
+          const profileData = results[0].status === 'fulfilled' ? results[0].value as Profile | null : null;
+          const paymentData = results[1].status === 'fulfilled' ? results[1].value as PaymentDetails | null : null;
+          const rolesData = results[2].status === 'fulfilled' ? results[2].value as AppRole[] : [];
           
           // Check if account is deleted - sign them out
           if (profileData?.is_deleted) {
