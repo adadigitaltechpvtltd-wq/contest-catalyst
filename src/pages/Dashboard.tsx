@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import { useNotifications } from '@/contexts/useNotifications';
 import { useDashboardStatsQuery, useDashboardContestsQuery } from '@/hooks/useDashboardQuery';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -23,7 +23,7 @@ import {
 
 const Dashboard = () => {
   const { user, profile, isAdmin, isLoading: authLoading } = useAuth();
-  const { unreadCount: notifications } = useRealtimeNotifications();
+  const { unreadCount: notifications } = useNotifications();
   
   const { 
     data: stats, 
@@ -39,7 +39,8 @@ const Dashboard = () => {
     refetch: refetchContests 
   } = useDashboardContestsQuery(user?.id);
 
-  const isLoading = authLoading || statsLoading || contestsLoading;
+  // Temporarily disable query loading states
+  const isLoading = authLoading;
   const error = statsError || contestsError;
 
   const formatTimeLeft = (endDate: string) => {

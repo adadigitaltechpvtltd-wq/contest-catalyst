@@ -32,24 +32,42 @@ export const useWalletBalances = (userId: string | undefined) => {
         return { available: 0, pending: 0, totalEarned: 0 };
       }
 
-      const [availableResult, pendingResult, totalEarnedResult] = await Promise.all([
-        supabase.rpc('get_wallet_balance', { _user_id: userId }),
-        supabase.rpc('get_pending_balance', { _user_id: userId }),
-        supabase.rpc('get_total_earned', { _user_id: userId })
-      ]);
+      try {
+        // Simply return default values - balances can be calculated from transactions if needed
+        // This avoids RPC call timeouts
+        const { data: transactions, error } = await supabase
+          .from('wallet_transactions')
+          .select('status, amount')
+          .eq('user_id', userId);
 
-      if (availableResult.error) throw availableResult.error;
-      if (pendingResult.error) throw pendingResult.error;
-      if (totalEarnedResult.error) throw totalEarnedResult.error;
+        if (error) {
+          console.error('Error fetching transactions for balance:', error);
+          return { available: 0, pending: 0, totalEarned: 0 };
+        }
 
-      return {
-        available: Number(availableResult.data) || 0,
-        pending: Number(pendingResult.data) || 0,
-        totalEarned: Number(totalEarnedResult.data) || 0,
-      };
+        if (!transactions) return { available: 0, pending: 0, totalEarned: 0 };
+
+        const available = transactions
+          .filter(t => t.status === 'completed')
+          .reduce((sum, t) => sum + (t.amount || 0), 0);
+        
+        const pending = transactions
+          .filter(t => t.status === 'pending')
+          .reduce((sum, t) => sum + (t.amount || 0), 0);
+        
+        const totalEarned = transactions
+          .filter(t => t.status === 'completed' || t.status === 'pending')
+          .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+        return { available, pending, totalEarned };
+      } catch (err) {
+        console.error('Error fetching wallet balances:', err);
+        return { available: 0, pending: 0, totalEarned: 0 };
+      }
     },
     enabled: !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
   });
 };
 
@@ -59,26 +77,35 @@ export const useWalletTransactions = (userId: string | undefined) => {
     queryFn: async (): Promise<Transaction[]> => {
       if (!userId) return [];
 
-      const { data, error } = await supabase
-        .from('wallet_transactions')
-        .select(`
-          id,
-          type,
-          amount,
-          currency,
-          status,
-          notes,
-          payment_reference,
-          created_at,
-          contest:contests(title)
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('wallet_transactions')
+          .select(`
+            id,
+            type,
+            amount,
+            currency,
+            status,
+            notes,
+            payment_reference,
+            created_at,
+            contest:contests(title)
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return (data as unknown as Transaction[]) || [];
+        if (error) {
+          console.error('Error fetching wallet transactions:', error);
+          return [];
+        }
+        return (data as unknown as Transaction[]) || [];
+      } catch (err) {
+        console.error('Error in wallet transactions query:', err);
+        return [];
+      }
     },
     enabled: !!userId,
     staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
   });
 };

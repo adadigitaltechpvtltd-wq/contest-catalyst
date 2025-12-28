@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +20,7 @@ export const useRealtimeNotifications = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [unreadCount, setUnreadCount] = useState(0);
+  const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // Fetch initial unread count
   useEffect(() => {
@@ -42,16 +43,27 @@ export const useRealtimeNotifications = () => {
     };
 
     fetchUnreadCount();
-  }, [user]);
+  }, [user?.id]);
 
   // Subscribe to realtime notifications
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
+
+    // If there's already an active subscription for this user, don't create a new one
+    if (subscriptionRef.current) {
+      console.log("Subscription already active for user:", user.id);
+      return;
+    }
 
     console.log("Setting up realtime notifications for user:", user.id);
 
     const channel = supabase
-      .channel(`notifications-realtime-${user.id}`)
+      .channel(`notifications-realtime-${user.id}`, {
+        config: {
+          broadcast: { self: false },
+          presence: { key: `notification-listener-${user.id}` },
+        },
+      })
       .on(
         "postgres_changes",
         {
@@ -97,11 +109,16 @@ export const useRealtimeNotifications = () => {
         console.log("Realtime subscription status:", status);
       });
 
+    subscriptionRef.current = channel;
+
     return () => {
-      console.log("Cleaning up realtime subscription");
-      supabase.removeChannel(channel);
+      console.log("Cleaning up realtime subscription for user:", user.id);
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current);
+        subscriptionRef.current = null;
+      }
     };
-  }, [user, toast, queryClient]);
+  }, [user?.id, toast, queryClient]);
 
   const markAsRead = async (notificationId: string) => {
     const { error } = await supabase

@@ -52,46 +52,59 @@ const MySubmissions = () => {
 
   // Real-time subscription for user's submissions
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
-    const channel = supabase
-      .channel('my-submissions')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'submissions',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('Submission change:', payload);
-          
-          if (payload.eventType === 'INSERT') {
-            toast({
-              title: 'New submission added',
-              description: 'Your submission has been recorded.',
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            const newStatus = (payload.new as any).status;
-            const oldStatus = (payload.old as any).status;
-            if (newStatus !== oldStatus) {
+    let isSubscribed = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const setupSubscription = async () => {
+      channel = supabase
+        .channel(`my-submissions-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'submissions',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            if (!isSubscribed) return;
+            console.log('Submission change:', payload);
+            
+            if (payload.eventType === 'INSERT') {
               toast({
-                title: 'Submission status updated',
-                description: `Your submission status changed to ${newStatus}.`,
+                title: 'New submission added',
+                description: 'Your submission has been recorded.',
               });
+            } else if (payload.eventType === 'UPDATE') {
+              const newStatus = (payload.new as any).status;
+              const oldStatus = (payload.old as any).status;
+              if (newStatus !== oldStatus) {
+                toast({
+                  title: 'Submission status updated',
+                  description: `Your submission status changed to ${newStatus}.`,
+                });
+              }
             }
+            
+            queryClient.invalidateQueries({ queryKey: ['my-submissions', user.id] });
           }
-          
-          queryClient.invalidateQueries({ queryKey: ['my-submissions'] });
-        }
-      )
-      .subscribe();
+        )
+        .subscribe((status) => {
+          console.log('My submissions subscription status:', status);
+        });
+    };
+
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      isSubscribed = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
-  }, [user, toast, queryClient]);
+  }, [user?.id, toast, queryClient]);
 
   const handleDelete = async (submissionId: string, imageUrl: string) => {
     setDeletingId(submissionId);

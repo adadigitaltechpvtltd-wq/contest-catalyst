@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import { useNotifications } from '@/contexts/useNotifications';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ErrorState from '@/components/ErrorState';
@@ -32,7 +32,7 @@ interface Notification {
 
 const Notifications = () => {
   const { user } = useAuth();
-  const { markAsRead, markAllAsRead, unreadCount } = useRealtimeNotifications();
+  const { markAsRead, markAllAsRead, unreadCount } = useNotifications();
 
   const { data: notifications = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['notifications'],

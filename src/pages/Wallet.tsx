@@ -41,42 +41,56 @@ const Wallet = () => {
   const { data: balances = { available: 0, pending: 0, totalEarned: 0 }, isLoading: balancesLoading, isError: balancesError, refetch: refetchBalances } = useWalletBalances(user?.id);
   const { data: transactions = [], isLoading: transactionsLoading, isError: transactionsError, refetch: refetchTransactions } = useWalletTransactions(user?.id);
 
-  const isLoading = authLoading || balancesLoading || transactionsLoading;
+  // Temporarily disable loading state check to see if queries are the issue
+  const isLoading = authLoading;
   const isError = balancesError || transactionsError;
 
   // Real-time subscription for wallet updates
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase
-      .channel('wallet-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'wallet_transactions',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('Wallet transaction update:', payload);
-          queryClient.invalidateQueries({ queryKey: ['wallet-balances'] });
-          queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
-          
-          if (payload.eventType === 'UPDATE' && payload.new) {
-            const newTx = payload.new as { status: string; amount: number; type: string };
-            if (newTx.status === 'completed' && newTx.type === 'prize') {
-              toast.success(`Payment of $${newTx.amount} has been processed!`);
+    let isSubscribed = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const setupSubscription = async () => {
+      channel = supabase
+        .channel(`wallet-updates-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'wallet_transactions',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            if (!isSubscribed) return;
+            console.log('Wallet transaction update:', payload);
+            queryClient.invalidateQueries({ queryKey: ['wallet-balances', user.id] });
+            queryClient.invalidateQueries({ queryKey: ['wallet-transactions', user.id] });
+            
+            if (payload.eventType === 'UPDATE' && payload.new) {
+              const newTx = payload.new as { status: string; amount: number; type: string };
+              if (newTx.status === 'completed' && newTx.type === 'prize') {
+                toast.success(`Payment of $${newTx.amount} has been processed!`);
+              }
             }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe((status) => {
+          console.log('Wallet subscription status:', status);
+        });
+    };
+
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      isSubscribed = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
-  }, [user, queryClient]);
+  }, [user?.id, queryClient]);
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([

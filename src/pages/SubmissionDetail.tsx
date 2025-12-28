@@ -99,24 +99,38 @@ const SubmissionDetail = () => {
   useEffect(() => {
     if (!id) return;
 
-    const channel = supabase
-      .channel(`submission-${id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'submissions',
-          filter: `id=eq.${id}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['submission-detail', id] });
-        }
-      )
-      .subscribe();
+    let isSubscribed = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const setupSubscription = async () => {
+      channel = supabase
+        .channel(`submission-${id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'submissions',
+            filter: `id=eq.${id}`
+          },
+          () => {
+            if (isSubscribed) {
+              queryClient.invalidateQueries({ queryKey: ['submission-detail', id] });
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('Submission detail subscription status:', status);
+        });
+    };
+
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      isSubscribed = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [id, queryClient]);
 

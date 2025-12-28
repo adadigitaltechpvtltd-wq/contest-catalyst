@@ -95,7 +95,7 @@ const ProtectedRoute = ({
           setVerifiedRole('unauthorized');
         }
       }
-    }, 5000);
+    }, 3000);
 
     return () => clearTimeout(timeout);
   }, [verifiedRole, isLoading, user, requireAdmin, requireModerator]);

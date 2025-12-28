@@ -1,10 +1,10 @@
 import { Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useNotifications } from "@/contexts/useNotifications";
 
 const NotificationBell = () => {
-  const { unreadCount } = useRealtimeNotifications();
+  const { unreadCount } = useNotifications();
 
   return (
     <Link to="/notifications">

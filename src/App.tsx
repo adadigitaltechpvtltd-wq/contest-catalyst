@@ -4,7 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { NotificationsProvider } from "@/contexts/NotificationsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import OfflineBanner from "@/components/OfflineBanner";
@@ -51,83 +52,92 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 2, // 2 minutes - data becomes stale
-      gcTime: 1000 * 60 * 10, // 10 minutes - cache garbage collection
-      refetchOnWindowFocus: true,
-      refetchOnReconnect: true,
-      refetchOnMount: true,
-      retry: 2,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 1000 * 60 * 5, // 5 minutes - data becomes stale
+      gcTime: 1000 * 60 * 30, // 30 minutes - cache garbage collection
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      retry: 1,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     },
   },
 });
 
+const AppContent = () => {
+  const { user } = useAuth();
+
+  return (
+    <NotificationsProvider userId={user?.id || null}>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/login" element={<Auth />} />
+        <Route path="/signup" element={<Auth />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/contests" element={<Contests />} />
+        {/* New URL structure with category */}
+        <Route path="/contest/:category/:slug" element={<ContestDetail />} />
+        <Route path="/gallery/:category/:contestSlug/:photoSlug" element={<PhotoDetail />} />
+        {/* Legacy redirects - handled by components */}
+        <Route path="/contest/:slug" element={<ContestDetail />} />
+        <Route path="/photo/:contestSlug/:photoSlug" element={<PhotoDetail />} />
+        <Route path="/gallery" element={<Gallery />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/user/:username" element={<UserProfilePage />} />
+        <Route path="/for-brands" element={<ForBrands />} />
+      
+      {/* Protected User Routes */}
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/submit/:slug" element={<ProtectedRoute><SubmitPhoto /></ProtectedRoute>} />
+      <Route path="/submissions" element={<ProtectedRoute><MySubmissions /></ProtectedRoute>} />
+      <Route path="/submission/:id" element={<ProtectedRoute><SubmissionDetail /></ProtectedRoute>} />
+      <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+
+      {/* Admin Routes */}
+      <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
+        <Route index element={<AdminDashboard />} />
+        <Route path="contests" element={<AdminContests />} />
+        <Route path="contests/new" element={<CreateContest />} />
+        <Route path="contests/:id/edit" element={<EditContest />} />
+        <Route path="contests/:contestId/winner" element={<WinnerSelection />} />
+        <Route path="submissions" element={<AdminSubmissions />} />
+        <Route path="payments" element={<AdminPayments />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="brand-inquiries" element={<AdminBrandInquiries />} />
+        <Route path="reports" element={<AdminReports />} />
+        <Route path="analytics" element={<AdminAnalytics />} />
+        <Route path="seo" element={<AdminSEO />} />
+        <Route path="seo/bulk" element={<BulkSEOReview />} />
+      </Route>
+
+      {/* Legal Pages */}
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/contest-rules" element={<ContestRules />} />
+      <Route path="/copyright" element={<Copyright />} />
+      <Route path="/age-policy" element={<AgePolicy />} />
+      <Route path="/how-gaal-works" element={<HowGaalWorks />} />
+      <Route path="/report" element={<ReportAbuse />} />
+      
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </NotificationsProvider>
+  );
+};
+
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
-      
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <OfflineBanner />
         <BrowserRouter>
           <AuthProvider>
-            <ScrollToTop />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/login" element={<Auth />} />
-              <Route path="/signup" element={<Auth />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/contests" element={<Contests />} />
-              {/* New URL structure with category */}
-              <Route path="/contest/:category/:slug" element={<ContestDetail />} />
-              <Route path="/gallery/:category/:contestSlug/:photoSlug" element={<PhotoDetail />} />
-              {/* Legacy redirects - handled by components */}
-              <Route path="/contest/:slug" element={<ContestDetail />} />
-              <Route path="/photo/:contestSlug/:photoSlug" element={<PhotoDetail />} />
-              <Route path="/gallery" element={<Gallery />} />
-              <Route path="/leaderboard" element={<LeaderboardPage />} />
-              <Route path="/user/:username" element={<UserProfilePage />} />
-              <Route path="/for-brands" element={<ForBrands />} />
-            
-            {/* Protected User Routes */}
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/submit/:slug" element={<ProtectedRoute><SubmitPhoto /></ProtectedRoute>} />
-            <Route path="/submissions" element={<ProtectedRoute><MySubmissions /></ProtectedRoute>} />
-            <Route path="/submission/:id" element={<ProtectedRoute><SubmissionDetail /></ProtectedRoute>} />
-            <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-
-            {/* Admin Routes */}
-            <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="contests" element={<AdminContests />} />
-              <Route path="contests/new" element={<CreateContest />} />
-              <Route path="contests/:id/edit" element={<EditContest />} />
-              <Route path="contests/:contestId/winner" element={<WinnerSelection />} />
-              <Route path="submissions" element={<AdminSubmissions />} />
-              <Route path="payments" element={<AdminPayments />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="brand-inquiries" element={<AdminBrandInquiries />} />
-              <Route path="reports" element={<AdminReports />} />
-              <Route path="analytics" element={<AdminAnalytics />} />
-              <Route path="seo" element={<AdminSEO />} />
-              <Route path="seo/bulk" element={<BulkSEOReview />} />
-            </Route>
-
-            {/* Legal Pages */}
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/contest-rules" element={<ContestRules />} />
-            <Route path="/copyright" element={<Copyright />} />
-            <Route path="/age-policy" element={<AgePolicy />} />
-            <Route path="/how-gaal-works" element={<HowGaalWorks />} />
-            <Route path="/report" element={<ReportAbuse />} />
-            
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AppContent />
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

@@ -93,18 +93,23 @@ const AdminSubmissions = () => {
 
   // Subscribe to real-time progress updates
   useEffect(() => {
+    let isSubscribed = true;
     const channel = supabase.channel('analysis-progress');
     
     channel.on('broadcast', { event: 'progress' }, (payload) => {
+      if (!isSubscribed) return;
+      
       const progress = payload.payload as AnalysisProgress;
       
       if (progress.module === 'batch') {
         setBatchProgress(progress);
         if (progress.status === 'completed') {
           setTimeout(() => {
-            setBatchProgress(null);
-            setIsBatchAnalyzing(false);
-            queryClient.invalidateQueries({ queryKey: ['admin-submissions'] });
+            if (isSubscribed) {
+              setBatchProgress(null);
+              setIsBatchAnalyzing(false);
+              queryClient.invalidateQueries({ queryKey: ['admin-submissions'] });
+            }
           }, 1500);
         }
       } else {
@@ -115,19 +120,24 @@ const AdminSubmissions = () => {
         
         if (progress.status === 'completed' || progress.status === 'error') {
           setTimeout(() => {
-            setAnalysisProgress(prev => {
-              const next = { ...prev };
-              delete next[progress.submission_id];
-              return next;
-            });
+            if (isSubscribed) {
+              setAnalysisProgress(prev => {
+                const next = { ...prev };
+                delete next[progress.submission_id];
+                return next;
+              });
+            }
           }, 2000);
         }
       }
     });
 
-    channel.subscribe();
+    channel.subscribe((status) => {
+      console.log('Admin analysis progress subscription status:', status);
+    });
 
     return () => {
+      isSubscribed = false;
       supabase.removeChannel(channel);
     };
   }, [queryClient]);

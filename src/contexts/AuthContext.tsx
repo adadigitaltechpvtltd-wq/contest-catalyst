@@ -52,44 +52,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, email, full_name, avatar_url, bio, date_of_birth, is_adult, phone, kyc_verified, username, is_deleted, scheduled_deletion_at')
-      .eq('id', userId)
-      .maybeSingle();
+    try {
+      // Add timeout
+      const timeoutId = setTimeout(() => {
+        console.warn('Profile fetch timeout');
+      }, 2000);
 
-    if (error) {
-      console.error('Error fetching profile:', error);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, avatar_url, bio, date_of_birth, is_adult, phone, kyc_verified, username, is_deleted, scheduled_deletion_at')
+        .eq('id', userId)
+        .maybeSingle();
+
+      clearTimeout(timeoutId);
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+      return data as Profile | null;
+    } catch (err) {
+      console.error('Error in fetchProfile:', err);
       return null;
     }
-    return data as Profile | null;
   };
 
   const fetchPaymentDetails = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('payment_details')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+    try {
+      // Add timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-    if (error) {
-      console.error('Error fetching payment details:', error);
+      const { data, error } = await supabase
+        .from('payment_details')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      clearTimeout(timeoutId);
+
+      if (error) {
+        console.error('Error fetching payment details:', error);
+        return null;
+      }
+      return data as PaymentDetails | null;
+    } catch (err) {
+      console.error('Error in fetchPaymentDetails:', err);
       return null;
     }
-    return data as PaymentDetails | null;
   };
 
   const fetchRoles = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId);
+    try {
+      // Add timeout
+      const timeoutId = setTimeout(() => {
+        console.warn('Roles fetch timeout');
+      }, 2000);
 
-    if (error) {
-      console.error('Error fetching roles:', error);
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      clearTimeout(timeoutId);
+
+      if (error) {
+        console.error('Error fetching roles:', error);
+        return [];
+      }
+      return data.map((r) => r.role as AppRole);
+    } catch (err) {
+      console.error('Error in fetchRoles:', err);
       return [];
     }
-    return data.map((r) => r.role as AppRole);
   };
 
   const refreshProfile = useCallback(async () => {
@@ -118,10 +153,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          const [profileRes, paymentRes, rolesRes] = await Promise.allSettled([
+          // Set timeout for profile fetch
+          const profilePromise = Promise.race([
             fetchProfile(session.user.id),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), 3000))
+          ]);
+
+          const paymentPromise = Promise.race([
             fetchPaymentDetails(session.user.id),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Payment details timeout')), 3000))
+          ]);
+
+          const rolesPromise = Promise.race([
             fetchRoles(session.user.id),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Roles fetch timeout')), 3000))
+          ]);
+
+          const [profileRes, paymentRes, rolesRes] = await Promise.allSettled([
+            profilePromise,
+            paymentPromise,
+            rolesPromise,
           ]);
 
           const profileData = profileRes.status === 'fulfilled' ? profileRes.value : null;
@@ -169,10 +220,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          const [profileData, paymentData, rolesData] = await Promise.all([
+          // Add timeouts for each fetch
+          const profilePromise = Promise.race([
             fetchProfile(session.user.id),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), 3000))
+          ]);
+
+          const paymentPromise = Promise.race([
             fetchPaymentDetails(session.user.id),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Payment details timeout')), 3000))
+          ]);
+
+          const rolesPromise = Promise.race([
             fetchRoles(session.user.id),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Roles fetch timeout')), 3000))
+          ]);
+
+          const [profileData, paymentData, rolesData] = await Promise.allSettled([
+            profilePromise,
+            paymentPromise,
+            rolesPromise,
+          ]).then(results => [
+            results[0].status === 'fulfilled' ? results[0].value : null,
+            results[1].status === 'fulfilled' ? results[1].value : null,
+            results[2].status === 'fulfilled' ? results[2].value : [],
           ]);
           
           // Check if account is deleted - sign them out
