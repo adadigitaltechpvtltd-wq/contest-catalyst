@@ -12,7 +12,7 @@ interface Notification {
   is_read: boolean;
   link: string | null;
   created_at: string;
-  user_id: string;
+  user_id: string; 
 }
 
 export const NotificationsProvider: React.FC<{ children: ReactNode; userId: string | null }> = ({ children, userId }) => {
