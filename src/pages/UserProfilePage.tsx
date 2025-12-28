@@ -72,9 +72,9 @@ const UserProfilePage = () => {
         return username;
       }
       
-      // Look up by username
+      // Look up by username using public_profiles view (safe, non-sensitive fields only)
       const { data, error } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("id")
         .eq("username", username)
         .maybeSingle();
@@ -101,12 +101,12 @@ const UserProfilePage = () => {
     enabled: !!resolvedUserId,
   });
 
-  // Fetch social links from profiles
+  // Fetch social links from public_profiles view (safe, non-sensitive fields only)
   const { data: socialLinks } = useQuery({
     queryKey: ["user-social-links", resolvedUserId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("instagram_url, twitter_url")
         .eq("id", resolvedUserId)
         .maybeSingle();
