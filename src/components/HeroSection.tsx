@@ -45,7 +45,7 @@ const HeroSection = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden py-20 lg:py-28">
+    <section className="relative overflow-hidden py-20 lg:py-20">
       {/* Background atmosphere */}
       <div className="absolute inset-0 hero-atmosphere" aria-hidden />
 
@@ -220,7 +220,7 @@ const HeroSection = () => {
           </div>
 
           {/* Stats */}
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-10">
+          {/* <div className="mt-10 flex flex-wrap items-center justify-center gap-10">
             <div className="text-center">
               <div className="text-2xl md:text-3xl font-display font-bold text-primary">50K+</div>
               <div className="text-xs text-muted-foreground">Active Creators</div>
@@ -233,7 +233,7 @@ const HeroSection = () => {
               <div className="text-2xl md:text-3xl font-display font-bold text-foreground">500+</div>
               <div className="text-xs text-muted-foreground">Brand Partners</div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </section>

@@ -77,7 +77,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-border">
           <p className="text-sm text-muted-foreground">
-            © 2024 Gaal. All rights reserved.
+            © 2025 Gaal. All rights reserved.
           </p>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>

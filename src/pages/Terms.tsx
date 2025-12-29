@@ -9,7 +9,7 @@ const Terms = () => {
       <main className="flex-1 container mx-auto px-4 py-8 pt-24">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-display font-bold mb-2">Terms & Conditions</h1>
-          <p className="text-muted-foreground mb-8">Last updated: December 2024</p>
+          <p className="text-muted-foreground mb-8">Last updated: December 2025</p>
 
           <Card className="glass-card">
             <CardContent className="p-8 prose prose-invert max-w-none">
