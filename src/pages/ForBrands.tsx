@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import CountryCodeSelect, { detectCountryCode } from "@/components/CountryCodeSelect";
 
 const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/;
 
@@ -78,6 +79,11 @@ const ForBrands = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [countryCode, setCountryCode] = useState("+1");
+
+  useEffect(() => {
+    setCountryCode(detectCountryCode());
+  }, []);
 
   const {
     register,
@@ -100,7 +106,7 @@ const ForBrands = () => {
         company_name: data.company_name,
         contact_name: data.contact_name,
         email: data.email,
-        phone: data.phone,
+        phone: `${countryCode} ${data.phone}`,
         website: data.website || null,
         budget_range: data.budget_range || null,
         message: data.message,
@@ -110,6 +116,7 @@ const ForBrands = () => {
 
       setIsSubmitted(true);
       reset();
+      setCountryCode(detectCountryCode());
       toast({
         title: "Inquiry submitted!",
         description: "Thanks for reaching out. Our team will contact you shortly.",
@@ -334,13 +341,19 @@ const ForBrands = () => {
                             <Phone className="w-4 h-4 text-muted-foreground" />
                             Phone Number *
                           </Label>
-                          <Input
-                            id="phone"
-                            type="tel"
-                            placeholder="+1 (555) 123-4567"
-                            {...register("phone")}
-                            className={errors.phone ? "border-destructive" : ""}
-                          />
+                          <div className="flex gap-2">
+                            <CountryCodeSelect
+                              value={countryCode}
+                              onChange={setCountryCode}
+                            />
+                            <Input
+                              id="phone"
+                              type="tel"
+                              placeholder="555 123 4567"
+                              {...register("phone")}
+                              className={`flex-1 ${errors.phone ? "border-destructive" : ""}`}
+                            />
+                          </div>
                           {errors.phone && (
                             <p className="text-sm text-destructive">{errors.phone.message}</p>
                           )}
