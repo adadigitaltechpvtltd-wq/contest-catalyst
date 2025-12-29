@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { getGalleryCanonicalUrl } from '@/lib/seoUtils';
+import { getGalleryCanonicalUrl, getPhotoBreadcrumbSchema } from '@/lib/seoUtils';
 
 const PhotoDetail = () => {
   // Support both new format (/gallery/:category/:contestSlug/:photoSlug) and legacy format (/photo/:contestSlug/:photoSlug)
@@ -242,6 +242,20 @@ const PhotoDetail = () => {
       : `${photo.title} - Photography submission for ${contestSeoTitle}. ${photo.contest.meta_description || ''}`.slice(0, 160);
   const canonicalUrl = getGalleryCanonicalUrl(contestCategory, photo.contest.slug, photo.slug);
   
+  // Generate breadcrumb schema
+  const breadcrumbSchema = getPhotoBreadcrumbSchema(
+    contestCategory,
+    photo.contest.slug,
+    photo.contest.title,
+    photo.slug,
+    photo.title
+  );
+  
+  // Image alt text - use description if available, otherwise title
+  const imageAlt = photo.description 
+    ? `${photo.title}: ${photo.description.slice(0, 100)}`
+    : photo.title;
+  
   // Only index if approved AND title passes quality validation
   const shouldNoIndex = !isApproved || hasTitleQualityIssue;
 
@@ -291,12 +305,14 @@ const PhotoDetail = () => {
             <div className="relative rounded-xl overflow-hidden bg-secondary">
                 <img
                   src={photo.image_url}
-                  alt={photo.title}
+                  alt={imageAlt}
+                  title={photo.title}
                   className="w-full h-auto max-h-[80vh] object-contain"
                   loading="eager"
                   fetchPriority="high"
                   width={1200}
                   height={800}
+                  decoding="async"
                 />
                 
                 {photo.status === 'winner' && (
@@ -348,7 +364,7 @@ const PhotoDetail = () => {
                 <h1 className="text-2xl font-bold mb-2">{photo.title}</h1>
                 
                 {photo.description && (
-                  <p className="text-muted-foreground mb-4">{photo.description}</p>
+                  <p className="text-muted-foreground mb-4" id="photo-caption">{photo.description}</p>
                 )}
 
                 {/* Category Badge */}
@@ -435,10 +451,12 @@ const PhotoDetail = () => {
                     <img
                       src={related.image_url}
                       alt={related.title}
+                      title={related.title}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       loading="lazy"
                       width={400}
                       height={400}
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="absolute bottom-0 left-0 right-0 p-3">
@@ -469,15 +487,21 @@ const PhotoDetail = () => {
         photoTitle={photo.title}
       />
 
-      {/* Structured Data for SEO */}
+      {/* Breadcrumb Structured Data */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{
+        __html: JSON.stringify(breadcrumbSchema)
+      }} />
+
+      {/* ImageObject Structured Data */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
         __html: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "ImageObject",
           "@id": canonicalUrl,
           "name": photo.title,
+          "caption": photo.description || photo.title,
           "description": seoDescription,
-          "contentUrl": canonicalUrl,
+          "contentUrl": photo.image_url,
           "thumbnailUrl": photo.image_url,
           "uploadDate": photo.created_at,
           "author": {
