@@ -435,148 +435,192 @@ const ContestDetail = () => {
       
       <Navbar />
 
-      {/* Contest Header Section */}
+      {/* Contest Header & Brand Section */}
       <section className="relative pt-6 pb-8">
         <div className="container mx-auto px-4">
-          <div className="bg-card border border-border rounded-2xl p-6 md:p-8">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${statusDisplay.className}`}>
-                    {contest.status === 'active' && <span className="w-2 h-2 rounded-full bg-current animate-pulse" />}
-                    {statusDisplay.label}
-                  </span>
-                  <span className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    Ends {format(new Date(contest.end_date), "MMMM d, yyyy")}
-                  </span>
-                </div>
-
-                <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
-                  {contest.title}
-                </h1>
-
-                {contest.theme && (
-                  <p className="text-muted-foreground mb-2">Theme: {contest.theme}</p>
-                )}
-
-                <p className="text-muted-foreground mb-6 max-w-2xl">
-                  {contest.description || "Share your best photos and compete for amazing prizes!"}
-                </p>
-
-                <div className="flex flex-wrap gap-6">
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Trophy className="w-5 h-5 text-primary" />
+          <div className="grid md:grid-cols-3 gap-6 auto-rows-max">
+            {/* Left Column - Contest Details (2 cols) */}
+            <div className="md:col-span-2 flex flex-col">
+              <div className="bg-card border border-border rounded-2xl p-6 md:p-8 h-full flex flex-col">
+                <div className="flex flex-col gap-6">
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${statusDisplay.className}`}>
+                        {contest.status === 'active' && <span className="w-2 h-2 rounded-full bg-current animate-pulse" />}
+                        {statusDisplay.label}
+                      </span>
+                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        Ends {format(new Date(contest.end_date), "MMMM d, yyyy")}
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-foreground font-bold">{prizeFormatted}</p>
-                      <p className="text-xs text-muted-foreground">Prize</p>
+
+                    <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
+                      {contest.title}
+                    </h1>
+
+                    {contest.theme && (
+                      <p className="text-muted-foreground mb-2">Theme: {contest.theme}</p>
+                    )}
+
+                    <p className="text-muted-foreground mb-6 max-w-2xl">
+                      {contest.description || "Share your best photos and compete for amazing prizes!"}
+                    </p>
+
+                    <div className="flex flex-wrap gap-6">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Trophy className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-foreground font-bold">{prizeFormatted}</p>
+                          <p className="text-xs text-muted-foreground">Prize</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                          <Users className="w-5 h-5 text-accent" />
+                        </div>
+                        <div>
+                          <p className="text-foreground font-bold">{participantCount}</p>
+                          <p className="text-xs text-muted-foreground">Entries</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                          <Clock className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-foreground font-bold">{formatTimeLeft(contest.end_date)}</p>
+                          <p className="text-xs text-muted-foreground">Time Left</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-accent" />
-                    </div>
-                    <div>
-                      <p className="text-foreground font-bold">{participantCount}</p>
-                      <p className="text-xs text-muted-foreground">Entries</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                      <Clock className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-foreground font-bold">{formatTimeLeft(contest.end_date)}</p>
-                      <p className="text-xs text-muted-foreground">Time Left</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              <div className="flex items-start gap-3">
-                {userSubmission ? (
-                  <Link to="/submissions">
-                    <Button size="lg" variant="secondary">
-                      <Eye className="w-4 h-4 mr-2" />
-                      View My Submission
+                  <div className="flex items-center gap-3">
+                    {userSubmission ? (
+                      <Link to="/submissions" className="flex-1">
+                        <Button size="lg" variant="secondary" className="w-full">
+                          <Eye className="w-4 h-4 mr-2" />
+                          View My Submission
+                        </Button>
+                      </Link>
+                    ) : contest.status === "active" ? (
+                      <Button 
+                        size="lg"
+                        className="flex-1"
+                        onClick={() => {
+                          if (!user) {
+                            toast.info("Please log in to submit your entry");
+                            navigate("/auth");
+                            return;
+                          }
+                          navigate(`/submit/${contest.slug || contest.id}`);
+                        }}
+                      >
+                        Submit Entry
+                      </Button>
+                    ) : null}
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="shrink-0"
+                      onClick={() => setIsShareDialogOpen(true)}
+                    >
+                      <Share2 className="w-4 h-4" />
                     </Button>
-                  </Link>
-                ) : contest.status === "active" ? (
-                  <Button 
-                    size="lg" 
-                    onClick={() => {
-                      if (!user) {
-                        toast.info("Please log in to submit your entry");
-                        navigate("/auth");
-                        return;
-                      }
-                      navigate(`/submit/${contest.slug || contest.id}`);
-                    }}
-                  >
-                    Submit Entry
-                  </Button>
-                ) : null}
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="shrink-0"
-                  onClick={() => setIsShareDialogOpen(true)}
-                >
-                  <Share2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Brand Section */}
-          {contest.brand_name && (
-            <div className="mt-6 bg-card border border-border rounded-2xl p-6">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Building2 className="w-6 h-6 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1">Sponsored by {contest.brand_name}</h3>
-                  {contest.brand_description && (
-                    <p className="text-muted-foreground text-sm mb-3">{contest.brand_description}</p>
-                  )}
-                  <div className="flex flex-wrap gap-2">
-                    {contest.brand_website_url && (
-                      <a href={contest.brand_website_url} target="_blank" rel="noopener noreferrer">
-                        <Button variant="outline" size="sm">
-                          <ExternalLink className="w-4 h-4 mr-1" />
-                          Website
-                        </Button>
-                      </a>
-                    )}
-                    {contest.brand_instagram_url && (
-                      <a href={contest.brand_instagram_url} target="_blank" rel="noopener noreferrer">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Instagram className="w-4 h-4" />
-                        </Button>
-                      </a>
-                    )}
-                    {contest.brand_twitter_url && (
-                      <a href={contest.brand_twitter_url} target="_blank" rel="noopener noreferrer">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Twitter className="w-4 h-4" />
-                        </Button>
-                      </a>
-                    )}
-                    {contest.brand_youtube_url && (
-                      <a href={contest.brand_youtube_url} target="_blank" rel="noopener noreferrer">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Youtube className="w-4 h-4" />
-                        </Button>
-                      </a>
-                    )}
                   </div>
                 </div>
               </div>
             </div>
-          )}
+
+            {/* Right Column - Sponsor Details */}
+            {contest.brand_name && (
+              <div className="md:col-span-1 flex flex-col">
+                <div className="bg-card border border-border rounded-2xl overflow-hidden sticky top-6 h-full flex flex-col">
+                  {/* Brand Image Banner */}
+                  {(contest.brand_image_url || contest.brand_logo_url) && (
+                    <div className="relative w-full h-32 overflow-hidden bg-muted group">
+                      <img 
+                        src={contest.brand_image_url || contest.brand_logo_url}
+                        alt={contest.brand_name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-foreground/20 to-transparent" />
+                    </div>
+                  )}
+                  
+                  {/* Brand Details */}
+                  <div className="p-5">
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        {contest.brand_logo_url && (
+                          <img 
+                            src={contest.brand_logo_url}
+                            alt={`${contest.brand_name} logo`}
+                            className="w-12 h-12 rounded-lg object-cover border border-border bg-white p-1 shrink-0"
+                          />
+                        )}
+                        {!contest.brand_logo_url && (
+                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <Building2 className="w-6 h-6 text-primary" />
+                          </div>
+                        )}
+                        
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base text-foreground">Sponsored by</h3>
+                          <p className="text-sm font-bold text-foreground truncate">{contest.brand_name}</p>
+                        </div>
+                      </div>
+
+                      {contest.brand_description && (
+                        <p className="text-xs text-muted-foreground line-clamp-3">{contest.brand_description}</p>
+                      )}
+
+                      <div className="flex flex-col gap-2 pt-2 border-t border-border">
+                        {contest.brand_website_url && (
+                          <a href={contest.brand_website_url} target="_blank" rel="noopener noreferrer" className="w-full">
+                            <Button variant="outline" size="sm" className="w-full text-xs">
+                              <ExternalLink className="w-3 h-3 mr-1.5" />
+                              Visit Website
+                            </Button>
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Social Links */}
+                      {(contest.brand_instagram_url || contest.brand_twitter_url || contest.brand_youtube_url) && (
+                        <div className="flex items-center gap-2 justify-center pt-2">
+                          {contest.brand_instagram_url && (
+                            <a href={contest.brand_instagram_url} target="_blank" rel="noopener noreferrer">
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Instagram className="w-4 h-4" />
+                              </Button>
+                            </a>
+                          )}
+                          {contest.brand_twitter_url && (
+                            <a href={contest.brand_twitter_url} target="_blank" rel="noopener noreferrer">
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Twitter className="w-4 h-4" />
+                              </Button>
+                            </a>
+                          )}
+                          {contest.brand_youtube_url && (
+                            <a href={contest.brand_youtube_url} target="_blank" rel="noopener noreferrer">
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Youtube className="w-4 h-4" />
+                              </Button>
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 

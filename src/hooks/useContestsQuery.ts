@@ -17,6 +17,8 @@ export interface Contest {
   end_date: string;
   status: ContestStatus;
   featured_in_hero?: boolean;
+  brand_logo_url?: string | null;
+  brand_image_url?: string | null;
 }
 
 export interface ContestWithCount extends Contest {

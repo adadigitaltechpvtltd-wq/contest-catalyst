@@ -9,6 +9,8 @@ export interface Contest {
   prize_amount: number;
   rules: string[] | null;
   end_date: string;
+  brand_logo_url?: string | null;
+  brand_image_url?: string | null;
 }
 
 export interface PreviousSubmission {

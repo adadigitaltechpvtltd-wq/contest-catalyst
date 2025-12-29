@@ -69,6 +69,8 @@ const CreateContest = () => {
   // Brand fields
   const [brandName, setBrandName] = useState('');
   const [brandDescription, setBrandDescription] = useState('');
+  const [brandLogoUrl, setBrandLogoUrl] = useState('');
+  const [brandImageUrl, setBrandImageUrl] = useState('');
   const [brandWebsiteUrl, setBrandWebsiteUrl] = useState('');
   const [brandInstagramUrl, setBrandInstagramUrl] = useState('');
   const [brandTwitterUrl, setBrandTwitterUrl] = useState('');
@@ -76,6 +78,9 @@ const CreateContest = () => {
   const [brandYoutubeUrl, setBrandYoutubeUrl] = useState('');
   const [brandCtaLabel, setBrandCtaLabel] = useState('');
   const [brandCtaUrl, setBrandCtaUrl] = useState('');
+  const [rawBrandImageFile, setRawBrandImageFile] = useState<File | null>(null);
+  const [showBrandImageCropper, setShowBrandImageCropper] = useState(false);
+  const [brandImageType, setBrandImageType] = useState<'logo' | 'image'>('image');
 
   const addRule = () => setRules([...rules, '']);
   const removeRule = (index: number) => setRules(rules.filter((_, i) => i !== index));
@@ -142,6 +147,62 @@ const CreateContest = () => {
   const handleCropCancel = useCallback(() => {
     setShowCropper(false);
     setRawImageFile(null);
+  }, []);
+
+  const handleBrandImageFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>, imageType: 'logo' | 'image') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast({ title: 'Invalid file type', description: 'Please upload JPEG, PNG, or WebP', variant: 'destructive' });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Max 10MB allowed', variant: 'destructive' });
+      return;
+    }
+
+    setRawBrandImageFile(file);
+    setBrandImageType(imageType);
+    setShowBrandImageCropper(true);
+    e.target.value = '';
+  }, [toast]);
+
+  const handleBrandImageCropComplete = useCallback(async (croppedFile: File) => {
+    setShowBrandImageCropper(false);
+    setRawBrandImageFile(null);
+    setIsUploadingImage(true);
+
+    const fileExt = croppedFile.name.split('.').pop() || 'jpg';
+    const fileName = `brand-${brandImageType}-${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('submissions')
+      .upload(`contests/${fileName}`, croppedFile, { upsert: true });
+
+    if (uploadError) {
+      toast({ title: 'Upload failed', description: uploadError.message, variant: 'destructive' });
+      setIsUploadingImage(false);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('submissions')
+      .getPublicUrl(`contests/${fileName}`);
+
+    if (brandImageType === 'logo') {
+      setBrandLogoUrl(publicUrl);
+    } else {
+      setBrandImageUrl(publicUrl);
+    }
+    setIsUploadingImage(false);
+    toast({ title: 'Image uploaded', description: `${brandImageType === 'logo' ? 'Logo' : 'Image'} uploaded successfully` });
+  }, [brandImageType, toast]);
+
+  const handleBrandImageCropCancel = useCallback(() => {
+    setShowBrandImageCropper(false);
+    setRawBrandImageFile(null);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -233,6 +294,8 @@ const CreateContest = () => {
       cover_image_url: coverImageUrl || null,
       brand_name: brandName || null,
       brand_description: brandDescription || null,
+      brand_logo_url: brandLogoUrl || null,
+      brand_image_url: brandImageUrl || null,
       brand_website_url: brandWebsiteUrl || null,
       brand_instagram_url: brandInstagramUrl || null,
       brand_twitter_url: brandTwitterUrl || null,
@@ -576,120 +639,231 @@ const CreateContest = () => {
             <CardTitle>Brand / Partner Details (Optional)</CardTitle>
             <CardDescription>Add optional brand or sponsor information for this contest</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
+          <CardContent className="space-y-6">
+            {/* Brand Images Section */}
+            <div className="grid md:grid-cols-2 gap-6 pb-6 border-b border-border">
+              {/* Brand Logo Upload */}
               <div className="space-y-2">
-                <Label htmlFor="brandName">Brand Name</Label>
-                <Input
-                  id="brandName"
-                  value={brandName}
-                  onChange={(e) => setBrandName(e.target.value)}
-                  placeholder="e.g., Powered by Acme Co"
-                />
+                <Label className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Brand Logo
+                </Label>
+                {brandLogoUrl ? (
+                  <div className="relative">
+                    <img
+                      src={brandLogoUrl}
+                      alt="Brand logo"
+                      className="w-full max-w-xs h-32 object-contain rounded-lg border border-border bg-muted p-2"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => setBrandLogoUrl('')}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-muted/50">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      {isUploadingImage && brandImageType === 'logo' ? (
+                        <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
+                      ) : (
+                        <>
+                          <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground">Click to upload</p>
+                        </>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(e) => handleBrandImageFileSelect(e, 'logo')}
+                      disabled={isUploadingImage}
+                    />
+                  </label>
+                )}
               </div>
+
+              {/* Brand Image Upload */}
               <div className="space-y-2">
-                <Label htmlFor="brandWebsiteUrl">Brand Website URL</Label>
-                <Input
-                  id="brandWebsiteUrl"
-                  type="url"
-                  value={brandWebsiteUrl}
-                  onChange={(e) => setBrandWebsiteUrl(e.target.value)}
-                  placeholder="https://example.com"
-                />
+                <Label className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Event / Campaign Image
+                </Label>
+                {brandImageUrl ? (
+                  <div className="relative">
+                    <img
+                      src={brandImageUrl}
+                      alt="Brand image"
+                      className="w-full max-w-xs h-32 object-cover rounded-lg border border-border bg-muted"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => setBrandImageUrl('')}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-muted/50">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      {isUploadingImage && brandImageType === 'image' ? (
+                        <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
+                      ) : (
+                        <>
+                          <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground">Click to upload</p>
+                        </>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(e) => handleBrandImageFileSelect(e, 'image')}
+                      disabled={isUploadingImage}
+                    />
+                  </label>
+                )}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="brandDescription">Brand Description (max 300 characters)</Label>
-              <Textarea
-                id="brandDescription"
-                value={brandDescription}
-                onChange={(e) => setBrandDescription(e.target.value)}
-                placeholder="Short description about the brand or partner..."
-                maxLength={300}
-                rows={2}
-              />
-              <p className="text-xs text-muted-foreground">
-                {brandDescription.length}/300 characters
-              </p>
-            </div>
+            {/* Brand Text Fields */}
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="brandName">Brand Name</Label>
+                  <Input
+                    id="brandName"
+                    value={brandName}
+                    onChange={(e) => setBrandName(e.target.value)}
+                    placeholder="e.g., Powered by Acme Co"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="brandWebsiteUrl">Brand Website URL</Label>
+                  <Input
+                    id="brandWebsiteUrl"
+                    type="url"
+                    value={brandWebsiteUrl}
+                    onChange={(e) => setBrandWebsiteUrl(e.target.value)}
+                    placeholder="https://example.com"
+                  />
+                </div>
+              </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="brandInstagramUrl" className="flex items-center gap-2">
-                  <Instagram className="h-4 w-4" /> Instagram URL
-                </Label>
-                <Input
-                  id="brandInstagramUrl"
-                  type="url"
-                  value={brandInstagramUrl}
-                  onChange={(e) => setBrandInstagramUrl(e.target.value)}
-                  placeholder="https://instagram.com/brand"
+                <Label htmlFor="brandDescription">Brand Description (max 300 characters)</Label>
+                <Textarea
+                  id="brandDescription"
+                  value={brandDescription}
+                  onChange={(e) => setBrandDescription(e.target.value)}
+                  placeholder="Short description about the brand or partner..."
+                  maxLength={300}
+                  rows={2}
                 />
+                <p className="text-xs text-muted-foreground">
+                  {brandDescription.length}/300 characters
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="brandTwitterUrl" className="flex items-center gap-2">
-                  <Twitter className="h-4 w-4" /> Twitter / X URL
-                </Label>
-                <Input
-                  id="brandTwitterUrl"
-                  type="url"
-                  value={brandTwitterUrl}
-                  onChange={(e) => setBrandTwitterUrl(e.target.value)}
-                  placeholder="https://twitter.com/brand"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="brandLinkedinUrl" className="flex items-center gap-2">
-                  <Linkedin className="h-4 w-4" /> LinkedIn URL
-                </Label>
-                <Input
-                  id="brandLinkedinUrl"
-                  type="url"
-                  value={brandLinkedinUrl}
-                  onChange={(e) => setBrandLinkedinUrl(e.target.value)}
-                  placeholder="https://linkedin.com/company/brand"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="brandYoutubeUrl" className="flex items-center gap-2">
-                  <Youtube className="h-4 w-4" /> YouTube URL
-                </Label>
-                <Input
-                  id="brandYoutubeUrl"
-                  type="url"
-                  value={brandYoutubeUrl}
-                  onChange={(e) => setBrandYoutubeUrl(e.target.value)}
-                  placeholder="https://youtube.com/@brand"
-                />
-              </div>
-            </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="brandCtaLabel" className="flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4" /> CTA Button Label
-                </Label>
-                <Input
-                  id="brandCtaLabel"
-                  value={brandCtaLabel}
-                  onChange={(e) => setBrandCtaLabel(e.target.value)}
-                  placeholder="e.g., Visit Brand"
-                />
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="brandInstagramUrl" className="flex items-center gap-2">
+                    <Instagram className="h-4 w-4" /> Instagram URL
+                  </Label>
+                  <Input
+                    id="brandInstagramUrl"
+                    type="url"
+                    value={brandInstagramUrl}
+                    onChange={(e) => setBrandInstagramUrl(e.target.value)}
+                    placeholder="https://instagram.com/brand"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="brandTwitterUrl" className="flex items-center gap-2">
+                    <Twitter className="h-4 w-4" /> Twitter / X URL
+                  </Label>
+                  <Input
+                    id="brandTwitterUrl"
+                    type="url"
+                    value={brandTwitterUrl}
+                    onChange={(e) => setBrandTwitterUrl(e.target.value)}
+                    placeholder="https://twitter.com/brand"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="brandLinkedinUrl" className="flex items-center gap-2">
+                    <Linkedin className="h-4 w-4" /> LinkedIn URL
+                  </Label>
+                  <Input
+                    id="brandLinkedinUrl"
+                    type="url"
+                    value={brandLinkedinUrl}
+                    onChange={(e) => setBrandLinkedinUrl(e.target.value)}
+                    placeholder="https://linkedin.com/company/brand"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="brandYoutubeUrl" className="flex items-center gap-2">
+                    <Youtube className="h-4 w-4" /> YouTube URL
+                  </Label>
+                  <Input
+                    id="brandYoutubeUrl"
+                    type="url"
+                    value={brandYoutubeUrl}
+                    onChange={(e) => setBrandYoutubeUrl(e.target.value)}
+                    placeholder="https://youtube.com/@brand"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="brandCtaUrl">CTA Button URL</Label>
-                <Input
-                  id="brandCtaUrl"
-                  type="url"
-                  value={brandCtaUrl}
-                  onChange={(e) => setBrandCtaUrl(e.target.value)}
-                  placeholder="https://example.com/promo"
-                />
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="brandCtaLabel" className="flex items-center gap-2">
+                    <ExternalLink className="h-4 w-4" /> CTA Button Label
+                  </Label>
+                  <Input
+                    id="brandCtaLabel"
+                    value={brandCtaLabel}
+                    onChange={(e) => setBrandCtaLabel(e.target.value)}
+                    placeholder="e.g., Visit Brand"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="brandCtaUrl">CTA Button URL</Label>
+                  <Input
+                    id="brandCtaUrl"
+                    type="url"
+                    value={brandCtaUrl}
+                    onChange={(e) => setBrandCtaUrl(e.target.value)}
+                    placeholder="https://example.com/promo"
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Brand Image Cropper Modal */}
+        {rawBrandImageFile && (
+          <ImageCropper
+            file={rawBrandImageFile}
+            isOpen={showBrandImageCropper}
+            onClose={handleBrandImageCropCancel}
+            onCropComplete={handleBrandImageCropComplete}
+            maxWidth={brandImageType === 'logo' ? 500 : 1920}
+            maxHeight={brandImageType === 'logo' ? 500 : 1080}
+            quality={0.85}
+          />
+        )}
 
         <Card className="glass-card mb-6">
           <CardHeader>

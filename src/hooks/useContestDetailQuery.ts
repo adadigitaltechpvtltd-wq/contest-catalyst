@@ -21,6 +21,8 @@ export interface Contest {
   max_participants: number | null;
   brand_name: string | null;
   brand_description: string | null;
+  brand_logo_url: string | null;
+  brand_image_url: string | null;
   brand_website_url: string | null;
   brand_instagram_url: string | null;
   brand_twitter_url: string | null;
@@ -68,7 +70,8 @@ export const useContestDetailQuery = (slug: string | undefined) => {
         .maybeSingle();
 
       if (error) throw error;
-      return data as Contest | null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data as any) as Contest | null;
     },
     enabled: !!slug,
     staleTime: 2 * 60 * 1000, // 2 minutes
