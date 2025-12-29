@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { Clock, Users, Trophy, CheckCircle, Share2, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check, ChevronLeft, ChevronRight, Download, Heart, Facebook, X, Youtube, ExternalLink, Building2 } from "lucide-react";
 import ContestDetailSkeleton from "@/components/skeletons/ContestDetailSkeleton";
 import ErrorState from "@/components/ErrorState";
+import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -24,6 +25,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { getContestCanonicalUrl, getContestSchema } from "@/lib/seoUtils";
 
 const ContestDetail = () => {
   const { category, slug } = useParams<{ category?: string; slug: string }>();
@@ -406,8 +408,31 @@ const ContestDetail = () => {
         "Entries must be submitted before the deadline",
       ];
 
+  // SEO metadata
+  const contestCategory = contest.category || 'general';
+  const seoTitle = contest.seo_title || contest.title;
+  const seoDescription = contest.meta_description 
+    || contest.description 
+    || `Join the ${contest.title} photography contest. Prize: ${prizeFormatted}. ${contest.theme ? `Theme: ${contest.theme}` : ''}`;
+  const canonicalUrl = getContestCanonicalUrl(contestCategory, contest.slug || contest.id);
+  const contestSchema = getContestSchema(contest, contestCategory, contest.slug || contest.id);
+
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={seoTitle}
+        description={seoDescription}
+        canonicalUrl={canonicalUrl}
+        ogImage={contest.cover_image_url || undefined}
+        ogType="website"
+        keywords={contest.keywords || undefined}
+      />
+      
+      {/* Contest Structured Data */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{
+        __html: JSON.stringify(contestSchema)
+      }} />
+      
       <Navbar />
 
       {/* Contest Header Section */}

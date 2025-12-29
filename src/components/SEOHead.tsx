@@ -7,6 +7,7 @@ interface SEOHeadProps {
   ogImage?: string;
   ogType?: 'website' | 'article' | 'product';
   noIndex?: boolean;
+  keywords?: string[];
 }
 
 const SEOHead = ({
@@ -16,6 +17,7 @@ const SEOHead = ({
   ogImage = 'https://lovable.dev/opengraph-image-p98pqg.png',
   ogType = 'website',
   noIndex = false,
+  keywords,
 }: SEOHeadProps) => {
   const siteName = 'GAAL';
   const fullTitle = title.includes('GAAL') ? title : `${title} | ${siteName}`;
@@ -27,6 +29,11 @@ const SEOHead = ({
     <Helmet>
       <title>{fullTitle}</title>
       <meta name="description" content={truncatedDescription} />
+      
+      {/* Keywords */}
+      {keywords && keywords.length > 0 && (
+        <meta name="keywords" content={keywords.join(', ')} />
+      )}
       
       {/* Indexing Control */}
       {noIndex ? (
