@@ -29,7 +29,7 @@ const inquirySchema = z.object({
     .regex(phoneRegex, "Please enter a valid phone number"),
   website: z.string().trim().url("Enter a valid URL").max(500, "URL too long").optional().or(z.literal("")),
   budget_range: z.string().optional(),
-  message: z.string().trim().min(10, "Please provide more details about your campaign idea").max(2000, "Message too long"),
+  message: z.string().trim().max(2000, "Message too long").optional().or(z.literal("")),
 });
 
 type InquiryFormData = z.infer<typeof inquirySchema>;
@@ -396,7 +396,7 @@ const ForBrands = () => {
                       <div className="space-y-2">
                         <Label htmlFor="message" className="flex items-center gap-2">
                           <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                          Campaign Idea / Message *
+                          Campaign Idea / Message
                         </Label>
                         <Textarea
                           id="message"
