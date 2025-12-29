@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Camera, Handshake, FileImage, Sparkles, ArrowRight, Building2, Mail, Globe, MessageSquare, User } from "lucide-react";
+import { Check, Camera, Handshake, FileImage, Sparkles, ArrowRight, Building2, Mail, Globe, MessageSquare, User, Phone } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -15,10 +15,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/;
+
 const inquirySchema = z.object({
   company_name: z.string().trim().min(1, "Company name is required").max(200, "Company name too long"),
   contact_name: z.string().trim().min(1, "Contact name is required").max(100, "Name too long"),
   email: z.string().trim().email("Valid email is required").max(255, "Email too long"),
+  phone: z.string().trim()
+    .min(1, "Phone number is required")
+    .min(7, "Phone number must be at least 7 digits")
+    .max(20, "Phone number too long")
+    .regex(phoneRegex, "Please enter a valid phone number"),
   website: z.string().trim().url("Enter a valid URL").max(500, "URL too long").optional().or(z.literal("")),
   budget_range: z.string().optional(),
   message: z.string().trim().min(10, "Please provide more details about your campaign idea").max(2000, "Message too long"),
@@ -93,6 +100,7 @@ const ForBrands = () => {
         company_name: data.company_name,
         contact_name: data.contact_name,
         email: data.email,
+        phone: data.phone,
         website: data.website || null,
         budget_range: data.budget_range || null,
         message: data.message,
@@ -322,21 +330,38 @@ const ForBrands = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="website" className="flex items-center gap-2">
-                            <Globe className="w-4 h-4 text-muted-foreground" />
-                            Website (Optional)
+                          <Label htmlFor="phone" className="flex items-center gap-2">
+                            <Phone className="w-4 h-4 text-muted-foreground" />
+                            Phone Number *
                           </Label>
                           <Input
-                            id="website"
-                            type="url"
-                            placeholder="https://yourcompany.com"
-                            {...register("website")}
-                            className={errors.website ? "border-destructive" : ""}
+                            id="phone"
+                            type="tel"
+                            placeholder="+1 (555) 123-4567"
+                            {...register("phone")}
+                            className={errors.phone ? "border-destructive" : ""}
                           />
-                          {errors.website && (
-                            <p className="text-sm text-destructive">{errors.website.message}</p>
+                          {errors.phone && (
+                            <p className="text-sm text-destructive">{errors.phone.message}</p>
                           )}
                         </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="website" className="flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-muted-foreground" />
+                          Website (Optional)
+                        </Label>
+                        <Input
+                          id="website"
+                          type="url"
+                          placeholder="https://yourcompany.com"
+                          {...register("website")}
+                          className={errors.website ? "border-destructive" : ""}
+                        />
+                        {errors.website && (
+                          <p className="text-sm text-destructive">{errors.website.message}</p>
+                        )}
                       </div>
 
                       <div className="space-y-2">
