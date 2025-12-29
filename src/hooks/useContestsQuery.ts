@@ -95,7 +95,7 @@ export const useActiveContestsQuery = (limit = 4) => {
       const { data, error } = await supabase
         .from("contests")
         .select("id, slug, title, description, prize_amount, prize_currency, start_date, end_date, status, theme, cover_image_url")
-        .in("status", ["active", "voting", "completed"])
+        .eq("status", "active")
         .eq("featured_in_hero", false)
         .order("start_date", { ascending: false })
         .limit(limit);
