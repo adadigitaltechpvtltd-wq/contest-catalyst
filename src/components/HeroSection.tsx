@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Play, Settings, Trophy, Users } from "lucide-react";
+import { Play, Trophy, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,7 +9,6 @@ const HeroSection = () => {
   const { data: contestData, isLoading } = useFeaturedContestQuery();
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
 
-  // Update countdown timer
   useEffect(() => {
     if (!contestData?.end_date) return;
 
@@ -45,11 +44,11 @@ const HeroSection = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden py-20 lg:py-20">
+    <section className="relative overflow-hidden py-20 lg:py-24">
       {/* Background atmosphere */}
       <div className="absolute inset-0 hero-atmosphere" aria-hidden />
 
-      {/* Decorative cubes */}
+      {/* Decorative shapes */}
       <div
         className="absolute top-24 right-[12%] w-24 h-24 md:w-32 md:h-32 rounded-[28px] bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--warm-pink))] animate-float shadow-glow rotate-12"
         aria-hidden
@@ -64,51 +63,45 @@ const HeroSection = () => {
         aria-hidden
       />
 
-      {/* Decorative gear */}
-      <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-[0.06] hidden lg:block" aria-hidden>
-        <Settings className="w-28 h-28 text-foreground" />
-      </div>
-
       <div className="container mx-auto px-4 relative">
         <div className="mx-auto max-w-5xl text-center">
           {/* Badge */}
           <div className="flex justify-center mb-7">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/15 border border-primary/25 text-primary text-sm font-semibold">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              {contestData ? "Contest Live" : "New Contest Coming"}
+              {contestData ? "Campaign Live" : "New Campaign Coming"}
             </div>
           </div>
 
-          {/* Tagline */}
-          <p className="font-display text-lg md:text-xl font-medium text-muted-foreground tracking-wide mb-4">
-            Real moments. Real value.
-          </p>
-
           {/* Headline */}
           <h1 className="font-display text-[44px] leading-[1.02] md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground">
-            <span className="text-foreground">Create Bold.</span>{" "}
-            <span className="text-gradient">Compete Fair.</span>
+            <span className="text-foreground">Real People.</span>{" "}
+            <span className="text-gradient">Real Campaigns.</span>
             <br />
-            <span className="text-gradient-cool">Get Rewarded.</span>
+            <span className="text-gradient-cool">Real Impact.</span>
           </h1>
 
           {/* Subheadline */}
           <p className="mt-6 mx-auto max-w-3xl text-lg md:text-xl text-muted-foreground">
-            <span className="font-semibold text-foreground">Gaal — Where everyday photos earn.</span> A skill-based photo contest platform where creators compete in short challenges and earn cash, products, and brand recognition — all for free.
+            Gaal connects brands with real users to create authentic participation campaigns — generating trust and visibility that feels natural.
           </p>
 
-          {/* Browse All Contests Button - shown when there's an active hero contest */}
-          {!isLoading && contestData && (
-            <div className="mt-8 flex justify-center">
-              <Link to="/contests">
-                <Button variant="outline" size="lg" className="rounded-2xl border-border/60 bg-card/20 hover:bg-card/35 text-foreground">
-                  Browse All Contests
-                </Button>
-              </Link>
-            </div>
-          )}
+          {/* CTAs */}
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link to="/contests">
+              <Button size="lg" className="rounded-2xl px-8 group">
+                Join a Campaign
+                <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+            <Link to="/for-brands">
+              <Button variant="outline" size="lg" className="rounded-2xl px-8 border-border/60 bg-card/20 hover:bg-card/35 text-foreground">
+                For Brands → Launch a Campaign
+              </Button>
+            </Link>
+          </div>
 
-          {/* Featured Contest Card */}
+          {/* Featured Campaign Card */}
           {isLoading ? (
             <div className="mt-12 mx-auto max-w-4xl glass-card rounded-3xl p-6 md:p-8">
               <div className="flex items-start justify-between gap-4">
@@ -123,13 +116,6 @@ const HeroSection = () => {
               </div>
               <Skeleton className="mt-4 h-5 w-full max-w-md" />
               <Skeleton className="mt-6 h-24 w-full rounded-2xl" />
-              <div className="mt-6 flex items-center justify-between">
-                <div className="flex gap-4">
-                  <Skeleton className="h-5 w-24" />
-                  <Skeleton className="h-5 w-32" />
-                </div>
-                <Skeleton className="h-12 w-32 rounded-2xl" />
-              </div>
             </div>
           ) : contestData ? (
             <div className="mt-12 mx-auto max-w-4xl glass-card rounded-3xl">
@@ -141,7 +127,7 @@ const HeroSection = () => {
                       🌱
                     </div>
                     <div className="text-left">
-                      <div className="text-sm text-muted-foreground">This Week's Challenge</div>
+                      <div className="text-sm text-muted-foreground">Live Campaign</div>
                       <div className="font-display text-2xl font-bold text-foreground">"{contestData.title}"</div>
                     </div>
                   </div>
@@ -151,7 +137,7 @@ const HeroSection = () => {
                 </div>
 
                 <p className="mt-4 text-left text-muted-foreground">
-                  {contestData.description || contestData.theme || "Join this exciting photography challenge!"}
+                  {contestData.description || contestData.theme || "Join this exciting participation campaign!"}
                 </p>
 
                 {/* Countdown row */}
@@ -176,12 +162,12 @@ const HeroSection = () => {
                   <div className="flex items-center gap-6 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4" />
-                      <span>{contestData.participantCount.toLocaleString()} entries</span>
+                      <span>{contestData.participantCount.toLocaleString()} participants</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Trophy className="w-4 h-4" />
                       {contestData.prize_amount === 0 ? (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold">🎉 FREE CONTEST</span>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold">🎉 FREE</span>
                       ) : (
                         <span>Up to {formatPrize(contestData.prize_amount, contestData.prize_currency)} in rewards</span>
                       )}
@@ -190,20 +176,13 @@ const HeroSection = () => {
 
                   <Link to={`/contest/${contestData.slug || contestData.id}`}>
                     <Button size="lg" className="rounded-2xl px-10">
-                      Enter Now
+                      Join Now
                     </Button>
                   </Link>
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="mt-12 mx-auto max-w-4xl glass-card rounded-3xl p-8 text-center">
-              <p className="text-muted-foreground text-lg">No featured contest at the moment. Check back soon!</p>
-              <Link to="/contests" className="mt-4 inline-block">
-                <Button variant="outline" size="lg">Browse All Contests</Button>
-              </Link>
-            </div>
-          )}
+          ) : null}
 
           {/* Watch How It Works */}
           <div className="mt-10 flex justify-center">
@@ -214,26 +193,10 @@ const HeroSection = () => {
                 className="rounded-2xl border-border/60 bg-card/20 hover:bg-card/35 text-foreground"
               >
                 <Play className="w-4 h-4" />
-                Watch How It Works
+                See How It Works
               </Button>
             </Link>
           </div>
-
-          {/* Stats */}
-          {/* <div className="mt-10 flex flex-wrap items-center justify-center gap-10">
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-display font-bold text-primary">50K+</div>
-              <div className="text-xs text-muted-foreground">Active Creators</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-display font-bold text-[hsl(var(--cool-blue))]">$2M+</div>
-              <div className="text-xs text-muted-foreground">Prizes Awarded</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-display font-bold text-foreground">500+</div>
-              <div className="text-xs text-muted-foreground">Brand Partners</div>
-            </div>
-          </div> */}
         </div>
       </div>
     </section>
