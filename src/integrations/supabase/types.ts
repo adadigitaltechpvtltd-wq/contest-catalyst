@@ -549,6 +549,9 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           risk_score: number | null
+          seo_approved: boolean | null
+          seo_page_generated: boolean | null
+          seo_page_url: string | null
           seo_title: string | null
           sharpness_score: number | null
           slug: string | null
@@ -598,6 +601,9 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           risk_score?: number | null
+          seo_approved?: boolean | null
+          seo_page_generated?: boolean | null
+          seo_page_url?: string | null
           seo_title?: string | null
           sharpness_score?: number | null
           slug?: string | null
@@ -647,6 +653,9 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           risk_score?: number | null
+          seo_approved?: boolean | null
+          seo_page_generated?: boolean | null
+          seo_page_url?: string | null
           seo_title?: string | null
           sharpness_score?: number | null
           slug?: string | null

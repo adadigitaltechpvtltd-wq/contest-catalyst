@@ -30,6 +30,7 @@ export interface AdminSubmission {
   admin_notes: string | null;
   analysis_completed_at: string | null;
   created_at: string;
+  seo_approved: boolean | null;
   contest: {
     id: string;
     title: string;
@@ -74,6 +75,7 @@ async function fetchSubmissions(statusFilter: string): Promise<AdminSubmission[]
       admin_notes,
       analysis_completed_at,
       created_at,
+      seo_approved,
       contest:contests!submissions_contest_id_fkey(id, title, status, prize_amount, prize_currency),
       profile:profiles!submissions_user_id_profiles_fkey(id, full_name, email)
     `)
