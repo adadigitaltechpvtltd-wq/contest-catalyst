@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Camera, Handshake, FileImage, Sparkles, ArrowRight, Building2, Mail, Globe, MessageSquare, User, Phone } from "lucide-react";
+import { 
+  Check, Rocket, Target, Users, MessageSquare, FileImage, 
+  ArrowRight, Building2, Mail, Globe, Phone, XCircle,
+  Sparkles, CheckCircle, BarChart3, DollarSign, Shield
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
@@ -36,34 +40,51 @@ type InquiryFormData = z.infer<typeof inquirySchema>;
 
 const howItWorksSteps = [
   {
-    icon: MessageSquare,
-    title: "Submit Your Campaign Idea",
-    description: "Tell us about your brand and the kind of content you're looking for.",
+    icon: Target,
+    title: "Define the Campaign",
+    description: "Share your objective: product launch, brand awareness, audience engagement, or user feedback.",
   },
   {
-    icon: Handshake,
-    title: "We Review & Connect",
-    description: "Our team reviews your inquiry and reaches out to discuss the details.",
+    icon: Users,
+    title: "We Activate Participants",
+    description: "Gaal invites relevant users to participate by using or experiencing your product and sharing real feedback.",
   },
   {
-    icon: Camera,
-    title: "Gaal Manages the Contest",
-    description: "We create, launch, and manage the entire photo contest for you.",
+    icon: BarChart3,
+    title: "Campaign Runs at Scale",
+    description: "Gaal manages participation flow, quality control, moderation, consent and usage rights.",
   },
   {
     icon: FileImage,
-    title: "Receive Authentic Content",
-    description: "Get real, human-made photos from engaged creators — ready to use.",
+    title: "Receive Campaign Outcomes",
+    description: "Get authentic content, honest feedback, organic reach, and assets ready for multi-channel use.",
   },
 ];
 
-const benefits = [
-  "Real user-generated content from real people",
-  "Fixed pricing and transparent rules",
-  "Manual human curation — no AI-generated content",
-  "Rights-safe content with creator consent",
-  "Campaigns managed end-to-end by Gaal",
-  "Access to engaged photography community",
+const outcomes = [
+  "Large-scale real participation",
+  "Authentic creatives that outperform polished ads",
+  "Lower cost per creative",
+  "Faster product validation",
+  "Trust-building content",
+  "Multi-channel reuse value",
+];
+
+const useCases = [
+  "New product launches",
+  "User trial and sampling campaigns",
+  "D2C brands",
+  "Tech, education, food, and lifestyle brands",
+  "Brands seeking authentic user stories",
+];
+
+const whyGaal = [
+  { icon: XCircle, text: "No influencer dependency", negative: true },
+  { icon: XCircle, text: "No AI-generated content", negative: true },
+  { icon: XCircle, text: "No fake engagement", negative: true },
+  { icon: CheckCircle, text: "Fully managed campaigns", negative: false },
+  { icon: CheckCircle, text: "Transparent pricing", negative: false },
+  { icon: CheckCircle, text: "Rights-safe content", negative: false },
 ];
 
 const budgetOptions = [
@@ -96,7 +117,7 @@ const ForBrands = () => {
   });
 
   const scrollToForm = () => {
-    document.getElementById("partner-form")?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("campaign-form")?.scrollIntoView({ behavior: "smooth" });
   };
 
   const onSubmit = async (data: InquiryFormData) => {
@@ -136,8 +157,8 @@ const ForBrands = () => {
   return (
     <>
       <SEOHead
-        title="For Brands | Launch Authentic Photo Contests | Gaal"
-        description="Partner with Gaal to launch sponsored photo contests and generate real user-generated content from engaged creators. No AI, no fake content — just authentic human photography."
+        title="For Brands | Launch User-Driven Marketing Campaigns | Gaal"
+        description="Launch large-scale, user-driven marketing campaigns with Gaal. Engage real users, collect authentic content, and build trust at scale. No influencers, no AI, just real participation."
       />
       <Navbar />
 
@@ -149,49 +170,80 @@ const ForBrands = () => {
           <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl" />
 
           <div className="container mx-auto px-4 relative">
-            <div className="max-w-3xl mx-auto text-center">
+            <div className="max-w-4xl mx-auto text-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
                 <Sparkles className="w-4 h-4" />
                 For Brands & Businesses
               </div>
 
               <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
-                Launch Authentic Photo Contests{" "}
-                <span className="text-gradient">With Real Creators</span>
+                Launch Large-Scale, User-Driven{" "}
+                <span className="text-gradient">Marketing Campaigns</span>
               </h1>
 
-              <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Gaal helps brands generate real, human-made photography through skill-based contests — no AI, no fake content, no influencer noise. Just authentic engagement.
+              <p className="text-lg md:text-xl text-muted-foreground mb-4 max-w-3xl mx-auto">
+                Gaal helps brands engage real users to participate in campaigns, share authentic content, and build trust — at scale.
+              </p>
+
+              <p className="text-muted-foreground mb-8">
+                Not influencers. Not ads. <strong className="text-foreground">Real people, real experiences, real stories.</strong>
               </p>
 
               <Button size="lg" onClick={scrollToForm} className="group">
-                Partner With Us
+                Launch a Campaign
                 <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
           </div>
         </section>
 
-        {/* How It Works */}
+        {/* What Gaal Is */}
         <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-6">
+                What is <span className="text-gradient">Gaal</span>?
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                Gaal is a <strong className="text-foreground">participation-based marketing platform</strong> designed for brands that want authentic engagement at scale.
+              </p>
+              
+              <div className="grid sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
+                {[
+                  "Run product trial and experience campaigns",
+                  "Collect real usage content and feedback",
+                  "Build trust before scaling paid marketing",
+                  "Create reusable marketing assets",
+                ].map((item, index) => (
+                  <div key={index} className="flex items-start gap-3 p-4 bg-card border border-border rounded-xl">
+                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Check className="w-3 h-3 text-primary" />
+                    </div>
+                    <span className="text-foreground text-sm">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works */}
+        <section className="py-20">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-                How It Works for Brands
+                How It Works for <span className="text-gradient">Brands</span>
               </h2>
-              <p className="text-muted-foreground max-w-xl mx-auto">
-                A simple, hands-off process to get authentic user-generated content.
-              </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {howItWorksSteps.map((step, index) => (
                 <Card key={index} className="relative border-border/50 bg-card/50 backdrop-blur-sm">
-                  <CardContent className="pt-6">
+                  <CardContent className="pt-8 pb-6">
                     <div className="absolute -top-3 left-6 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
                       {index + 1}
                     </div>
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 mt-2">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                       <step.icon className="w-6 h-6 text-primary" />
                     </div>
                     <h3 className="font-display font-semibold text-foreground mb-2">{step.title}</h3>
@@ -204,62 +256,100 @@ const ForBrands = () => {
         </section>
 
         {/* What Brands Get */}
-        <section className="py-20">
+        <section className="py-20 bg-muted/30">
           <div className="container mx-auto px-4">
-            <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
-              <div>
-                <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-6">
-                  What You Get With Gaal
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
+                  What Brands <span className="text-gradient">Get</span>
                 </h2>
-                <p className="text-muted-foreground mb-8">
-                  We handle everything so you can focus on your brand. From contest creation to content delivery — it's all managed by our team.
-                </p>
-
-                <ul className="space-y-4">
-                  {benefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full bg-success/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check className="w-3 h-3 text-success" />
-                      </div>
-                      <span className="text-foreground">{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
+                <p className="text-xl text-muted-foreground">Outcomes, Not Just Content</p>
               </div>
 
-              <div className="relative">
-                <div className="bg-gradient-to-br from-primary/20 via-orange-500/10 to-background rounded-2xl p-8 border border-border">
-                  <div className="text-center">
-                    <div className="w-20 h-20 rounded-2xl bg-primary/20 flex items-center justify-center mx-auto mb-6">
-                      <Camera className="w-10 h-10 text-primary" />
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {outcomes.map((outcome, index) => (
+                  <div key={index} className="flex items-center gap-3 p-4 bg-card border border-border rounded-xl">
+                    <div className="w-6 h-6 rounded-full bg-success/20 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-4 h-4 text-success" />
                     </div>
-                    <h3 className="font-display text-xl font-semibold text-foreground mb-2">
-                      Ready to get started?
-                    </h3>
-                    <p className="text-muted-foreground mb-6">
-                      Submit your inquiry below and our team will get back to you within 24-48 hours.
-                    </p>
-                    <Button onClick={scrollToForm} variant="outline">
-                      Go to Form
-                      <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
+                    <span className="text-foreground font-medium">{outcome}</span>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
-        {/* Partner Form */}
-        <section id="partner-form" className="py-20 bg-muted/30">
+        {/* Ideal Use Cases */}
+        <section className="py-20">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
+                  Ideal <span className="text-gradient">Use Cases</span>
+                </h2>
+                <p className="text-muted-foreground">Perfect for:</p>
+              </div>
+
+              <div className="flex flex-wrap justify-center gap-3">
+                {useCases.map((useCase, index) => (
+                  <div 
+                    key={index} 
+                    className="px-5 py-3 bg-card border border-border rounded-full text-foreground font-medium"
+                  >
+                    {useCase}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Why Gaal */}
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
+                  Why <span className="text-gradient">Gaal</span>
+                </h2>
+              </div>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+                {whyGaal.map((item, index) => (
+                  <div 
+                    key={index} 
+                    className={`flex items-center gap-3 p-4 rounded-xl border ${
+                      item.negative 
+                        ? "bg-destructive/5 border-destructive/20" 
+                        : "bg-success/5 border-success/20"
+                    }`}
+                  >
+                    <item.icon className={`w-5 h-5 ${item.negative ? "text-destructive" : "text-success"}`} />
+                    <span className="text-foreground font-medium">{item.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-center">
+                <p className="text-lg text-muted-foreground">
+                  <strong className="text-foreground">Real participation beats paid promotion.</strong>
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Campaign Inquiry Form */}
+        <section id="campaign-form" className="py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto">
               <div className="text-center mb-10">
                 <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-                  Partner With Us
+                  Ready to Launch a <span className="text-gradient">Campaign</span>?
                 </h2>
                 <p className="text-muted-foreground">
-                  Tell us about your brand and campaign idea. We'll get back to you shortly.
+                  Tell us your idea and we'll help you design a campaign that delivers real participation and real marketing impact.
                 </p>
               </div>
 
@@ -303,7 +393,7 @@ const ForBrands = () => {
 
                         <div className="space-y-2">
                           <Label htmlFor="contact_name" className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-muted-foreground" />
+                            <Users className="w-4 h-4 text-muted-foreground" />
                             Contact Person Name *
                           </Label>
                           <Input
@@ -400,7 +490,7 @@ const ForBrands = () => {
                         </Label>
                         <Textarea
                           id="message"
-                          placeholder="Tell us about your brand and what kind of photo contest you're envisioning..."
+                          placeholder="Tell us about your brand and what kind of campaign you're envisioning..."
                           rows={5}
                           {...register("message")}
                           className={errors.message ? "border-destructive" : ""}
@@ -411,7 +501,7 @@ const ForBrands = () => {
                       </div>
 
                       <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-                        {isSubmitting ? "Submitting..." : "Submit Inquiry"}
+                        {isSubmitting ? "Submitting..." : "Submit Campaign Inquiry"}
                       </Button>
                     </form>
                   </CardContent>

@@ -1,9 +1,11 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import ActiveContests from "@/components/ActiveContests";
+import WhatIsGaal from "@/components/home/WhatIsGaal";
+import WhyPeopleJoin from "@/components/home/WhyPeopleJoin";
+import WhyBrandsUse from "@/components/home/WhyBrandsUse";
 import HowItWorks from "@/components/HowItWorks";
-import Leaderboard from "@/components/Leaderboard";
-import BrandsSection from "@/components/BrandsSection";
+import ActiveContests from "@/components/ActiveContests";
+import TrustSection from "@/components/home/TrustSection";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -11,10 +13,12 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSection />
-      <ActiveContests />
+      <WhatIsGaal />
+      <WhyPeopleJoin />
+      <WhyBrandsUse />
       <HowItWorks />
-      <Leaderboard />
-      <BrandsSection />
+      <ActiveContests />
+      <TrustSection />
       <Footer />
     </div>
   );

@@ -1,29 +1,42 @@
-import { UserPlus, Camera, Star, Trophy, Settings } from "lucide-react";
+import { UserPlus, Camera, Star, Trophy, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
-const steps = [
+const participantSteps = [
   {
-    icon: UserPlus,
-    title: "Join for Free",
+    title: "Join for free",
     description: "Create your profile in seconds. No credit card required.",
-    color: "from-blue-500 to-cyan-500",
   },
   {
-    icon: Camera,
-    title: "Submit Your Entry",
-    description: "Upload an original photo or video that fits the challenge theme.",
-    color: "from-purple-500 to-pink-500",
+    title: "Enter live campaigns",
+    description: "Browse and join campaigns that match your interests.",
   },
   {
-    icon: Star,
-    title: "Get Evaluated Fairly",
-    description: "Each submission is reviewed based on creativity, originality, engagement, and authenticity.",
-    color: "from-orange-500 to-red-500",
+    title: "Share real moments",
+    description: "Submit authentic content showcasing your experience.",
   },
   {
-    icon: Trophy,
-    title: "Earn Rewards",
-    description: "Top-scoring creators receive prizes, recognition, and brand opportunities.",
-    color: "from-yellow-500 to-orange-500",
+    title: "Earn rewards",
+    description: "Get cash, products, vouchers, and brand recognition.",
+  },
+];
+
+const brandSteps = [
+  {
+    title: "Define campaign goals",
+    description: "Tell us what you want to achieve with your campaign.",
+  },
+  {
+    title: "Gaal manages end-to-end",
+    description: "We handle everything from launch to moderation.",
+  },
+  {
+    title: "Users participate at scale",
+    description: "Real people engage with your brand authentically.",
+  },
+  {
+    title: "Receive outcomes",
+    description: "Get content, reach, insights, and marketing assets.",
   },
 ];
 
@@ -36,44 +49,80 @@ const HowItWorks = () => {
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
             How Gaal <span className="text-gradient">Works</span>
           </h2>
-          <p className="text-muted-foreground">
-            From sign-up to earning rewards — it's simpler than you think
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            Simple process for both participants and brands
           </p>
         </div>
 
-        {/* Steps */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {steps.map((step, i) => (
-            <div 
-              key={i}
-              className="group relative bg-card border border-border rounded-2xl p-6 hover:border-primary/50 transition-all duration-300"
-            >
-              {/* Step number */}
-              <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                {i + 1}
+        <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+          {/* For Participants */}
+          <div>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <UserPlus className="w-5 h-5 text-primary" />
               </div>
-
-              {/* Icon */}
-              <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-4`}>
-                <step.icon className="w-7 h-7 text-white" />
-              </div>
-
-              {/* Content */}
-              <h3 className="font-display font-bold text-foreground mb-2">{step.title}</h3>
-              <p className="text-sm text-muted-foreground">{step.description}</p>
-
-              {/* Decorative gear */}
-              <div className="absolute bottom-4 right-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Settings className="w-8 h-8 text-muted-foreground" />
-              </div>
+              <h3 className="font-display text-xl font-semibold text-foreground">For Participants</h3>
             </div>
-          ))}
+            <div className="space-y-4">
+              {participantSteps.map((step, i) => (
+                <div 
+                  key={i}
+                  className="relative bg-card border border-border rounded-xl p-5 hover:border-primary/50 transition-all duration-300"
+                >
+                  <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                    {i + 1}
+                  </div>
+                  <div className="ml-2">
+                    <h4 className="font-display font-semibold text-foreground mb-1">{step.title}</h4>
+                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6">
+              <Link to="/contests">
+                <Button className="group">
+                  Browse Campaigns
+                  <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* For Brands */}
+          <div>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-orange-500" />
+              </div>
+              <h3 className="font-display text-xl font-semibold text-foreground">For Brands</h3>
+            </div>
+            <div className="space-y-4">
+              {brandSteps.map((step, i) => (
+                <div 
+                  key={i}
+                  className="relative bg-card border border-border rounded-xl p-5 hover:border-orange-500/50 transition-all duration-300"
+                >
+                  <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold">
+                    {i + 1}
+                  </div>
+                  <div className="ml-2">
+                    <h4 className="font-display font-semibold text-foreground mb-1">{step.title}</h4>
+                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6">
+              <Link to="/for-brands">
+                <Button variant="outline" className="group border-orange-500/50 text-orange-500 hover:bg-orange-500/10">
+                  Launch a Campaign
+                  <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      {/* Decorative gear on right side */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-5 hidden lg:block">
-        <Settings className="w-32 h-32 text-muted-foreground" />
       </div>
     </section>
   );
