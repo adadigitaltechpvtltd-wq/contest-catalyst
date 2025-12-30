@@ -17,7 +17,7 @@ const Privacy = () => {
                 <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
                 <p className="text-muted-foreground mb-4">
                   At Gaal, we take your privacy seriously. This Privacy Policy explains how we collect, 
-                  use, disclose, and safeguard your information when you use our photography contest platform.
+                  use, disclose, and safeguard your information when you use our user-driven marketing platform.
                 </p>
               </section>
 
@@ -33,15 +33,15 @@ const Privacy = () => {
                   <li>Email address</li>
                   <li>Date of birth (for age verification)</li>
                   <li>Phone number (optional)</li>
-                  <li>Payment information (UPI ID, bank details for prize payouts)</li>
+                  <li>Payment information (UPI ID, bank details for reward payouts)</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold mb-3 mt-6">2.2 Photo Submissions</h3>
+                <h3 className="text-xl font-semibold mb-3 mt-6">2.2 Campaign Submissions</h3>
                 <p className="text-muted-foreground mb-4">
-                  When you submit photos, we collect:
+                  When you participate in campaigns, we collect:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>The photograph itself</li>
+                  <li>The content you submit (photos, videos)</li>
                   <li>EXIF metadata (camera model, date taken, GPS coordinates if present)</li>
                   <li>Title and description you provide</li>
                 </ul>
@@ -62,10 +62,10 @@ const Privacy = () => {
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>Create and manage your account</li>
-                  <li>Process contest submissions and determine winners</li>
-                  <li>Verify photo authenticity using EXIF metadata</li>
-                  <li>Process prize payouts</li>
-                  <li>Send notifications about contests and account activity</li>
+                  <li>Process campaign submissions and determine reward recipients</li>
+                  <li>Verify content authenticity using EXIF metadata</li>
+                  <li>Process reward payouts</li>
+                  <li>Send notifications about campaigns and account activity</li>
                   <li>Improve our platform and user experience</li>
                   <li>Prevent fraud and ensure platform integrity</li>
                   <li>Comply with legal obligations</li>
@@ -73,17 +73,18 @@ const Privacy = () => {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">4. Photo Display and Rights</h2>
+                <h2 className="text-2xl font-semibold mb-4">4. Content Display and Rights</h2>
                 <p className="text-muted-foreground mb-4">
-                  Regarding your submitted photographs:
+                  Regarding your submitted content:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>You retain full ownership of your photographs</li>
-                  <li>You grant Gaal display rights for contest and platform display purposes</li>
-                  <li>Approved photos may be displayed on our platform, search results, and promotional materials</li>
-                  <li>We do not sell user photographs. Licensing or brand usage, if introduced, will always be opt-in and clearly disclosed to creators</li>
-                  <li>You can request removal of your photos by contacting us</li>
-                  <li>You can choose whether your content is contest-only, brand-licensable, or SEO-visible only</li>
+                  <li>You retain full ownership of your content</li>
+                  <li>You grant Gaal display rights for campaign and platform display purposes</li>
+                  <li>Approved content may be displayed on our platform, search results, and promotional materials</li>
+                  <li>Brands may license your content for marketing purposes (you earn revenue)</li>
+                  <li>We do not sell user content. Licensing is always opt-in and clearly disclosed</li>
+                  <li>You can request removal of your content by contacting us</li>
+                  <li>You can choose whether your content is campaign-only, brand-licensable, or SEO-visible only</li>
                 </ul>
               </section>
 
@@ -93,6 +94,7 @@ const Privacy = () => {
                   We may share your information with:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+                  <li><strong>Brand Partners:</strong> For campaign participation and content licensing (with your consent)</li>
                   <li><strong>Service Providers:</strong> Payment processors, cloud hosting providers</li>
                   <li><strong>Legal Requirements:</strong> When required by law or legal process</li>
                   <li><strong>Business Transfers:</strong> In case of merger, acquisition, or sale</li>
@@ -140,7 +142,7 @@ const Privacy = () => {
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li><strong>Personal data is anonymized:</strong> Your name becomes "Deleted User", your email is anonymized, and profile information is removed</li>
                   <li><strong>Payment details are deleted:</strong> UPI IDs, bank account numbers, and other payment information are permanently removed</li>
-                  <li><strong>Contest integrity preserved:</strong> Your photo submissions remain visible to maintain contest history and leaderboard accuracy</li>
+                  <li><strong>Campaign integrity preserved:</strong> Your submissions remain visible to maintain campaign history and leaderboard accuracy</li>
                   <li><strong>Wallet restrictions:</strong> You cannot schedule deletion if you have pending earnings or an available balance</li>
                   <li><strong>Transaction records retained:</strong> Payment history is kept for legal and accounting purposes</li>
                 </ul>
@@ -150,8 +152,8 @@ const Privacy = () => {
                   To maintain platform integrity, the following data is retained after account deletion:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>Photo submissions (displayed under "Deleted User")</li>
-                  <li>Contest participation and rankings</li>
+                  <li>Content submissions (displayed under "Deleted User")</li>
+                  <li>Campaign participation and rankings</li>
                   <li>Leaderboard points and positions</li>
                   <li>Transaction history (without personal identifiers)</li>
                 </ul>

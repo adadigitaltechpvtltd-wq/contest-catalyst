@@ -1,7 +1,7 @@
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, Sparkles } from 'lucide-react';
 
 const AgePolicy = () => {
   return (
@@ -9,8 +9,12 @@ const AgePolicy = () => {
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-8 pt-24">
         <div className="max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+            <Sparkles className="w-4 h-4" />
+            Eligibility Requirements
+          </div>
           <h1 className="text-4xl font-display font-bold mb-2">Age & Eligibility Policy</h1>
-          <p className="text-muted-foreground mb-8">Understanding age requirements and restrictions</p>
+          <p className="text-muted-foreground mb-8">Understanding age requirements and participation eligibility</p>
 
           <Card className="glass-card mb-6">
             <CardContent className="p-8">
@@ -21,7 +25,7 @@ const AgePolicy = () => {
                   <div>
                     <h3 className="font-semibold text-success mb-1">Minimum Age: 18 Years</h3>
                     <p className="text-sm text-muted-foreground">
-                      You must be at least 18 years old to create an account and participate in contests.
+                      You must be at least 18 years old to create an account and participate in campaigns.
                     </p>
                   </div>
                 </div>
@@ -31,7 +35,7 @@ const AgePolicy = () => {
                   <div>
                     <h3 className="font-semibold text-amber-500 mb-1">Payout Age: 18 Years</h3>
                     <p className="text-sm text-muted-foreground">
-                      You must be at least 18 years old to receive prize payouts directly.
+                      You must be at least 18 years old to receive reward payouts directly.
                     </p>
                   </div>
                 </div>
@@ -40,7 +44,7 @@ const AgePolicy = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">1. Age Requirements Overview</h2>
                 <p className="text-muted-foreground mb-4">
-                  Gaal has different age requirements for different activities:
+                  Gaal has age requirements for different activities:
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -58,17 +62,17 @@ const AgePolicy = () => {
                         <td className="py-3 px-4">Full access</td>
                       </tr>
                       <tr className="border-b border-border/50">
-                        <td className="py-3 px-4">Contest Participation</td>
+                        <td className="py-3 px-4">Campaign Participation</td>
                         <td className="py-3 px-4">18 years</td>
                         <td className="py-3 px-4">Free to enter</td>
                       </tr>
                       <tr className="border-b border-border/50">
-                        <td className="py-3 px-4">Prize Eligibility</td>
+                        <td className="py-3 px-4">Reward Eligibility</td>
                         <td className="py-3 px-4">18 years</td>
-                        <td className="py-3 px-4">Can win prizes</td>
+                        <td className="py-3 px-4">Can earn rewards</td>
                       </tr>
                       <tr>
-                        <td className="py-3 px-4">Direct Prize Payout</td>
+                        <td className="py-3 px-4">Direct Reward Payout</td>
                         <td className="py-3 px-4">18 years</td>
                         <td className="py-3 px-4">Full KYC required</td>
                       </tr>
@@ -84,10 +88,10 @@ const AgePolicy = () => {
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>Full access to all platform features</li>
-                  <li>Ability to create an account and participate in all contests</li>
-                  <li>Eligible for direct prize payouts</li>
+                  <li>Ability to create an account and participate in all campaigns</li>
+                  <li>Eligible for direct reward payouts</li>
                   <li>Can complete KYC verification independently</li>
-                  <li>Responsible for tax obligations on winnings</li>
+                  <li>Responsible for tax obligations on earnings</li>
                 </ul>
               </section>
 
@@ -104,25 +108,7 @@ const AgePolicy = () => {
                   <Info className="h-6 w-6 text-blue-400 flex-shrink-0 mt-1" />
                   <p className="text-sm text-muted-foreground">
                     Providing false age information is a violation of our terms and may result in 
-                    account suspension and forfeiture of winnings.
-                  </p>
-                </div>
-              </section>
-
-              <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">4. Age Verification Process</h2>
-                <p className="text-muted-foreground mb-4">
-                  We verify age through the following methods:
-                </p>
-                <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li><strong>At Registration:</strong> Date of birth declaration</li>
-                  <li><strong>At Payout:</strong> Government ID verification (KYC)</li>
-                </ul>
-                <div className="flex items-start gap-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg mt-4">
-                  <Info className="h-6 w-6 text-blue-400 flex-shrink-0 mt-1" />
-                  <p className="text-sm text-muted-foreground">
-                    Providing false age information is a violation of our terms and may result in 
-                    account suspension and forfeiture of winnings.
+                    account suspension and forfeiture of earnings.
                   </p>
                 </div>
               </section>
@@ -130,11 +116,11 @@ const AgePolicy = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">4. Payout Process</h2>
                 <p className="text-muted-foreground mb-4">
-                  For winners, the payout process is:
+                  For reward recipients, the payout process is:
                 </p>
                 <ol className="list-decimal pl-6 text-muted-foreground space-y-2">
-                  <li>Winner is notified of their prize</li>
-                  <li>Prize amount is added to the Gaal wallet</li>
+                  <li>User is notified of their reward</li>
+                  <li>Reward amount is added to the Gaal wallet</li>
                   <li>User submits payout request</li>
                   <li>User completes KYC verification</li>
                   <li>Payout is processed to verified account</li>
@@ -159,10 +145,10 @@ const AgePolicy = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">6. Tax Considerations</h2>
                 <p className="text-muted-foreground mb-4">
-                  Regarding taxes on prize winnings:
+                  Regarding taxes on reward earnings:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>Winners are responsible for any applicable taxes</li>
+                  <li>Recipients are responsible for any applicable taxes</li>
                   <li>Consult a tax professional for guidance on reporting requirements</li>
                   <li>Gaal may provide documentation for tax purposes upon request</li>
                 </ul>

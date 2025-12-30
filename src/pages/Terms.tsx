@@ -24,13 +24,14 @@ const Terms = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">2. Nature of Service</h2>
                 <p className="text-muted-foreground mb-4">
-                  Gaal is a skill-based creative platform that hosts photography contests and other creator programs. Important clarifications:
+                  Gaal is a user-driven marketing platform that enables brands to run participation campaigns and users to earn rewards through authentic engagement. Important clarifications:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>This is NOT gambling, lottery, or any form of chance-based gaming</li>
-                  <li>All contests are FREE to enter - no purchase or payment is required to participate</li>
-                  <li>Winners are selected based on skill and merit, judged by human reviewers</li>
-                  <li>No random selection or luck-based winner determination is used</li>
+                  <li>All campaigns are FREE to enter - no purchase or payment is required to participate</li>
+                  <li>Rewards are based on quality, authenticity, and brand selection</li>
+                  <li>No random selection or luck-based determination is used</li>
+                  <li>Human reviewers and brand partners make final decisions</li>
                 </ul>
               </section>
 
@@ -61,30 +62,30 @@ const Terms = () => {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">5. Contest Participation</h2>
+                <h2 className="text-2xl font-semibold mb-4">5. Campaign Participation</h2>
                 <p className="text-muted-foreground mb-4">
-                  When participating in contests, you agree to:
+                  When participating in campaigns, you agree to:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>Submit only original photographs that you personally captured</li>
-                  <li>Not submit AI-generated, stock, or copied images</li>
-                  <li>Follow all contest-specific rules and guidelines</li>
-                  <li>Accept the decisions of contest judges as final</li>
+                  <li>Submit only original content that you personally created</li>
+                  <li>Not submit AI-generated, stock, or copied content</li>
+                  <li>Follow all campaign-specific rules and guidelines</li>
+                  <li>Accept the decisions of campaign reviewers as final</li>
                   <li>Not engage in any form of manipulation or cheating</li>
                 </ul>
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">6. Prizes and Payouts</h2>
+                <h2 className="text-2xl font-semibold mb-4">6. Rewards and Payouts</h2>
                 <p className="text-muted-foreground mb-4">
-                  Regarding contest prizes:
+                  Regarding campaign rewards:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>Prize amounts are fixed and clearly displayed for each contest</li>
+                  <li>Reward types and amounts are clearly displayed for each campaign</li>
                   <li>Payouts are subject to manual approval and verification</li>
                   <li>KYC verification may be required for prize disbursement</li>
-                  <li>Tax responsibility lies with the winner as per local laws</li>
-                  <li>Prizes are non-transferable</li>
+                  <li>Tax responsibility lies with the recipient as per local laws</li>
+                  <li>Rewards are non-transferable</li>
                 </ul>
               </section>
 
@@ -94,12 +95,13 @@ const Terms = () => {
                   Users must not:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>Submit photographs they do not own or have rights to</li>
-                  <li>Use AI-generated images or heavily manipulated content</li>
+                  <li>Submit content they do not own or have rights to</li>
+                  <li>Use AI-generated content or heavily manipulated material</li>
                   <li>Create multiple accounts to gain unfair advantage</li>
                   <li>Harass, abuse, or harm other users</li>
-                  <li>Attempt to manipulate contest results</li>
+                  <li>Attempt to manipulate campaign results</li>
                   <li>Submit inappropriate, offensive, or illegal content</li>
+                  <li>Engage in fake engagement or artificial activity</li>
                 </ul>
               </section>
 
@@ -141,7 +143,7 @@ const Terms = () => {
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>Technical issues or service interruptions</li>
                   <li>Loss of data or submissions</li>
-                  <li>Decisions made by contest judges</li>
+                  <li>Decisions made by campaign reviewers or brand partners</li>
                   <li>Actions of third parties or other users</li>
                 </ul>
               </section>

@@ -16,13 +16,13 @@ const Copyright = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">1. Ownership of Submitted Content</h2>
                 <p className="text-muted-foreground mb-4">
-                  At Gaal, we respect the intellectual property rights of photographers and creators:
+                  At Gaal, we respect the intellectual property rights of creators and participants:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li><strong>You retain full ownership</strong> of all photographs you submit</li>
+                  <li><strong>You retain full ownership</strong> of all content you submit</li>
                   <li>Gaal does not claim ownership of user-submitted content</li>
                   <li>Your copyright remains with you at all times</li>
-                  <li>We do not sell user photographs. Only usage rights may be licensed, and only with your explicit consent</li>
+                  <li>We do not sell user content. Only usage rights may be licensed, and only with your explicit consent</li>
                   <li>You can delete your content at any time</li>
                 </ul>
               </section>
@@ -30,21 +30,21 @@ const Copyright = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">2. License Granted to Gaal</h2>
                 <p className="text-muted-foreground mb-4">
-                  By submitting a photograph to our platform, you grant Gaal a limited license to:
+                  By submitting content to our platform, you grant Gaal a limited license to:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>Display your photo on our platform for contest purposes</li>
-                  <li>Show your photo in search results (like Google)</li>
-                  <li>Feature your photo in our gallery of submissions</li>
+                  <li>Display your content on our platform for campaign purposes</li>
+                  <li>Show your content in search results (like Google)</li>
+                  <li>Feature your content in our gallery of submissions</li>
                   <li>Show previews to brands (for potential licensing opportunities)</li>
-                  <li>Use your photo in promotional materials (with attribution)</li>
+                  <li>Use your content in promotional materials (with attribution)</li>
                   <li>Create thumbnails and resized versions for display</li>
                 </ul>
                 <p className="text-muted-foreground mt-4">
                   This license is:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li><strong>Non-exclusive:</strong> You can use and license your photo elsewhere</li>
+                  <li><strong>Non-exclusive:</strong> You can use and license your content elsewhere</li>
                   <li><strong>Royalty-free:</strong> No fees are charged for this display license</li>
                   <li><strong>Revocable:</strong> You can request removal at any time</li>
                   <li><strong>Limited:</strong> For display, search visibility, and promotional purposes</li>
@@ -54,7 +54,7 @@ const Copyright = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">3. Brand Licensing (Opt-In)</h2>
                 <p className="text-muted-foreground mb-4">
-                  By default, photos are used only for contest and platform display purposes. Any brand licensing or commercial usage:
+                  By default, content is used only for campaign and platform display purposes. Any brand licensing or commercial usage:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li><strong>Requires your explicit opt-in</strong> — you choose whether your content is brand-licensable</li>
@@ -67,7 +67,7 @@ const Copyright = () => {
                   You can choose whether your content is:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li><strong>Contest-only:</strong> Used only for contests you enter</li>
+                  <li><strong>Campaign-only:</strong> Used only for campaigns you enter</li>
                   <li><strong>Brand-licensable:</strong> Available for brands to license (you earn revenue)</li>
                   <li><strong>SEO-visible only:</strong> Visible in search results but not for brand licensing</li>
                 </ul>
@@ -76,12 +76,12 @@ const Copyright = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">4. Your Responsibilities</h2>
                 <p className="text-muted-foreground mb-4">
-                  When submitting photographs, you represent and warrant that:
+                  When submitting content, you represent and warrant that:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>You are the original creator of the photograph</li>
-                  <li>You own all rights to the photograph</li>
-                  <li>The photograph does not infringe on any third-party rights</li>
+                  <li>You are the original creator of the content</li>
+                  <li>You own all rights to the content</li>
+                  <li>The content does not infringe on any third-party rights</li>
                   <li>You have obtained necessary releases for identifiable people or private property</li>
                   <li>You have the authority to grant the license described above</li>
                 </ul>
@@ -93,12 +93,12 @@ const Copyright = () => {
                   We take copyright infringement seriously. The following are strictly prohibited:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>Submitting photographs you did not take</li>
-                  <li>Using stock images from any source</li>
-                  <li>Copying images from the internet</li>
-                  <li>Using images without proper licensing</li>
-                  <li>Removing watermarks or credits from images</li>
-                  <li>Submitting AI-generated images as original photographs</li>
+                  <li>Submitting content you did not create</li>
+                  <li>Using stock content from any source</li>
+                  <li>Copying content from the internet</li>
+                  <li>Using content without proper licensing</li>
+                  <li>Removing watermarks or credits from content</li>
+                  <li>Submitting AI-generated content as original work</li>
                 </ul>
               </section>
 
@@ -152,11 +152,11 @@ const Copyright = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">9. Model and Property Releases</h2>
                 <p className="text-muted-foreground mb-4">
-                  When submitting photographs featuring:
+                  When submitting content featuring:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li><strong>Identifiable People:</strong> Ensure you have appropriate model releases</li>
-                  <li><strong>Private Property:</strong> Ensure you have permission to photograph</li>
+                  <li><strong>Private Property:</strong> Ensure you have permission to capture</li>
                   <li><strong>Trademarks:</strong> Be cautious of prominent branded content</li>
                   <li><strong>Artwork:</strong> Respect copyright of art, architecture, and designs</li>
                 </ul>
@@ -165,13 +165,13 @@ const Copyright = () => {
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">10. Removal Requests</h2>
                 <p className="text-muted-foreground mb-4">
-                  You may request removal of your photographs at any time:
+                  You may request removal of your content at any time:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>Contact our support team with your request</li>
                   <li>Provide proof of ownership if requested</li>
                   <li>Allow up to 7 business days for processing</li>
-                  <li>Note: Removal may affect your participation in ongoing contests</li>
+                  <li>Note: Removal may affect your participation in ongoing campaigns</li>
                   <li>If a brand is already using your content under a paid license, that license will continue until it ends — then the content is fully removed</li>
                 </ul>
               </section>
