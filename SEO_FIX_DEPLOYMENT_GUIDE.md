@@ -147,11 +147,19 @@ SELECT routine_definition FROM information_schema.routines
 WHERE routine_name = 'on_submission_seo_approved';
 ```
 
+Check PostgreSQL logs for NOTICE and WARNING messages from the trigger:
+```sql
+-- In Supabase Dashboard, check Logs section for messages like:
+-- NOTICE: SEO page generation triggered for submission ...
+-- WARNING: Failed to call generate-seo-page edge function ...
+```
+
 ### Problem: File not appearing in storage
 **Solution:** 
 1. Check edge function logs for errors
 2. Verify storage bucket is public
 3. Check storage bucket permissions/policies
+4. Check trigger function logs for warnings
 
 ### Problem: Permission denied when uploading to storage
 **Solution:** Add storage policy:
@@ -160,6 +168,13 @@ CREATE POLICY "Service role can insert seo pages" ON storage.objects
 FOR INSERT
 WITH CHECK (bucket_id = 'public-pages' AND auth.role() = 'service_role');
 ```
+
+### Monitoring Trigger Execution
+The trigger function logs its activity:
+- **Success**: Look for NOTICE messages in PostgreSQL logs
+- **Failure**: Look for WARNING messages in PostgreSQL logs
+- The submission approval will complete successfully even if the edge function call fails
+- Failed SEO page generation can be retried by updating `seo_approved` to FALSE then TRUE again
 
 ## Related Files
 - Migration: `supabase/migrations/20251230130553_483da5ee-121b-43be-be7a-75471ade0900.sql`

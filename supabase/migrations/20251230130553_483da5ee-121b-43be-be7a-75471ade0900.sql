@@ -19,18 +19,30 @@ ON public.submissions(seo_page_generated) WHERE seo_page_generated = TRUE;
 -- If you're deploying to a different project, update this URL
 CREATE OR REPLACE FUNCTION public.on_submission_seo_approved()
 RETURNS TRIGGER AS $$
+DECLARE
+  response_id bigint;
 BEGIN
   -- Only trigger if seo_approved changed from false to true
   IF NEW.seo_approved = TRUE AND (OLD.seo_approved IS NULL OR OLD.seo_approved = FALSE) THEN
-    -- Call Edge Function asynchronously using net.http_post from the http extension
-    -- Note: Uses the same Supabase project URL pattern as other migrations
-    PERFORM net.http_post(
-      url := 'https://xoompskrczzucsohfcyy.supabase.co/functions/v1/generate-seo-page',
-      headers := jsonb_build_object(
-        'Content-Type', 'application/json'
-      ),
-      body := jsonb_build_object('submission_id', NEW.id)
-    );
+    BEGIN
+      -- Call Edge Function asynchronously using net.http_post from the http extension
+      -- Note: Uses the same Supabase project URL pattern as other migrations
+      -- The edge function is public and uses its own service role key from environment
+      SELECT request_id INTO response_id FROM net.http_post(
+        url := 'https://xoompskrczzucsohfcyy.supabase.co/functions/v1/generate-seo-page',
+        headers := jsonb_build_object(
+          'Content-Type', 'application/json'
+        ),
+        body := jsonb_build_object('submission_id', NEW.id)
+      );
+      
+      -- Log successful call (response_id will be populated if call succeeded)
+      RAISE NOTICE 'SEO page generation triggered for submission %, request_id: %', NEW.id, response_id;
+    EXCEPTION WHEN OTHERS THEN
+      -- Log error but don't fail the transaction
+      -- This ensures submission approval completes even if edge function call fails
+      RAISE WARNING 'Failed to call generate-seo-page edge function for submission %: %', NEW.id, SQLERRM;
+    END;
   END IF;
   RETURN NEW;
 END;
