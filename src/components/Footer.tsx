@@ -20,7 +20,7 @@ const Footer = () => {
               <GaalLogo size="md" />
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
-              Skill-based photography contests where creativity meets rewards. Free to enter, win real prizes.
+              Gaal — A user-driven marketing platform built on real participation.
             </p>
           </div>
 

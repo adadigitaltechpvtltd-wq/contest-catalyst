@@ -41,7 +41,7 @@ const Navbar = () => {
 
             {/* Center nav - Desktop */}
             <div className="hidden md:flex items-center gap-8">
-              <Link to="/contests" className="text-foreground font-medium text-sm hover:text-primary transition-colors">Contests</Link>
+              <Link to="/contests" className="text-foreground font-medium text-sm hover:text-primary transition-colors">Campaigns</Link>
               <Link to="/gallery" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Gallery</Link>
               <Link to="/#how-it-works" className="text-muted-foreground text-sm hover:text-foreground transition-colors">How It Works</Link>
               <Link to="/leaderboard" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Leaderboard</Link>

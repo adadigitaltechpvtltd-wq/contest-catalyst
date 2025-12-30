@@ -39,7 +39,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   };
 
   const navLinks = [
-    { label: "Contests", href: "/contests", isLink: true },
+    { label: "Campaigns", href: "/contests", isLink: true },
     { label: "Gallery", href: "/gallery", isLink: true },
     { label: "How It Works", href: "/#how-it-works", isLink: false },
     { label: "Leaderboard", href: "/leaderboard", isLink: true },
