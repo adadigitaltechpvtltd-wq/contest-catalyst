@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 import ErrorState from '@/components/ErrorState';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Clock, Users, ArrowRight, Share2 } from 'lucide-react';
+import { Trophy, Clock, Users, ArrowRight, Share2, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow, isPast, isFuture, differenceInDays } from 'date-fns';
 import { useContestsQuery, ContestWithCount } from '@/hooks/useContestsQuery';
@@ -125,13 +125,13 @@ const Contests = () => {
         <div className="relative p-5 flex-grow flex flex-col">
           {/* Header */}
           <div className="mb-3">
-            <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">{contest.theme || "Photography"}</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">{contest.theme || "Participation Campaign"}</span>
             <h3 className="font-display font-bold text-lg text-foreground line-clamp-2 mt-1">"{contest.title}"</h3>
           </div>
 
           {/* Description */}
           <p className="text-sm text-muted-foreground mb-4 line-clamp-2 flex-grow">
-            {contest.description || "Join this exciting photography challenge!"}
+            {contest.description || "Join this participation campaign and share your authentic experience!"}
           </p>
 
 
@@ -161,7 +161,7 @@ const Contests = () => {
           {status === "live" ? (
             <Link to={`/contest/${contest.slug || contest.id}`} className="w-full">
               <Button className="w-full">
-                Enter Contest <ArrowRight className="w-4 h-4 ml-1" />
+                Join Campaign <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
           ) : status === "soon" ? (
@@ -212,19 +212,22 @@ const Contests = () => {
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-8 pt-24">
         <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+            <Sparkles className="w-4 h-4" />
+            Explore Campaigns
+          </div>
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">
-            Photography <span className="text-gradient">Contests</span>
+            Participation <span className="text-gradient">Campaigns</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Join skill-based photography contests and win amazing prizes.
-            All contests are free to enter!
+            Join real participation campaigns powered by authentic users. Share your experiences and earn rewards.
           </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'active' | 'completed')}>
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
             <TabsTrigger value="active">
-              Active ({activeContests.length})
+              Live ({activeContests.length})
             </TabsTrigger>
             <TabsTrigger value="completed">
               Completed ({completedContests.length})
@@ -235,8 +238,8 @@ const Contests = () => {
             <LoadingSkeleton />
           ) : error ? (
             <ErrorState
-              title="Failed to Load Contests"
-              message="Failed to load contests"
+              title="Failed to Load Campaigns"
+              message="Failed to load campaigns"
               onRetry={() => refetch()}
             />
           ) : (
@@ -245,9 +248,9 @@ const Contests = () => {
                 {activeContests.length === 0 ? (
                   <div className="text-center py-12">
                     <Trophy className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">No Active Contests</h3>
+                    <h3 className="text-xl font-semibold mb-2">No Live Campaigns</h3>
                     <p className="text-muted-foreground">
-                      Check back soon for new photography contests!
+                      Check back soon for new participation campaigns!
                     </p>
                   </div>
                 ) : (
@@ -263,9 +266,9 @@ const Contests = () => {
                 {completedContests.length === 0 ? (
                   <div className="text-center py-12">
                     <Trophy className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">No Completed Contests Yet</h3>
+                    <h3 className="text-xl font-semibold mb-2">No Completed Campaigns Yet</h3>
                     <p className="text-muted-foreground">
-                      Completed contests will appear here.
+                      Completed campaigns will appear here.
                     </p>
                   </div>
                 ) : (

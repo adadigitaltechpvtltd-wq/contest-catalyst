@@ -11,7 +11,9 @@ import {
   Scale, 
   Trash2, 
   Heart, 
-  Sparkles 
+  Sparkles,
+  Users,
+  Target
 } from "lucide-react";
 
 const HowGaalWorks = () => {
@@ -23,14 +25,18 @@ const HowGaalWorks = () => {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+              <Sparkles className="w-4 h-4" />
+              Platform Guide
+            </div>
             <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Welcome to GAAL
+              Welcome to <span className="text-gradient">Gaal</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              GAAL is a platform where real people share real moments — and get paid when those moments create value.
+              Gaal is a user-driven marketing platform where real people participate in brand campaigns, share authentic content, and get rewarded when that content creates value.
             </p>
             <p className="text-muted-foreground mt-4">
-              This page explains, in simple terms, how your content is used and how you earn.
+              This page explains, in simple terms, how participation works and how you earn.
             </p>
           </div>
 
@@ -47,7 +53,7 @@ const HowGaalWorks = () => {
                       1. You Own Your Content
                     </h2>
                     <p className="text-muted-foreground mb-4">
-                      Anything you upload to GAAL — photos or videos — belongs to you.
+                      Anything you create and share on Gaal — photos, videos, or experiences — belongs to you.
                     </p>
                     <ul className="space-y-2 text-muted-foreground">
                       <li className="flex items-center gap-2">
@@ -73,15 +79,15 @@ const HowGaalWorks = () => {
                   </div>
                   <div>
                     <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-                      2. What Permission You Give GAAL
+                      2. What Permission You Give Gaal
                     </h2>
                     <p className="text-muted-foreground mb-4">
-                      By uploading content, you give GAAL permission to:
+                      By participating in campaigns and sharing content, you give Gaal permission to:
                     </p>
                     <ul className="space-y-2 text-muted-foreground mb-6">
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        display your content on the GAAL platform
+                        display your content on the Gaal platform
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
@@ -89,11 +95,11 @@ const HowGaalWorks = () => {
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        show previews to brands
+                        show previews to brands running campaigns
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        include it in contests you choose to enter
+                        include it in campaigns you choose to enter
                       </li>
                     </ul>
                     <p className="text-muted-foreground mb-2">This permission is:</p>
@@ -121,20 +127,20 @@ const HowGaalWorks = () => {
                   </div>
                   <div>
                     <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-                      3. Brand Use & Licensing
+                      3. Brand Campaigns & Licensing
                     </h2>
                     <p className="text-muted-foreground mb-4">
-                      Some brands may want to use your content in ads, websites, or campaigns.
+                      Brands use Gaal to run participation campaigns. When you participate, your authentic content may be used in their marketing.
                     </p>
                     <p className="text-muted-foreground mb-2">When this happens:</p>
                     <ul className="space-y-2 text-muted-foreground mb-6">
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        brands pay for usage rights
+                        brands pay for usage rights through Gaal
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        GAAL manages the license
+                        Gaal manages the license on your behalf
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
@@ -150,7 +156,7 @@ const HowGaalWorks = () => {
                     <ul className="space-y-2 text-muted-foreground">
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        contest-only
+                        campaign-only
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
@@ -181,7 +187,7 @@ const HowGaalWorks = () => {
                     <ul className="space-y-2 text-muted-foreground mb-6">
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        winning contests
+                        campaign rewards (cash, products, vouchers)
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
@@ -189,18 +195,18 @@ const HowGaalWorks = () => {
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        views, downloads, or usage from search traffic
+                        recognition and portfolio building
                       </li>
                     </ul>
                     <p className="text-muted-foreground mb-2">Earnings depend on:</p>
                     <ul className="space-y-2 text-muted-foreground mb-6">
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        content quality
+                        content quality and authenticity
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        authenticity
+                        relevance to campaign goals
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
@@ -208,12 +214,12 @@ const HowGaalWorks = () => {
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        real usage (not likes or followers)
+                        real participation (not likes or followers)
                       </li>
                     </ul>
                     <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
                       <p className="text-amber-600 dark:text-amber-400 font-medium">
-                        There are no guaranteed payouts.
+                        There are no guaranteed payouts. Rewards depend on campaign participation and brand decisions.
                       </p>
                     </div>
                   </div>
@@ -233,7 +239,7 @@ const HowGaalWorks = () => {
                       5. Authentic Content Only
                     </h2>
                     <p className="text-muted-foreground mb-4">
-                      GAAL is built on trust.
+                      Gaal is built on trust and real participation.
                     </p>
                     <p className="text-muted-foreground mb-2">You agree that:</p>
                     <ul className="space-y-2 text-muted-foreground mb-4">
@@ -243,7 +249,7 @@ const HowGaalWorks = () => {
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                        you have the right to upload it
+                        you have the right to share it
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
@@ -255,7 +261,7 @@ const HowGaalWorks = () => {
                       </li>
                     </ul>
                     <p className="text-muted-foreground">
-                      Fake or misleading content may be removed.
+                      Fake or misleading content may be removed and accounts may be suspended.
                     </p>
                   </div>
                 </div>
@@ -271,9 +277,9 @@ const HowGaalWorks = () => {
                   </div>
                   <div>
                     <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-                      6. What GAAL Will NOT Do
+                      6. What Gaal Will NOT Do
                     </h2>
-                    <p className="text-muted-foreground mb-4">GAAL will never:</p>
+                    <p className="text-muted-foreground mb-4">Gaal will never:</p>
                     <ul className="space-y-2 text-muted-foreground">
                       <li className="flex items-center gap-2">
                         <XCircle className="h-4 w-4 text-destructive shrink-0" />
@@ -295,6 +301,10 @@ const HowGaalWorks = () => {
                         <XCircle className="h-4 w-4 text-destructive shrink-0" />
                         lock your content forever
                       </li>
+                      <li className="flex items-center gap-2">
+                        <XCircle className="h-4 w-4 text-destructive shrink-0" />
+                        use AI-generated content or fake engagement
+                      </li>
                     </ul>
                   </div>
                 </div>
@@ -310,25 +320,25 @@ const HowGaalWorks = () => {
                   </div>
                   <div>
                     <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-                      7. Visibility & Judging
+                      7. Quality & Selection
                     </h2>
-                    <p className="text-muted-foreground mb-4">GAAL uses a mix of:</p>
+                    <p className="text-muted-foreground mb-4">Gaal evaluates content based on:</p>
                     <ul className="space-y-2 text-muted-foreground mb-6">
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        quality checks
+                        quality and authenticity
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        authenticity checks
+                        relevance to campaign goals
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        usefulness scoring
+                        usefulness for brand marketing
                       </li>
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        limited engagement signals
+                        human review and curation
                       </li>
                     </ul>
                     <p className="text-muted-foreground mb-2">We do not rank content by:</p>
@@ -348,7 +358,7 @@ const HowGaalWorks = () => {
                     </ul>
                     <div className="p-4 rounded-lg bg-muted/50">
                       <p className="text-foreground font-medium">
-                        Our goal is fairness and long-term earning potential.
+                        Our goal is fairness and authentic participation — real people, real content.
                       </p>
                     </div>
                   </div>
@@ -365,25 +375,27 @@ const HowGaalWorks = () => {
                   </div>
                   <div>
                     <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-                      8. Removing Your Content
+                      8. Content Removal
                     </h2>
-                    <p className="text-muted-foreground mb-2">You can:</p>
-                    <ul className="space-y-2 text-muted-foreground mb-6">
+                    <p className="text-muted-foreground mb-4">
+                      You can request removal of your content at any time:
+                    </p>
+                    <ul className="space-y-2 text-muted-foreground mb-4">
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                        delete your content
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                        Contact our support team
                       </li>
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                        opt out of licensing
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                        We will remove it from Gaal's platform
                       </li>
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                        leave the platform
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                        If a brand is already using your content under a paid license, that license will continue until it ends — then the content is fully removed
                       </li>
                     </ul>
                     <p className="text-muted-foreground">
-                      If a brand is already using your content under a paid license, that license will continue until it ends — then the content is fully removed.
+                      We respect your right to control your content.
                     </p>
                   </div>
                 </div>
@@ -399,74 +411,58 @@ const HowGaalWorks = () => {
                   </div>
                   <div>
                     <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-                      9. Respect & Safety
+                      9. Our Promise
                     </h2>
-                    <p className="text-muted-foreground mb-4">Content that includes:</p>
+                    <p className="text-muted-foreground mb-4">
+                      Gaal is built for real people, not influencers or AI.
+                    </p>
                     <ul className="space-y-2 text-muted-foreground mb-4">
                       <li className="flex items-center gap-2">
-                        <XCircle className="h-4 w-4 text-destructive shrink-0" />
-                        hate
+                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                        No fake engagement
                       </li>
                       <li className="flex items-center gap-2">
-                        <XCircle className="h-4 w-4 text-destructive shrink-0" />
-                        abuse
+                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                        No influencer dependency
                       </li>
                       <li className="flex items-center gap-2">
-                        <XCircle className="h-4 w-4 text-destructive shrink-0" />
-                        illegal activity
+                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                        No AI-generated content
                       </li>
                       <li className="flex items-center gap-2">
-                        <XCircle className="h-4 w-4 text-destructive shrink-0" />
-                        explicit harm
+                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                        Real participation, real rewards
                       </li>
                     </ul>
-                    <p className="text-muted-foreground">will be removed.</p>
-                    <p className="text-muted-foreground mt-4">
-                      We want GAAL to be safe for creators and brands.
-                    </p>
+                    <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                      <p className="text-foreground font-medium">
+                        Gaal — A user-driven marketing platform built on real participation.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Section 10 */}
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+            <Card className="border-border/50">
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-start gap-4">
                   <div className="p-3 rounded-xl bg-primary/10 text-primary shrink-0">
-                    <Sparkles className="h-6 w-6" />
+                    <Users className="h-6 w-6" />
                   </div>
                   <div>
                     <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
-                      10. In Simple Words
+                      10. Questions?
                     </h2>
-                    <ul className="space-y-3 mb-6">
-                      <li className="flex items-center gap-3 text-foreground font-medium">
-                        <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
-                        You own your work
-                      </li>
-                      <li className="flex items-center gap-3 text-foreground font-medium">
-                        <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
-                        You choose how it's used
-                      </li>
-                      <li className="flex items-center gap-3 text-foreground font-medium">
-                        <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
-                        You get paid when it creates value
-                      </li>
-                    </ul>
-                    <div className="p-4 rounded-lg bg-primary/10 mb-6">
-                      <p className="text-foreground font-semibold">
-                        GAAL exists to protect creators, not exploit them.
-                      </p>
-                    </div>
-                    <p className="text-muted-foreground mb-6">
-                      If something feels unclear or unfair — contact us.
+                    <p className="text-muted-foreground mb-4">
+                      If anything is unclear, reach out to us at{' '}
+                      <a href="mailto:support@gaal.com" className="text-primary hover:underline">
+                        support@gaal.com
+                      </a>
                     </p>
                     <p className="text-muted-foreground">
-                      GAAL is built for the long term, with creators at the center.
-                    </p>
-                    <p className="mt-6 text-foreground font-semibold">
-                      — Team GAAL
+                      We're here to help you understand how Gaal works and make the most of your participation.
                     </p>
                   </div>
                 </div>

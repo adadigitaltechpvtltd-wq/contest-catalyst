@@ -1,7 +1,7 @@
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, Sparkles } from 'lucide-react';
 
 const ContestRules = () => {
   return (
@@ -9,18 +9,22 @@ const ContestRules = () => {
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-8 pt-24">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-display font-bold mb-2">Contest Rules</h1>
-          <p className="text-muted-foreground mb-8">Guidelines for fair and transparent competition</p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+            <Sparkles className="w-4 h-4" />
+            Campaign Guidelines
+          </div>
+          <h1 className="text-4xl font-display font-bold mb-2">Campaign Rules</h1>
+          <p className="text-muted-foreground mb-8">Guidelines for fair and authentic participation</p>
 
           <Card className="glass-card mb-6">
             <CardContent className="p-8">
               <div className="flex items-start gap-4 p-4 bg-success/10 border border-success/30 rounded-lg mb-6">
                 <CheckCircle className="h-6 w-6 text-success flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="font-semibold text-success mb-1">Skill-Based Contests Only</h3>
+                  <h3 className="font-semibold text-success mb-1">Authentic Participation Only</h3>
                   <p className="text-sm text-muted-foreground">
-                    All Gaal contests are skill-based photography competitions. Winners are determined 
-                    by the quality and creativity of their submissions, judged by human reviewers. 
+                    All Gaal campaigns are participation-based. Success is determined 
+                    by the quality and authenticity of your contribution, reviewed by human curators. 
                     There is NO element of chance or luck involved.
                   </p>
                 </div>
@@ -30,7 +34,7 @@ const ContestRules = () => {
                 <h2 className="text-2xl font-semibold mb-4">1. Eligibility</h2>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>Open to all registered users aged 18 and above</li>
-                  <li>One submission per user per contest</li>
+                  <li>One submission per user per campaign</li>
                   <li>Users must have a verified email address</li>
                   <li>Employees and immediate family of Gaal are not eligible</li>
                 </ul>
@@ -40,8 +44,8 @@ const ContestRules = () => {
                 <h2 className="text-2xl font-semibold mb-4">2. Entry Requirements</h2>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                   <li>All entries are FREE - no purchase or payment required</li>
-                  <li>Photos must be original works captured by the participant</li>
-                  <li>Photos must be relevant to the contest theme (if specified)</li>
+                  <li>Content must be original works created by the participant</li>
+                  <li>Submissions must be relevant to the campaign theme (if specified)</li>
                   <li>Submissions must be in JPEG, PNG, or WebP format</li>
                   <li>Maximum file size: 10MB</li>
                   <li>Participants must agree to the originality declaration</li>
@@ -55,13 +59,13 @@ const ContestRules = () => {
                 </h2>
                 <p className="text-muted-foreground mb-4">The following are strictly prohibited:</p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li><strong>AI-Generated Images:</strong> Photos created using AI tools like Midjourney, DALL-E, Stable Diffusion, etc.</li>
-                  <li><strong>Stock Photos:</strong> Images from stock photography websites</li>
-                  <li><strong>Copied Images:</strong> Photos taken from the internet or other sources</li>
-                  <li><strong>Heavy Manipulation:</strong> Significantly altered images that misrepresent reality</li>
+                  <li><strong>AI-Generated Content:</strong> Content created using AI tools like Midjourney, DALL-E, Stable Diffusion, etc.</li>
+                  <li><strong>Stock Content:</strong> Images from stock photography websites</li>
+                  <li><strong>Copied Content:</strong> Content taken from the internet or other sources</li>
+                  <li><strong>Heavy Manipulation:</strong> Significantly altered content that misrepresents reality</li>
                   <li><strong>Inappropriate Content:</strong> Nudity, violence, hate speech, or illegal content</li>
-                  <li><strong>Copyright Violations:</strong> Images containing copyrighted material without permission</li>
-                  <li><strong>Watermarked Images:</strong> Photos with visible watermarks from other platforms</li>
+                  <li><strong>Copyright Violations:</strong> Content containing copyrighted material without permission</li>
+                  <li><strong>Watermarked Content:</strong> Content with visible watermarks from other platforms</li>
                 </ul>
               </section>
 
@@ -78,22 +82,22 @@ const ContestRules = () => {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">5. Judging Process</h2>
+                <h2 className="text-2xl font-semibold mb-4">5. Review Process</h2>
                 <p className="text-muted-foreground mb-4">
-                  Our judging process is transparent and skill-based:
+                  Our review process is transparent and quality-focused:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li><strong>Review Phase:</strong> All submissions undergo moderation for rule compliance</li>
-                  <li><strong>Scoring:</strong> Approved entries are scored by admin judges based on:
+                  <li><strong>Moderation Phase:</strong> All submissions undergo moderation for rule compliance</li>
+                  <li><strong>Quality Review:</strong> Approved entries are reviewed based on:
                     <ul className="list-disc pl-6 mt-2">
-                      <li>Technical quality (composition, focus, exposure)</li>
-                      <li>Creativity and originality</li>
-                      <li>Relevance to theme</li>
+                      <li>Authenticity and originality</li>
+                      <li>Quality and relevance to campaign</li>
                       <li>Emotional impact and storytelling</li>
+                      <li>Brand usefulness</li>
                     </ul>
                   </li>
-                  <li><strong>Winner Selection:</strong> The highest-scoring entry wins</li>
-                  <li><strong>Human Review:</strong> Final decisions are always made by human judges, not algorithms</li>
+                  <li><strong>Selection:</strong> Top contributions are selected for rewards</li>
+                  <li><strong>Human Review:</strong> Final decisions are always made by human curators, not algorithms</li>
                 </ul>
               </section>
 
@@ -118,14 +122,15 @@ const ContestRules = () => {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">7. Prizes</h2>
+                <h2 className="text-2xl font-semibold mb-4">7. Rewards</h2>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>Prize amounts are fixed and clearly displayed for each contest</li>
-                  <li>Minimum 100 participants required for contest completion</li>
-                  <li>Prizes are awarded to the winner after verification</li>
+                  <li>Reward types and amounts are clearly displayed for each campaign</li>
+                  <li>Rewards may include cash, products, vouchers, or recognition</li>
+                  <li>Minimum participation thresholds may apply for campaign completion</li>
+                  <li>Rewards are distributed after verification</li>
                   <li>Payouts require identity verification (KYC) if applicable</li>
-                  <li>Tax responsibility lies with the winner</li>
-                  <li>Prizes are non-transferable</li>
+                  <li>Tax responsibility lies with the recipient</li>
+                  <li>Rewards are non-transferable</li>
                 </ul>
               </section>
 
@@ -139,7 +144,7 @@ const ContestRules = () => {
                   <li>False declarations of originality</li>
                   <li>Submitting AI-generated content</li>
                   <li>Multiple account usage</li>
-                  <li>Attempting to manipulate contest results</li>
+                  <li>Attempting to manipulate campaign results</li>
                   <li>Harassment of other participants</li>
                 </ul>
                 <p className="text-muted-foreground mt-4">
@@ -163,13 +168,14 @@ const ContestRules = () => {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">10. Rights and Licensing</h2>
                 <p className="text-muted-foreground mb-4">
-                  By submitting a photo:
+                  By submitting content:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                  <li>You retain full ownership of your photograph</li>
-                  <li>You grant Gaal non-exclusive display rights for contest purposes</li>
-                  <li>Your photo may be featured on our platform and promotional materials</li>
-                  <li>You can request removal of your photos by contacting support</li>
+                  <li>You retain full ownership of your content</li>
+                  <li>You grant Gaal non-exclusive display rights for campaign purposes</li>
+                  <li>Your content may be featured on our platform and in brand marketing materials</li>
+                  <li>Brands may license your content for commercial use (you earn revenue)</li>
+                  <li>You can request removal of your content by contacting support</li>
                 </ul>
               </section>
             </CardContent>
