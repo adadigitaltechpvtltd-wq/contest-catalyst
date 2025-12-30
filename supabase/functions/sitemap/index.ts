@@ -32,10 +32,10 @@ serve(async (req) => {
       throw contestsError;
     }
 
-    // Fetch approved and winner submissions only
+    // Fetch approved and winner submissions only (with SEO page info)
     const { data: submissions, error: submissionsError } = await supabase
       .from('submissions')
-      .select('slug, updated_at, contest_id')
+      .select('slug, updated_at, contest_id, seo_approved, seo_page_url')
       .in('status', ['approved', 'winner'])
       .order('updated_at', { ascending: false })
       .limit(5000);
@@ -116,11 +116,16 @@ serve(async (req) => {
       const contestInfo = contestMap.get(submission.contest_id);
       if (!contestInfo) continue;
       
+      // Use SEO page URL if it exists, otherwise use React route
+      const locUrl = submission.seo_approved && submission.seo_page_url 
+        ? submission.seo_page_url
+        : `${BASE_URL}/gallery/${contestInfo.category}/${contestInfo.slug}/${submission.slug}`;
+      
       xml += `  <url>
-    <loc>${BASE_URL}/gallery/${contestInfo.category}/${contestInfo.slug}/${submission.slug}</loc>
+    <loc>${locUrl}</loc>
     <lastmod>${new Date(submission.updated_at).toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
+    <priority>${submission.seo_approved ? '0.8' : '0.6'}</priority>
   </url>
 `;
     }

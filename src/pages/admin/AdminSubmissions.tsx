@@ -79,6 +79,7 @@ const AdminSubmissions = () => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [analyzingSubmissionId, setAnalyzingSubmissionId] = useState<string | null>(null);
+  const [seoApproval, setSeoApproval] = useState(false);
 
   // SEO enhancement state
   const [seoTitle, setSeoTitle] = useState('');
@@ -255,6 +256,7 @@ const AdminSubmissions = () => {
     setReviewNotes(submission.admin_notes || '');
     setReviewAction('approve');
     setRejectionReason('');
+    setSeoApproval(submission.seo_approved || false);
     // Initialize SEO fields
     setSeoTitle(submission.seo_title || '');
     setSeoDescription(submission.meta_description || '');
@@ -314,6 +316,7 @@ const AdminSubmissions = () => {
           description: enhancedDescription || selectedSubmission.description,
           seo_title: seoTitle || null,
           meta_description: seoDescription || null,
+          seo_approved: (newStatus === 'approved' || newStatus === 'winner') ? seoApproval : false,
         })
         .eq('id', selectedSubmission.id);
 
@@ -958,6 +961,22 @@ const AdminSubmissions = () => {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {(reviewAction === 'approve' || reviewAction === 'winner') && (
+                      <div className="flex items-center gap-3 p-3 bg-primary/10 rounded border border-primary/20">
+                        <input
+                          type="checkbox"
+                          id="seoApproval"
+                          checked={seoApproval}
+                          onChange={(e) => setSeoApproval(e.target.checked)}
+                          className="w-4 h-4 rounded cursor-pointer"
+                        />
+                        <label htmlFor="seoApproval" className="text-sm font-medium cursor-pointer flex-1">
+                          Generate SEO page for Google indexing
+                        </label>
+                        <Zap className="h-4 w-4 text-primary" />
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       <Label>Score (0-100)</Label>
