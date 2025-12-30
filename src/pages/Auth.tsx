@@ -615,7 +615,7 @@ const Auth = () => {
               <GaalLogo size="lg" />
             </div>
             <p className="text-muted-foreground">
-              Join the community of photographers and win amazing prizes!
+              Gaal — A user-driven marketing platform built on real participation.
             </p>
           </div>
 
