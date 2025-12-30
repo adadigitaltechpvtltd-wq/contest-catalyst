@@ -64,11 +64,23 @@ serve(async (req) => {
       );
     }
 
-    // Generate HTML with SEO tags
-    const html = generateSeoHTML(submission);
+    // Extract contest data (Supabase returns nested relations as objects when using .single())
+    const contest = submission.contest as unknown as { id: string; title: string; slug: string; category: string; description: string; status: string } | null;
+    const profile = submission.profile as unknown as { id: string; username: string; full_name: string; avatar_url: string } | null;
 
-    // Generate storage path
-    const storagePath = `seo-pages/${submission.contest.category}/${submission.contest.slug}/${submission.slug}.html`;
+    if (!contest) {
+      return new Response(
+        JSON.stringify({ error: 'Contest not found for submission' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Generate HTML with SEO tags
+    const html = generateSeoHTML({ ...submission, contest, profile });
+
+    // Generate storage path - use category or 'general' as fallback
+    const category = contest.category || 'general';
+    const storagePath = `seo-pages/${category}/${contest.slug}/${submission.slug}.html`;
 
     // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
@@ -116,10 +128,11 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
