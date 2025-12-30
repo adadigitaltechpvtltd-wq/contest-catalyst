@@ -287,9 +287,12 @@ const AdminSubmissions = () => {
     }
 
     try {
-      // Determine if we need to regenerate slug (title was changed)
-      const titleChanged = enhancedTitle && enhancedTitle !== selectedSubmission.title;
-      const newSlug = titleChanged ? generateSlugFromTitle(enhancedTitle) : selectedSubmission.slug;
+      // Determine if we need to regenerate slug (title was changed or slug is missing)
+      const titleSource = enhancedTitle || selectedSubmission.title;
+      const titleChanged = Boolean(enhancedTitle && enhancedTitle !== selectedSubmission.title);
+      const newSlug = (titleChanged || !selectedSubmission.slug)
+        ? generateSlugFromTitle(titleSource)
+        : selectedSubmission.slug;
       
       // Check title quality for flagging
       const titleToCheck = enhancedTitle || selectedSubmission.title;
@@ -328,6 +331,30 @@ const AdminSubmissions = () => {
         });
         setIsSubmittingReview(false);
         return;
+      }
+
+      // If SEO is approved, generate the public HTML page immediately (so it works even if seo_approved was already true)
+      if (seoApproval && (newStatus === 'approved' || newStatus === 'winner')) {
+        supabase.functions
+          .invoke('generate-seo-page', {
+            body: { submission_id: selectedSubmission.id },
+          })
+          .then(({ error }) => {
+            if (error) {
+              toast({
+                title: 'SEO page generation failed',
+                description: error.message,
+                variant: 'destructive',
+              });
+              return;
+            }
+
+            toast({
+              title: 'SEO page generated',
+              description: 'Public page created in Storage for indexing.',
+            });
+            queryClient.invalidateQueries({ queryKey: ['admin-submissions'] });
+          });
       }
 
       // If marking as winner, also update the contest with winner info, create wallet transaction, and send notification

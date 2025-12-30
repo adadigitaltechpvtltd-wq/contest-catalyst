@@ -28,6 +28,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch submission details with contest and profile
+    // IMPORTANT: Disambiguate relationships (there are multiple FK paths between submissions↔contests)
     const { data: submission, error: submissionError } = await supabase
       .from('submissions')
       .select(`
@@ -38,7 +39,7 @@ serve(async (req) => {
         image_url,
         seo_title,
         meta_description,
-        contest:contests(
+        contest:contests!submissions_contest_id_fkey(
           id,
           title,
           slug,
@@ -46,7 +47,7 @@ serve(async (req) => {
           description,
           status
         ),
-        profile:profiles(
+        profile:profiles!submissions_user_id_profiles_fkey(
           id,
           username,
           full_name,
@@ -150,8 +151,14 @@ function generateSeoHTML(submission: any): string {
     profile,
   } = submission;
 
-  const pageTitle = seo_title || `${title} | GAAL Photo Contest`;
-  const pageDescription = meta_description || description || contest.description;
+  const safeTitle = String(title || 'Photo');
+  const creatorName = String(profile?.full_name || profile?.username || 'Anonymous');
+
+  const pageTitle = (typeof seo_title === 'string' && seo_title.trim())
+    ? seo_title
+    : `${safeTitle} | GAAL Photo Contest`;
+
+  const pageDescription = String(meta_description || description || contest?.description || '');
   const canonicalUrl = `https://gaal.app/campaigns/${contest.slug}/photos/${slug}`;
   
   // Escape HTML entities
@@ -202,7 +209,7 @@ function generateSeoHTML(submission: any): string {
       "image": "${escapeHtml(image_url)}",
       "creator": {
         "@type": "Person",
-        "name": "${escapeHtml(profile.full_name || profile.username)}"
+        "name": "${escapeHtml(creatorName)}"
       },
       "uploadDate": "${new Date().toISOString()}",
       "inLanguage": "en"
@@ -336,7 +343,7 @@ function generateSeoHTML(submission: any): string {
           </div>
           <div class="meta-item">
             <div class="meta-label">Photographer</div>
-            <div class="meta-value">${escapeHtml(profile.full_name || profile.username)}</div>
+            <div class="meta-value">${escapeHtml(creatorName)}</div>
           </div>
           <div class="meta-item">
             <div class="meta-label">Published</div>
