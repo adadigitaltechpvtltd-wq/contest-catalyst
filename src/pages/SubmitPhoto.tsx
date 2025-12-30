@@ -165,8 +165,8 @@ const SubmitPhoto = () => {
   useEffect(() => {
     if (!isLoadingContest && !contest && slug) {
       toast({
-        title: 'Contest not found',
-        description: 'This contest may have ended or does not exist.',
+        title: 'Campaign not found',
+        description: 'This campaign may have ended or does not exist.',
         variant: 'destructive',
       });
       navigate('/contests');
@@ -428,7 +428,7 @@ const SubmitPhoto = () => {
                 The deadline for this contest has passed.
               </p>
               <Button asChild>
-                <Link to="/contests">Browse Other Contests</Link>
+                <Link to="/contests">Browse Other Campaigns</Link>
               </Button>
             </CardContent>
           </Card>

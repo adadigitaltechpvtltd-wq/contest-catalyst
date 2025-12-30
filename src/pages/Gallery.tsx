@@ -271,7 +271,7 @@ const Gallery = () => {
                       <SelectValue placeholder="All contests" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All contests</SelectItem>
+                      <SelectItem value="all">All campaigns</SelectItem>
                       {contests.map(contest => (
                         <SelectItem key={contest.id} value={contest.id}>
                           {contest.title}
@@ -388,7 +388,7 @@ const Gallery = () => {
                   to="/contests"
                   className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Browse Contests
+                  Browse Campaigns
                 </Link>
               )}
             </div>

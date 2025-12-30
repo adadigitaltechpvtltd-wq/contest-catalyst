@@ -209,7 +209,7 @@ const MySubmissions = () => {
                 </p>
                 {activeTab === 'all' && (
                   <Button asChild>
-                    <Link to="/contests">Browse Contests</Link>
+                    <Link to="/contests">Browse Campaigns</Link>
                   </Button>
                 )}
               </CardContent>

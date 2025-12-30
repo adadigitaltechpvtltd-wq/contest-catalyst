@@ -218,7 +218,7 @@ const Dashboard = () => {
                   </div>
                 )}
                 <Button asChild variant="outline" className="w-full mt-4">
-                  <Link to="/contests">View All Contests</Link>
+                  <Link to="/contests">View All Campaigns</Link>
                 </Button>
               </CardContent>
             </Card>

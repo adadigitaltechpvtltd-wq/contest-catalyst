@@ -106,7 +106,7 @@ const Notifications = () => {
                 )}
               </h1>
               <p className="text-muted-foreground mt-1">
-                Stay updated on your contests and submissions
+                Stay updated on your campaigns and submissions
               </p>
             </div>
             {unreadCount > 0 && (
@@ -131,10 +131,10 @@ const Notifications = () => {
                 <Bell className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-xl font-semibold mb-2">No Notifications</h3>
                 <p className="text-muted-foreground mb-6">
-                  You are all caught up! Notifications about your contests and submissions will appear here.
+                  You are all caught up! Notifications about your campaigns and submissions will appear here.
                 </p>
                 <Button asChild>
-                  <Link to="/contests">Browse Contests</Link>
+                  <Link to="/contests">Browse Campaigns</Link>
                 </Button>
               </CardContent>
             </Card>

@@ -52,10 +52,10 @@ const ActiveContests = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Active <span className="text-gradient">Contests</span>
+              Active <span className="text-gradient">Campaigns</span>
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Discover challenges that spark your creativity. New contests launch every week.
+              Discover campaigns that spark your creativity. New campaigns launch every week.
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -93,17 +93,17 @@ const ActiveContests = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Active <span className="text-gradient">Contests</span>
+            Active <span className="text-gradient">Campaigns</span>
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Discover challenges that spark your creativity. New contests launch every week.
+            Discover campaigns that spark your creativity. New campaigns launch every week.
           </p>
         </div>
 
-        {/* Contest Grid */}
+        {/* Campaign Grid */}
         {contests.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No active contests at the moment. Check back soon!</p>
+            <p className="text-muted-foreground">No active campaigns at the moment. Check back soon!</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -209,7 +209,7 @@ const ActiveContests = () => {
                     {status === "live" ? (
                       <Link to={`/contest/${contest.slug || contest.id}`} className="w-full">
                         <Button className="w-full">
-                          Enter Contest <ArrowRight className="w-4 h-4 ml-1" />
+                          Enter Campaign <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
                       </Link>
                     ) : status === "soon" ? (
@@ -234,7 +234,7 @@ const ActiveContests = () => {
         <div className="text-center">
           <Link to="/contests">
             <Button variant="outline" size="lg">
-              View All Contests
+              View All Campaigns
             </Button>
           </Link>
         </div>

@@ -85,7 +85,7 @@ const ContestDetail = () => {
   }, [contest, category, navigate]);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareText = contest ? `Check out "${contest.title}" contest on GAAL!` : "Check out this contest on GAAL!";
+  const shareText = contest ? `Check out "${contest.title}" campaign on GAAL!` : "Check out this campaign on GAAL!";
 
   const handleShare = (platform: string) => {
     const encodedUrl = encodeURIComponent(shareUrl);
@@ -358,8 +358,8 @@ const ContestDetail = () => {
         <Navbar />
         <div className="container mx-auto px-4 py-20">
           <ErrorState
-            title="Failed to Load Contest"
-            message="We couldn't load the contest details. Please try again."
+            title="Failed to Load Campaign"
+            message="We couldn't load the campaign details. Please try again."
             onRetry={() => refetchContest()}
           />
         </div>
@@ -373,10 +373,10 @@ const ContestDetail = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container mx-auto px-4 py-20 text-center">
-          <h1 className="text-2xl font-display font-bold text-foreground mb-4">Contest Not Found</h1>
-          <p className="text-muted-foreground mb-6">The contest you're looking for doesn't exist.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground mb-4">Campaign Not Found</h1>
+          <p className="text-muted-foreground mb-6">The campaign you're looking for doesn't exist.</p>
           <Link to="/contests">
-            <Button>Back to Contests</Button>
+            <Button>Back to Campaigns</Button>
           </Link>
         </div>
         <Footer />
@@ -749,7 +749,7 @@ const ContestDetail = () => {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h3 className="text-xl font-display font-bold mb-4">Contest Rules</h3>
+              <h3 className="text-xl font-display font-bold mb-4">Campaign Rules</h3>
               <ul className="space-y-3">
                 {rules.map((rule, i) => (
                   <li key={i} className="flex items-start gap-3">
@@ -790,8 +790,8 @@ const ContestDetail = () => {
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <div className="text-center mb-4">
-            <h3 className="text-lg font-semibold">Share this contest</h3>
-            <p className="text-sm text-muted-foreground">Spread the word about this photo contest!</p>
+            <h3 className="text-lg font-semibold">Share this campaign</h3>
+            <p className="text-sm text-muted-foreground">Spread the word about this campaign!</p>
           </div>
           <div className="grid grid-cols-5 gap-2">
             <Button variant="outline" className="flex-col h-auto py-3 gap-1.5" onClick={() => handleShare("twitter")}>
@@ -935,7 +935,7 @@ const ContestDetail = () => {
 
                 <div className="mt-4 pt-4 border-t border-border">
                   <Link to="/contests" className="text-sm text-primary hover:underline" onClick={() => setSelectedImage(null)}>
-                    Explore more contests →
+                    Explore more campaigns →
                   </Link>
                 </div>
               </div>

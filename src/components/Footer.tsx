@@ -28,7 +28,7 @@ const Footer = () => {
           <div>
             <h4 className="font-display font-semibold text-foreground mb-4">Platform</h4>
             <ul className="space-y-2">
-              <li><Link to="/contests" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Browse Contests</Link></li>
+              <li><Link to="/contests" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Browse Campaigns</Link></li>
               <li><Link to="/how-gaal-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How GAAL Works</Link></li>
               <li><Link to="/leaderboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Leaderboard</Link></li>
               <li><Link to="/contest-rules" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contest Rules</Link></li>

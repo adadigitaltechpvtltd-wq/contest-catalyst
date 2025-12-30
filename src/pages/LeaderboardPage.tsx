@@ -50,7 +50,7 @@ const LeaderboardPage = () => {
                     icon: Users,
                   },
                   {
-                    label: "Contests Participated",
+                    label: "Campaigns Participated",
                     value: leaders?.reduce((acc, l) => acc + l.contests_entered, 0) || 0,
                     icon: Award,
                   },
