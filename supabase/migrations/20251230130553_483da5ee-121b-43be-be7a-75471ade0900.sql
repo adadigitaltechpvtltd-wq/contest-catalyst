@@ -14,15 +14,16 @@ CREATE INDEX IF NOT EXISTS idx_submissions_seo_page_generated
 ON public.submissions(seo_page_generated) WHERE seo_page_generated = TRUE;
 
 -- Create trigger function to automatically call SEO generation Edge Function
--- NOTE: The URL below uses the project-specific Supabase URL
--- If this needs to be updated, modify the URL to match your Supabase project
+-- IMPORTANT: The URL below must match your Supabase project URL
+-- It currently uses: https://xoompskrczzucsohfcyy.supabase.co (same as other migrations)
+-- If you're deploying to a different project, update this URL
 CREATE OR REPLACE FUNCTION public.on_submission_seo_approved()
 RETURNS TRIGGER AS $$
 BEGIN
   -- Only trigger if seo_approved changed from false to true
   IF NEW.seo_approved = TRUE AND (OLD.seo_approved IS NULL OR OLD.seo_approved = FALSE) THEN
-    -- Call Edge Function asynchronously
-    -- Using the same project URL pattern as seen in other migrations
+    -- Call Edge Function asynchronously using net.http_post from the http extension
+    -- Note: Uses the same Supabase project URL pattern as other migrations
     PERFORM net.http_post(
       url := 'https://xoompskrczzucsohfcyy.supabase.co/functions/v1/generate-seo-page',
       headers := jsonb_build_object(
