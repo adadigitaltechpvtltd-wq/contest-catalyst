@@ -1,56 +1,32 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+export const config = {
+  runtime: 'edge',
+};
 
-const BOT_REGEX =
-  /googlebot|bingbot|yandex|duckduckbot|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot/i
+export default async function handler(request: Request) {
+  const userAgent = request.headers.get('user-agent') || '';
 
-export function middleware(req: NextRequest) {
-  const ua = req.headers.get('user-agent') || ''
-  const isBot = BOT_REGEX.test(ua)
+  const isBot = /googlebot|bingbot|yandex|duckduckbot|baiduspider|slurp/i.test(
+    userAgent
+  );
 
   if (!isBot) {
-    // Normal users → React SPA
-    return NextResponse.next()
+    // Let normal users get React SPA
+    return fetch(request);
   }
 
-  const url = req.nextUrl.clone()
-  const pathname = url.pathname
+  const url = new URL(request.url);
 
-  // Handle gallery pages
-  // /gallery/{category}/{contest}/{photo}
-  const galleryMatch = pathname.match(
-    /^\/gallery\/([^/]+)\/([^/]+)\/([^/]+)$/
-  )
+  // Rewrite gallery URLs to SEO HTML
+  if (url.pathname.startsWith('/gallery/')) {
+    const seoPath = url.pathname.replace('/gallery/', '/seo/');
+    const seoUrl = `https://gaal.app${seoPath}`;
 
-  if (galleryMatch) {
-    const [, category, contest, photo] = galleryMatch
+    const seoResponse = await fetch(seoUrl);
 
-    // Redirect crawler to static SEO HTML
-    url.pathname = `/seo/${category}/${contest}/${photo}`
-
-    return NextResponse.rewrite(url)
+    if (seoResponse.ok) {
+      return seoResponse;
+    }
   }
 
-  // Handle contest pages
-  // /contest/{category}/{contest}
-  const contestMatch = pathname.match(
-    /^\/contest\/([^/]+)\/([^/]+)$/
-  )
-
-  if (contestMatch) {
-    const [, category, contest] = contestMatch
-    url.pathname = `/seo/contest/${category}/${contest}`
-
-    return NextResponse.rewrite(url)
-  }
-
-  return NextResponse.next()
+  return fetch(request);
 }
-
-export const config = {
-  matcher: [
-    '/gallery/:path*',
-    '/contest/:path*',
-  ],
-}
-// End of middleware.ts ---
