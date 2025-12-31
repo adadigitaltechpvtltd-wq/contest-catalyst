@@ -217,8 +217,8 @@ const Privacy = () => {
                 <h2 className="text-2xl font-semibold mb-4">12. Contact Us</h2>
                 <p className="text-muted-foreground">
                   For privacy-related inquiries, please contact us at{' '}
-                  <a href="mailto:privacy@gaal.com" className="text-primary hover:underline">
-                    privacy@gaal.com
+                  <a href="mailto:support@wimira.com" className="text-primary hover:underline">
+                    privacy@wimira.com
                   </a>
                 </p>
               </section>

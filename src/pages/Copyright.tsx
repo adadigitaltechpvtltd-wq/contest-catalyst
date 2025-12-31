@@ -117,8 +117,8 @@ const Copyright = () => {
                 </ul>
                 <p className="text-muted-foreground mt-4">
                   Send DMCA notices to:{' '}
-                  <a href="mailto:dmca@gaal.com" className="text-primary hover:underline">
-                    dmca@gaal.com
+                  <a href="mailto:support@wimira.com" className="text-primary hover:underline">
+                    dmca@wimira.com
                   </a>
                 </p>
               </section>
@@ -180,8 +180,8 @@ const Copyright = () => {
                 <h2 className="text-2xl font-semibold mb-4">11. Contact</h2>
                 <p className="text-muted-foreground">
                   For copyright-related inquiries, please contact:{' '}
-                  <a href="mailto:copyright@gaal.com" className="text-primary hover:underline">
-                    copyright@gaal.com
+                  <a href="mailto:copyright@wimira.com" className="text-primary hover:underline">
+                    copyright@wimira.com
                   </a>
                 </p>
               </section>
