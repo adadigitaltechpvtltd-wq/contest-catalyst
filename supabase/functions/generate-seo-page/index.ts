@@ -153,13 +153,19 @@ function generateSeoHTML(submission: any): string {
 
   const safeTitle = String(title || 'Photo');
   const creatorName = String(profile?.full_name || profile?.username || 'Anonymous');
+  const category = contest?.category || 'general';
+  const contestTitle = contest?.title || 'Photo Contest';
+  const contestSlug = contest?.slug || 'contest';
 
   const pageTitle = (typeof seo_title === 'string' && seo_title.trim())
     ? seo_title
-    : `${safeTitle} | GAAL Photo Contest`;
+    : `${safeTitle} | ${contestTitle} | GAAL`;
 
-  const pageDescription = String(meta_description || description || contest?.description || '');
-  const canonicalUrl = `https://gaal.app/campaigns/${contest.slug}/photos/${slug}`;
+  const pageDescription = String(meta_description || description || contest?.description || `${safeTitle} - Photography submission for ${contestTitle} on GAAL.`);
+  
+  // Use correct gallery URL format
+  const canonicalUrl = `https://gaal.app/gallery/${category}/${contestSlug}/${slug}`;
+  const contestUrl = `https://gaal.app/contest/${category}/${contestSlug}`;
   
   // Escape HTML entities
   const escapeHtml = (text: string) => {
@@ -173,6 +179,9 @@ function generateSeoHTML(submission: any): string {
     return text.replace(/[&<>"']/g, (m) => map[m]);
   };
 
+  // Format category for display
+  const formattedCategory = category.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -180,14 +189,16 @@ function generateSeoHTML(submission: any): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${escapeHtml(pageTitle)}</title>
     <meta name="description" content="${escapeHtml(pageDescription)}">
-    <meta name="keywords" content="${escapeHtml(title)}, ${escapeHtml(contest.title)}, photography, contest">
+    <meta name="keywords" content="${escapeHtml(safeTitle)}, ${escapeHtml(contestTitle)}, ${escapeHtml(formattedCategory)}, photography, contest, GAAL">
+    <meta name="robots" content="index, follow">
     
     <!-- Open Graph -->
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="article">
     <meta property="og:title" content="${escapeHtml(pageTitle)}">
     <meta property="og:description" content="${escapeHtml(pageDescription)}">
     <meta property="og:image" content="${escapeHtml(image_url)}">
     <meta property="og:url" content="${canonicalUrl}">
+    <meta property="og:site_name" content="GAAL">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
@@ -197,16 +208,17 @@ function generateSeoHTML(submission: any): string {
     
     <!-- Canonical -->
     <link rel="canonical" href="${canonicalUrl}">
+    <link rel="icon" href="https://gaal.app/favicon.svg" type="image/svg+xml">
     
     <!-- Structured Data - ImageObject -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "ImageObject",
-      "name": "${escapeHtml(title)}",
+      "name": "${escapeHtml(safeTitle)}",
       "description": "${escapeHtml(pageDescription)}",
       "url": "${canonicalUrl}",
-      "image": "${escapeHtml(image_url)}",
+      "contentUrl": "${escapeHtml(image_url)}",
       "creator": {
         "@type": "Person",
         "name": "${escapeHtml(creatorName)}"
@@ -231,19 +243,25 @@ function generateSeoHTML(submission: any): string {
         {
           "@type": "ListItem",
           "position": 2,
-          "name": "Campaigns",
-          "item": "https://gaal.app/campaigns"
+          "name": "Gallery",
+          "item": "https://gaal.app/gallery"
         },
         {
           "@type": "ListItem",
           "position": 3,
-          "name": "${escapeHtml(contest.title)}",
-          "item": "https://gaal.app/campaigns/${contest.slug}"
+          "name": "${escapeHtml(formattedCategory)}",
+          "item": "https://gaal.app/gallery?category=${category}"
         },
         {
           "@type": "ListItem",
           "position": 4,
-          "name": "${escapeHtml(title)}",
+          "name": "${escapeHtml(contestTitle)}",
+          "item": "${contestUrl}"
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "name": "${escapeHtml(safeTitle)}",
           "item": "${canonicalUrl}"
         }
       ]
@@ -253,93 +271,110 @@ function generateSeoHTML(submission: any): string {
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         line-height: 1.6;
-        color: #333;
-        background: #f5f5f5;
+        color: #f8f8f8;
+        background: #0a0a0a;
       }
       .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-      header { background: white; padding: 20px 0; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-      .breadcrumb { font-size: 14px; color: #666; margin-bottom: 20px; }
-      .breadcrumb a { color: #0066cc; text-decoration: none; }
+      header { background: #111; padding: 16px 0; margin-bottom: 30px; border-bottom: 1px solid #222; }
+      header a { color: #f97316; font-size: 20px; font-weight: 700; text-decoration: none; }
+      .breadcrumb { font-size: 14px; color: #888; margin-bottom: 24px; }
+      .breadcrumb a { color: #f97316; text-decoration: none; }
       .breadcrumb a:hover { text-decoration: underline; }
-      .content { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-      h1 { font-size: 32px; margin-bottom: 15px; color: #1a1a1a; }
-      .image-section { margin: 30px 0; }
+      .content { background: #111; padding: 32px; border-radius: 16px; border: 1px solid #222; }
+      h1 { font-size: 32px; margin-bottom: 16px; color: #fff; font-weight: 700; }
+      .image-section { margin: 24px 0; text-align: center; }
       .image-section img {
-        width: 100%;
-        max-width: 600px;
+        max-width: 100%;
+        max-height: 70vh;
         height: auto;
-        border-radius: 8px;
-        margin-bottom: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.4);
       }
       .photo-meta {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 20px;
         margin: 30px 0;
-        padding: 20px;
-        background: #f9f9f9;
-        border-radius: 8px;
+        padding: 24px;
+        background: #1a1a1a;
+        border-radius: 12px;
       }
       .meta-item { }
-      .meta-label { font-size: 12px; color: #999; text-transform: uppercase; font-weight: 600; }
-      .meta-value { font-size: 14px; color: #333; margin-top: 5px; }
-      .description { font-size: 16px; line-height: 1.8; color: #555; margin: 20px 0; }
-      .cta { margin-top: 30px; padding-top: 30px; border-top: 1px solid #eee; }
+      .meta-label { font-size: 12px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+      .meta-value { font-size: 14px; color: #f8f8f8; margin-top: 6px; }
+      .description { font-size: 16px; line-height: 1.8; color: #aaa; margin: 24px 0; }
+      .cta { margin-top: 32px; padding-top: 32px; border-top: 1px solid #222; }
       .btn { 
         display: inline-block;
-        background: #0066cc;
+        background: linear-gradient(135deg, #f97316, #ea580c);
         color: white;
-        padding: 12px 24px;
-        border-radius: 6px;
+        padding: 14px 28px;
+        border-radius: 8px;
         text-decoration: none;
         font-weight: 600;
-        transition: background 0.2s;
+        transition: transform 0.2s, box-shadow 0.2s;
       }
-      .btn:hover { background: #0052a3; }
-      footer { margin-top: 50px; padding-top: 30px; border-top: 1px solid #eee; text-align: center; color: #999; font-size: 12px; }
+      .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(249,115,22,0.3); }
+      .btn-secondary {
+        background: transparent;
+        border: 1px solid #333;
+        color: #f8f8f8;
+        margin-left: 12px;
+      }
+      .btn-secondary:hover { background: #1a1a1a; border-color: #444; }
+      footer { margin-top: 50px; padding-top: 30px; border-top: 1px solid #222; text-align: center; color: #666; font-size: 12px; }
       @media (max-width: 768px) {
         h1 { font-size: 24px; }
-        .container { padding: 15px; }
+        .container { padding: 16px; }
         .content { padding: 20px; }
         .photo-meta { grid-template-columns: 1fr; }
       }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
       <div class="container">
-        <a href="https://gaal.app" style="font-size: 18px; font-weight: 600; color: #0066cc; text-decoration: none;">GAAL</a>
+        <a href="https://gaal.app">GAAL</a>
       </div>
     </header>
     
     <div class="container">
-      <div class="breadcrumb">
-        <a href="https://gaal.app">Home</a> /
-        <a href="https://gaal.app/campaigns">Campaigns</a> /
-        <a href="https://gaal.app/campaigns/${escapeHtml(contest.slug)}">${escapeHtml(contest.title)}</a> /
-        <span>${escapeHtml(title)}</span>
-      </div>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="https://gaal.app">Home</a> / 
+        <a href="https://gaal.app/gallery">Gallery</a> / 
+        <a href="https://gaal.app/gallery?category=${category}">${escapeHtml(formattedCategory)}</a> / 
+        <a href="${contestUrl}">${escapeHtml(contestTitle)}</a> / 
+        <span>${escapeHtml(safeTitle)}</span>
+      </nav>
       
-      <div class="content">
-        <h1>${escapeHtml(title)}</h1>
+      <article class="content">
+        <h1>${escapeHtml(safeTitle)}</h1>
         
-        <div class="image-section">
+        <figure class="image-section">
           <img 
             src="${escapeHtml(image_url)}" 
-            alt="${escapeHtml(title)}" 
-            title="${escapeHtml(title)}"
-            loading="lazy"
-            width="600"
-            height="400"
+            alt="${escapeHtml(pageDescription.slice(0, 125))}"
+            title="${escapeHtml(safeTitle)}"
+            width="1200"
+            height="800"
+            fetchpriority="high"
           />
-        </div>
+          <figcaption class="description">${escapeHtml(pageDescription)}</figcaption>
+        </figure>
         
         <div class="photo-meta">
           <div class="meta-item">
-            <div class="meta-label">Campaign</div>
-            <div class="meta-value">${escapeHtml(contest.title)}</div>
+            <div class="meta-label">Contest</div>
+            <div class="meta-value">${escapeHtml(contestTitle)}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Category</div>
+            <div class="meta-value">${escapeHtml(formattedCategory)}</div>
           </div>
           <div class="meta-item">
             <div class="meta-label">Photographer</div>
@@ -349,23 +384,16 @@ function generateSeoHTML(submission: any): string {
             <div class="meta-label">Published</div>
             <div class="meta-value">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
           </div>
-          <div class="meta-item">
-            <div class="meta-label">Status</div>
-            <div class="meta-value" style="text-transform: capitalize;">${escapeHtml(contest.status)}</div>
-          </div>
-        </div>
-        
-        <div class="description">
-          ${escapeHtml(pageDescription)}
         </div>
         
         <div class="cta">
-          <a href="https://gaal.app/campaigns/${escapeHtml(contest.slug)}" class="btn">View Campaign</a>
+          <a href="${contestUrl}" class="btn">View Contest</a>
+          <a href="https://gaal.app/gallery" class="btn btn-secondary">Explore Gallery</a>
         </div>
-      </div>
+      </article>
       
       <footer>
-        <p>&copy; ${new Date().getFullYear()} GAAL - A user-driven marketing platform built on real participation.</p>
+        <p>&copy; ${new Date().getFullYear()} GAAL - Win Big. Create Bold. Get Rewarded.</p>
       </footer>
     </div>
 </body>

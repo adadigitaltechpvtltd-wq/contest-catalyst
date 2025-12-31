@@ -55,6 +55,20 @@ const formatCount = (count: number): string => {
 // Masonry column heights for varied aspect ratios
 const MASONRY_HEIGHTS = ['aspect-[3/4]', 'aspect-square', 'aspect-[4/5]', 'aspect-[3/4]', 'aspect-square', 'aspect-[5/4]'];
 
+// Helper to get the correct photo URL - use SEO page for crawlers, React route for interactive experience
+const getPhotoUrl = (photo: GalleryPhoto): string => {
+  const category = photo.contest.category || 'general';
+  return `/gallery/${category}/${photo.contest.slug}/${photo.slug}`;
+};
+
+// Get the SEO page URL for external crawlers (only if SEO approved and page generated)
+const getSeoPageUrl = (photo: GalleryPhoto): string | null => {
+  if (photo.seo_approved && photo.seo_page_url) {
+    return photo.seo_page_url;
+  }
+  return null;
+};
+
 const Gallery = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const loadingRef = useRef<HTMLDivElement>(null);
@@ -396,117 +410,125 @@ const Gallery = () => {
             <>
               {layout === 'masonry' ? (
                 <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-                  {photos.map((photo, index) => (
-                    <Link
-                      key={photo.id}
-                      to={`/photo/${photo.contest.slug}/${photo.slug}`}
-                      className={`group relative break-inside-avoid block rounded-xl overflow-hidden bg-secondary mb-4 ${MASONRY_HEIGHTS[index % MASONRY_HEIGHTS.length]}`}
-                    >
-                      <img
-                        src={photo.image_url}
-                        alt={photo.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
+                  {photos.map((photo, index) => {
+                    const photoUrl = getPhotoUrl(photo);
+                    
+                    return (
+                      <Link
+                        key={photo.id}
+                        to={photoUrl}
+                        className={`group relative break-inside-avoid block rounded-xl overflow-hidden bg-secondary mb-4 ${MASONRY_HEIGHTS[index % MASONRY_HEIGHTS.length]}`}
+                      >
+                        <img
+                          src={photo.image_url}
+                          alt={photo.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
 
-                      {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute bottom-0 left-0 right-0 p-4">
-                          <p className="text-sm font-medium text-foreground truncate mb-1">
-                            {photo.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate mb-2">
-                            {photo.contest.title}
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {photo.profile?.avatar_url ? (
-                                <img
-                                  src={photo.profile.avatar_url}
-                                  alt=""
-                                  className="w-6 h-6 rounded-full object-cover ring-2 ring-background"
-                                />
-                              ) : (
-                                <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center ring-2 ring-background">
-                                  <User className="w-3 h-3 text-muted-foreground" />
-                                </div>
-                              )}
-                              <span className="text-xs text-muted-foreground truncate max-w-[80px]">
-                                {photo.profile?.full_name || 'Anonymous'}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Eye className="w-3 h-3" />
-                                {formatCount(photo.view_count)}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Heart className="w-3 h-3" />
-                                {formatCount(photo.like_count)}
-                              </span>
+                        {/* Hover Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <p className="text-sm font-medium text-foreground truncate mb-1">
+                              {photo.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate mb-2">
+                              {photo.contest.title}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {photo.profile?.avatar_url ? (
+                                  <img
+                                    src={photo.profile.avatar_url}
+                                    alt=""
+                                    className="w-6 h-6 rounded-full object-cover ring-2 ring-background"
+                                  />
+                                ) : (
+                                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center ring-2 ring-background">
+                                    <User className="w-3 h-3 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <span className="text-xs text-muted-foreground truncate max-w-[80px]">
+                                  {photo.profile?.full_name || 'Anonymous'}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Eye className="w-3 h-3" />
+                                  {formatCount(photo.view_count)}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Heart className="w-3 h-3" />
+                                  {formatCount(photo.like_count)}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {photos.map((photo) => (
-                    <Link
-                      key={photo.id}
-                      to={`/photo/${photo.contest.slug}/${photo.slug}`}
-                      className="group relative aspect-square rounded-xl overflow-hidden bg-secondary"
-                    >
-                      <img
-                        src={photo.image_url}
-                        alt={photo.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
+                  {photos.map((photo) => {
+                    const photoUrl = getPhotoUrl(photo);
+                    
+                    return (
+                      <Link
+                        key={photo.id}
+                        to={photoUrl}
+                        className="group relative aspect-square rounded-xl overflow-hidden bg-secondary"
+                      >
+                        <img
+                          src={photo.image_url}
+                          alt={photo.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
 
-                      {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute bottom-0 left-0 right-0 p-4">
-                          <p className="text-sm font-medium text-foreground truncate mb-1">
-                            {photo.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate mb-2">
-                            {photo.contest.title}
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {photo.profile?.avatar_url ? (
-                                <img
-                                  src={photo.profile.avatar_url}
-                                  alt=""
-                                  className="w-6 h-6 rounded-full object-cover ring-2 ring-background"
-                                />
-                              ) : (
-                                <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center ring-2 ring-background">
-                                  <User className="w-3 h-3 text-muted-foreground" />
-                                </div>
-                              )}
-                              <span className="text-xs text-muted-foreground truncate max-w-[80px]">
-                                {photo.profile?.full_name || 'Anonymous'}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Eye className="w-3 h-3" />
-                                {formatCount(photo.view_count)}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Heart className="w-3 h-3" />
-                                {formatCount(photo.like_count)}
-                              </span>
+                        {/* Hover Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <p className="text-sm font-medium text-foreground truncate mb-1">
+                              {photo.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate mb-2">
+                              {photo.contest.title}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {photo.profile?.avatar_url ? (
+                                  <img
+                                    src={photo.profile.avatar_url}
+                                    alt=""
+                                    className="w-6 h-6 rounded-full object-cover ring-2 ring-background"
+                                  />
+                                ) : (
+                                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center ring-2 ring-background">
+                                    <User className="w-3 h-3 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <span className="text-xs text-muted-foreground truncate max-w-[80px]">
+                                  {photo.profile?.full_name || 'Anonymous'}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Eye className="w-3 h-3" />
+                                  {formatCount(photo.view_count)}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Heart className="w-3 h-3" />
+                                  {formatCount(photo.like_count)}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
 
