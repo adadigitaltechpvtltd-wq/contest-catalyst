@@ -53,7 +53,7 @@ serve(async (req) => {
 
       const { data: submission } = await supabase
         .from('submissions')
-        .select('id, title, description, image_url, slug, status, created_at, user_id, view_count, like_count')
+        .select('id, title, description, image_url, slug, status, created_at, user_id, view_count, like_count, seo_page_generated, seo_approved')
         .eq('contest_id', contest.id)
         .eq('slug', photoSlug)
         .maybeSingle();
@@ -79,6 +79,31 @@ serve(async (req) => {
         });
       }
 
+      // If SEO page is generated in storage, fetch and serve it
+      if (submission.seo_page_generated && submission.seo_approved) {
+        const storagePath = `seo-pages/${contestCategory}/${contestSlug}/${photoSlug}.html`;
+        console.log('Fetching pre-generated SEO page from storage:', storagePath);
+        
+        const { data: fileData, error: storageError } = await supabase.storage
+          .from('public-pages')
+          .download(storagePath);
+        
+        if (!storageError && fileData) {
+          const html = await fileData.text();
+          console.log('Serving pre-generated SEO page for:', photoSlug);
+          return new Response(html, {
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'text/html; charset=utf-8',
+              'Cache-Control': 'public, max-age=3600',
+            },
+          });
+        } else {
+          console.log('Storage fetch error or no data, falling back to generated HTML:', storageError?.message);
+        }
+      }
+
+      // Fallback: Generate HTML dynamically
       const { data: profile } = await supabase
         .from('profiles')
         .select('full_name')
