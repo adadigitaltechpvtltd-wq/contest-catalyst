@@ -2,11 +2,9 @@ export const config = {
   runtime: 'edge',
 };
 
-export default async function handler(request: Request) {
-  const userAgent = request.headers.get('user-agent') || '';
-
-  const isBot =
-    /googlebot|bingbot|yandex|duckduckbot|baiduspider|slurp/i.test(userAgent);
+export default async function middleware(request: Request) {
+  const ua = request.headers.get('user-agent') || '';
+  const isBot = /googlebot|bingbot|duckduckbot|yandex|baiduspider/i.test(ua);
 
   if (!isBot) {
     return fetch(request);
@@ -14,27 +12,13 @@ export default async function handler(request: Request) {
 
   const url = new URL(request.url);
 
-  // Example: /contest/wildlife/simple-morning-photography-contest/morning-sunrise-photo
-  if (url.pathname.startsWith('/contest/')) {
-    const seoFilePath = `${url.pathname}.html`;
-
-    const seoStorageUrl =
-      `https://xoompskrczzucsohfcyy.supabase.co/storage/v1/object/public/` +
-      `public-pages/seo-pages${seoFilePath}`;
-
-    const seoResponse = await fetch(seoStorageUrl, {
-      headers: {
-        'content-type': 'text/html',
-      },
-    });
+  if (url.pathname.startsWith('/gallery/')) {
+    const seoResponse = await fetch(
+      `https://xoompskrczzucsohfcyy.supabase.co/functions/v1/seo-page?path=${encodeURIComponent(url.pathname)}`
+    );
 
     if (seoResponse.ok) {
-      return new Response(await seoResponse.text(), {
-        headers: {
-          'content-type': 'text/html; charset=utf-8',
-          'x-seo-prerender': 'true',
-        },
-      });
+      return seoResponse;
     }
   }
 

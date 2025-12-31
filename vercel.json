@@ -3,6 +3,10 @@
     {
       "source": "/sitemap.xml",
       "destination": "https://xoompskrczzucsohfcyy.supabase.co/functions/v1/sitemap"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
