@@ -11,10 +11,13 @@ export interface GalleryPhoto {
   status: string;
   created_at: string;
   user_id: string;
+  seo_approved: boolean;
+  seo_page_url: string | null;
   contest: {
     id: string;
     title: string;
     slug: string;
+    category: string | null;
   };
   profile: {
     id: string;
@@ -139,7 +142,9 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
           status,
           created_at,
           contest_id,
-          user_id
+          user_id,
+          seo_approved,
+          seo_page_url
         `)
         .in('status', ['approved', 'winner'])
         .order(orderColumn, { ascending });
@@ -180,11 +185,11 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
         return { photos: [], nextPage: undefined };
       }
 
-      // Fetch contest info
+      // Fetch contest info (include category for SEO URLs)
       const contestIds = [...new Set(submissions.map(s => s.contest_id))];
       const { data: contestsData } = await supabase
         .from('contests')
-        .select('id, title, slug')
+        .select('id, title, slug, category')
         .in('id', contestIds);
 
       const contestMap = new Map(contestsData?.map(c => [c.id, c]) || []);
@@ -210,6 +215,8 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
           status: s.status,
           created_at: s.created_at,
           user_id: s.user_id,
+          seo_approved: s.seo_approved || false,
+          seo_page_url: s.seo_page_url || null,
           contest: contestMap.get(s.contest_id)!,
           profile: profileMap.get(s.user_id) || null,
         }));

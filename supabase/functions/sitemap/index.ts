@@ -32,11 +32,12 @@ serve(async (req) => {
       throw contestsError;
     }
 
-    // Fetch approved and winner submissions only (with SEO page info)
+    // Fetch only SEO-approved submissions for the sitemap (these have static HTML pages)
     const { data: submissions, error: submissionsError } = await supabase
       .from('submissions')
-      .select('slug, updated_at, contest_id, seo_approved, seo_page_url')
+      .select('slug, updated_at, contest_id, seo_approved, seo_page_url, seo_page_generated')
       .in('status', ['approved', 'winner'])
+      .eq('seo_approved', true)
       .order('updated_at', { ascending: false })
       .limit(5000);
 
@@ -109,15 +110,15 @@ serve(async (req) => {
 `;
     }
 
-    // Add approved gallery pages with category in URL
+    // Add SEO-approved gallery pages with their storage URLs for Google to crawl
     for (const submission of submissions || []) {
       if (!submission.slug) continue;
       
       const contestInfo = contestMap.get(submission.contest_id);
       if (!contestInfo) continue;
       
-      // Use SEO page URL if it exists, otherwise use React route
-      const locUrl = submission.seo_approved && submission.seo_page_url 
+      // Use the static HTML page URL from storage if generated, otherwise the React route
+      const locUrl = submission.seo_page_generated && submission.seo_page_url 
         ? submission.seo_page_url
         : `${BASE_URL}/gallery/${contestInfo.category}/${contestInfo.slug}/${submission.slug}`;
       
@@ -125,7 +126,7 @@ serve(async (req) => {
     <loc>${locUrl}</loc>
     <lastmod>${new Date(submission.updated_at).toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>${submission.seo_approved ? '0.8' : '0.6'}</priority>
+    <priority>0.8</priority>
   </url>
 `;
     }
