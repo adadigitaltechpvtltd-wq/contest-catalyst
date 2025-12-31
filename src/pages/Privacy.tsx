@@ -163,7 +163,7 @@ const Privacy = () => {
                   Once the 30-day grace period has passed, account deletion cannot be undone by users. 
                   In exceptional circumstances, platform administrators may restore deleted accounts upon request. 
                   Contact{' '}
-                  <a href="mailto:support@gaal.com" className="text-primary hover:underline">support@gaal.com</a>{' '}
+                  <a href="mailto:support@wimira.com" className="text-primary hover:underline">support@wimira.com</a>{' '}
                   if you believe your account was deleted in error.
                 </p>
               </section>

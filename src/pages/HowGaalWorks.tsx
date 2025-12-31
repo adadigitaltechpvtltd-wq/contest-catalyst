@@ -457,8 +457,8 @@ const HowGaalWorks = () => {
                     </h2>
                     <p className="text-muted-foreground mb-4">
                       If anything is unclear, reach out to us at{' '}
-                      <a href="mailto:support@gaal.com" className="text-primary hover:underline">
-                        support@gaal.com
+                      <a href="mailto:support@wimira.com" className="text-primary hover:underline">
+                        support@wimira.com
                       </a>
                     </p>
                     <p className="text-muted-foreground">

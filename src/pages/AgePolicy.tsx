@@ -158,8 +158,8 @@ const AgePolicy = () => {
                 <h2 className="text-2xl font-semibold mb-4">7. Contact Us</h2>
                 <p className="text-muted-foreground mb-4">
                   For any questions about our age policy, contact us at:{' '}
-                  <a href="mailto:support@gaal.com" className="text-primary hover:underline">
-                    support@gaal.com
+                  <a href="mailto:support@wimira.com" className="text-primary hover:underline">
+                    support@wimira.com
                   </a>
                 </p>
               </section>

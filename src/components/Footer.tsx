@@ -51,7 +51,7 @@ const Footer = () => {
             <h4 className="font-display font-semibold text-foreground mb-4">Support</h4>
             <ul className="space-y-2">
               <li><Link to="/report" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Report Abuse</Link></li>
-              <li><a href="mailto:support@gaal.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact Us</a></li>
+              <li><a href="mailto:support@wimira.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact Us</a></li>
             </ul>
           </div>
 
