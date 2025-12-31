@@ -5,26 +5,36 @@ export const config = {
 export default async function handler(request: Request) {
   const userAgent = request.headers.get('user-agent') || '';
 
-  const isBot = /googlebot|bingbot|yandex|duckduckbot|baiduspider|slurp/i.test(
-    userAgent
-  );
+  const isBot =
+    /googlebot|bingbot|yandex|duckduckbot|baiduspider|slurp/i.test(userAgent);
 
   if (!isBot) {
-    // Let normal users get React SPA
     return fetch(request);
   }
 
   const url = new URL(request.url);
 
-  // Rewrite gallery URLs to SEO HTML
-  if (url.pathname.startsWith('/gallery/')) {
-    const seoPath = url.pathname.replace('/gallery/', '/seo/');
-    const seoUrl = `https://gaal.app${seoPath}`;
+  // Example: /contest/wildlife/simple-morning-photography-contest/morning-sunrise-photo
+  if (url.pathname.startsWith('/contest/')) {
+    const seoFilePath = `${url.pathname}.html`;
 
-    const seoResponse = await fetch(seoUrl);
+    const seoStorageUrl =
+      `https://xoompskrczzucsohfcyy.supabase.co/storage/v1/object/public/` +
+      `public-pages/seo-pages${seoFilePath}`;
+
+    const seoResponse = await fetch(seoStorageUrl, {
+      headers: {
+        'content-type': 'text/html',
+      },
+    });
 
     if (seoResponse.ok) {
-      return seoResponse;
+      return new Response(await seoResponse.text(), {
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          'x-seo-prerender': 'true',
+        },
+      });
     }
   }
 
