@@ -161,8 +161,8 @@ const Terms = () => {
                 <h2 className="text-2xl font-semibold mb-4">12. Contact Us</h2>
                 <p className="text-muted-foreground">
                   If you have any questions about these Terms & Conditions, please contact us at{' '}
-                  <a href="mailto:legal@gaal.com" className="text-primary hover:underline">
-                    legal@gaal.com
+                  <a href="mailto:support@wimira.com" className="text-primary hover:underline">
+                    support@wimira.com
                   </a>
                 </p>
               </section>
