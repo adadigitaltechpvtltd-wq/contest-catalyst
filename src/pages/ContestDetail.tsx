@@ -832,12 +832,6 @@ const ContestDetail = () => {
                   className="w-full max-h-[70vh] object-contain"
                 />
                 
-                <button
-                  onClick={() => setSelectedImage(null)}
-                  className="absolute top-4 right-4 p-2 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
 
                 {selectedImageIndex > 0 && (
                   <button
