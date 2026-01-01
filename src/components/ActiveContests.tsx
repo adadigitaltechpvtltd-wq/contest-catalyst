@@ -155,7 +155,7 @@ const ActiveContests = () => {
                         size="icon"
                         className="h-8 w-8 bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm rounded-full"
                         onClick={() => {
-                          const url = window.location.origin + `/contest/${contest.slug || contest.id}`;
+                          const url = window.location.origin + `/campaign/${contest.category || 'general'}/${contest.slug || contest.id}`;
                           navigator.share?.({ title: contest.title, url }) || navigator.clipboard.writeText(url);
                         }}
                       >
@@ -207,7 +207,7 @@ const ActiveContests = () => {
 
                     {/* Action Button */}
                     {status === "live" ? (
-                      <Link to={`/contest/${contest.slug || contest.id}`} className="w-full">
+                      <Link to={`/campaign/${contest.category || 'general'}/${contest.slug || contest.id}`} className="w-full">
                         <Button className="w-full">
                           Enter Campaign <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
@@ -217,7 +217,7 @@ const ActiveContests = () => {
                         Coming Soon
                       </Button>
                     ) : (
-                      <Link to={`/contest/${contest.slug || contest.id}`} className="w-full">
+                      <Link to={`/campaign/${contest.category || 'general'}/${contest.slug || contest.id}`} className="w-full">
                         <Button variant="ghost" className="w-full text-muted-foreground">
                           View Winners <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
@@ -232,7 +232,7 @@ const ActiveContests = () => {
 
         {/* View All */}
         <div className="text-center">
-          <Link to="/contests">
+          <Link to="/campaigns">
             <Button variant="outline" size="lg">
               View All Campaigns
             </Button>

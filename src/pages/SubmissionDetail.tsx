@@ -733,9 +733,9 @@ const SubmissionDetail = () => {
                 </div>
                 <Separator />
                 <Button asChild variant="outline" className="w-full">
-                  <Link to={`/contest/${localSubmission.contest.slug || localSubmission.contest.id}`}>
+                  <Link to={`/campaign/general/${localSubmission.contest.slug || localSubmission.contest.id}`}>
                     <Eye className="h-4 w-4 mr-2" />
-                    View Contest
+                    View Campaign
                   </Link>
                 </Button>
               </CardContent>

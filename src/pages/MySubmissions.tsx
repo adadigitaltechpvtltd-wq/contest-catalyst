@@ -173,11 +173,11 @@ const MySubmissions = () => {
           <div>
             <h1 className="text-3xl font-display font-bold">My Submissions</h1>
             <p className="text-muted-foreground mt-1">
-              Track all your contest entries and their status
+              Track all your campaign entries and their status
             </p>
           </div>
           <Button asChild className="gradient-primary">
-            <Link to="/contests">Enter New Contest</Link>
+            <Link to="/campaigns">Enter New Campaign</Link>
           </Button>
         </div>
 

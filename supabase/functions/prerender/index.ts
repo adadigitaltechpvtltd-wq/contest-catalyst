@@ -160,8 +160,8 @@ serve(async (req) => {
       });
     }
 
-    // Contest detail page: /contest/{category}/{contestSlug}
-    const contestMatch = path.match(/^\/contest\/([^/]+)\/([^/]+)$/);
+    // Campaign detail page: /campaign/{category}/{campaignSlug}
+    const contestMatch = path.match(/^\/campaign\/([^/]+)\/([^/]+)$/);
     if (contestMatch) {
       const [, category, contestSlug] = contestMatch;
       
@@ -183,7 +183,7 @@ serve(async (req) => {
       if (category !== contestCategory) {
         return new Response('', {
           status: 301,
-          headers: { ...corsHeaders, 'Location': `${BASE_URL}/contest/${contestCategory}/${contestSlug}` },
+          headers: { ...corsHeaders, 'Location': `${BASE_URL}/campaign/${contestCategory}/${contestSlug}` },
         });
       }
 
@@ -221,9 +221,19 @@ serve(async (req) => {
         const category = contest.category || 'general';
         return new Response('', {
           status: 301,
-          headers: { ...corsHeaders, 'Location': `${BASE_URL}/contest/${category}/${contestSlug}` },
+          headers: { ...corsHeaders, 'Location': `${BASE_URL}/campaign/${category}/${contestSlug}` },
         });
       }
+    }
+
+    // Legacy /contest/{category}/{slug} redirect to /campaign/
+    const legacyContestWithCategoryMatch = path.match(/^\/contest\/([^/]+)\/([^/]+)$/);
+    if (legacyContestWithCategoryMatch) {
+      const [, category, contestSlug] = legacyContestWithCategoryMatch;
+      return new Response('', {
+        status: 301,
+        headers: { ...corsHeaders, 'Location': `${BASE_URL}/campaign/${category}/${contestSlug}` },
+      });
     }
 
     // Default: return minimal HTML

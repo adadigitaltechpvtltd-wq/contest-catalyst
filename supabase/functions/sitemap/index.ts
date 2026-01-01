@@ -72,7 +72,7 @@ serve(async (req) => {
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>${BASE_URL}/contests</loc>
+    <loc>${BASE_URL}/campaigns</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -93,7 +93,7 @@ serve(async (req) => {
   </url>
 `;
 
-    // Add contest pages with category in URL
+    // Add campaign pages with category in URL
     for (const contest of contests || []) {
       if (!contest.slug) continue;
       
@@ -102,7 +102,7 @@ serve(async (req) => {
       const changefreq = contest.status === 'active' ? 'daily' : 'weekly';
       
       xml += `  <url>
-    <loc>${BASE_URL}/contest/${category}/${contest.slug}</loc>
+    <loc>${BASE_URL}/campaign/${category}/${contest.slug}</loc>
     <lastmod>${new Date(contest.updated_at).toISOString().split('T')[0]}</lastmod>
     <changefreq>${changefreq}</changefreq>
     <priority>${priority}</priority>

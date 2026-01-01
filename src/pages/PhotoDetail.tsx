@@ -292,7 +292,7 @@ const PhotoDetail = () => {
             </li>
             <li className="shrink-0">/</li>
             <li className="shrink-0 max-w-[120px] sm:max-w-[180px] truncate">
-              <Link to={`/contest/${contestCategory}/${photo.contest.slug}`} className="hover:text-foreground transition-colors">
+              <Link to={`/campaign/${contestCategory}/${photo.contest.slug}`} className="hover:text-foreground transition-colors">
                 {photo.contest.title}
               </Link>
             </li>
@@ -414,9 +414,9 @@ const PhotoDetail = () => {
 
               {/* Contest Info */}
               <div className="p-6 rounded-xl bg-card border border-border">
-                <h2 className="text-lg font-semibold mb-3">From Contest</h2>
+                <h2 className="text-lg font-semibold mb-3">From Campaign</h2>
                 <Link 
-                  to={`/contest/${contestCategory}/${photo.contest.slug}`}
+                  to={`/campaign/${contestCategory}/${photo.contest.slug}`}
                   className="block p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
                 >
                   <h3 className="font-medium mb-1">{photo.contest.title}</h3>

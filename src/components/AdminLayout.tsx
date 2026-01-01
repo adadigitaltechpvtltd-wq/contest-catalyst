@@ -33,7 +33,7 @@ import { cn } from '@/lib/utils';
 
 const adminNavItems = [
   { title: 'Dashboard', url: '/admin', icon: LayoutDashboard },
-  { title: 'Contests', url: '/admin/contests', icon: Trophy },
+  { title: 'Campaigns', url: '/admin/campaigns', icon: Trophy },
   { title: 'Submissions', url: '/admin/submissions', icon: ImageIcon },
   { title: 'Payments', url: '/admin/payments', icon: CreditCard },
   { title: 'Users', url: '/admin/users', icon: Users },
