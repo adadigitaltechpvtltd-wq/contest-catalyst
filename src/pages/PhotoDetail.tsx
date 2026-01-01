@@ -299,7 +299,7 @@ const PhotoDetail = () => {
         </nav>
 
         <article className="container mx-auto px-4 pb-12">
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Main Image */}
             <div className="lg:col-span-2">
             <div className="relative rounded-xl overflow-hidden bg-secondary">
@@ -324,34 +324,38 @@ const PhotoDetail = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-between mt-6">
-                <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
+                <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                   <Button
                     variant={hasLiked ? 'default' : 'outline'}
                     onClick={handleLike}
                     className="gap-2"
+                    size="sm"
                   >
                     <Heart className={`h-4 w-4 ${hasLiked ? 'fill-current' : ''}`} />
-                    {localLikeCount}
+                    <span className="hidden xs:inline">Like</span>
+                    <span>{localLikeCount}</span>
                   </Button>
-                  <Button variant="outline" onClick={handleDownloadClick} className="gap-2">
+                  <Button variant="outline" onClick={handleDownloadClick} className="gap-2" size="sm">
                     <Download className="h-4 w-4" />
-                    Download
+                    <span className="hidden xs:inline">Download</span>
                   </Button>
-                  <Button variant="outline" onClick={handleShare} className="gap-2">
+                  <Button variant="outline" onClick={handleShare} className="gap-2" size="sm">
                     <Share2 className="h-4 w-4" />
-                    Share
+                    <span className="hidden xs:inline">Share</span>
                   </Button>
                 </div>
                 
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Eye className="h-4 w-4" />
-                    {photo.view_count} views
+                    {photo.view_count}
+                    <span className="hidden sm:inline">views</span>
                   </span>
                   <span className="flex items-center gap-1">
                     <Download className="h-4 w-4" />
-                    {photo.download_count} downloads
+                    {photo.download_count}
+                    <span className="hidden sm:inline">downloads</span>
                   </span>
                 </div>
               </div>
