@@ -24,7 +24,9 @@ import {
   ExternalLink,
   Loader2,
   Camera,
-  Info
+  Info,
+  Maximize2,
+  X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -45,6 +47,7 @@ const PhotoDetail = () => {
   const [localLikeCount, setLocalLikeCount] = useState(0);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Handle redirects for category mismatch or legacy URLs
   useEffect(() => {
@@ -260,7 +263,7 @@ const PhotoDetail = () => {
   const shouldNoIndex = !isApproved || hasTitleQualityIssue;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       <SEOHead
         title={seoTitle}
         description={seoDescription}
@@ -274,40 +277,43 @@ const PhotoDetail = () => {
       
       <main className="flex-1 pt-20">
         {/* Breadcrumb */}
-        <nav className="container mx-auto px-4 py-4" aria-label="Breadcrumb">
-          <ol className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-            <li>
+        <nav className="container mx-auto px-4 py-4 overflow-x-auto" aria-label="Breadcrumb">
+          <ol className="flex items-center gap-2 text-sm text-muted-foreground whitespace-nowrap min-w-0">
+            <li className="shrink-0">
               <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             </li>
-            <li>/</li>
-            <li>
+            <li className="shrink-0">/</li>
+            <li className="shrink-0">
               <Link to="/gallery" className="hover:text-foreground transition-colors">Gallery</Link>
             </li>
-            <li>/</li>
-            <li>
+            <li className="shrink-0 hidden sm:block">/</li>
+            <li className="hidden sm:block shrink-0">
               <span className="capitalize">{contestCategory.replace(/-/g, ' ')}</span>
             </li>
-            <li>/</li>
-            <li>
+            <li className="shrink-0">/</li>
+            <li className="shrink-0 max-w-[120px] sm:max-w-[180px] truncate">
               <Link to={`/contest/${contestCategory}/${photo.contest.slug}`} className="hover:text-foreground transition-colors">
                 {photo.contest.title}
               </Link>
             </li>
-            <li>/</li>
-            <li className="text-foreground font-medium truncate max-w-[200px]">{photo.title}</li>
+            <li className="shrink-0">/</li>
+            <li className="text-foreground font-medium truncate max-w-[100px] sm:max-w-[200px]">{photo.title}</li>
           </ol>
         </nav>
 
         <article className="container mx-auto px-4 pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Main Image */}
-            <div className="lg:col-span-2">
-            <div className="relative rounded-xl overflow-hidden bg-secondary">
+            <div className="lg:col-span-2 min-w-0">
+              <div 
+                className="relative rounded-xl overflow-hidden bg-secondary cursor-pointer group"
+                onClick={() => setIsFullscreen(true)}
+              >
                 <img
                   src={photo.image_url}
                   alt={imageAlt}
                   title={photo.title}
-                  className="w-full h-auto max-h-[80vh] object-contain"
+                  className="w-full h-auto max-h-[60vh] sm:max-h-[80vh] object-contain"
                   loading="eager"
                   fetchPriority="high"
                   width={1200}
@@ -315,9 +321,16 @@ const PhotoDetail = () => {
                   decoding="async"
                 />
                 
+                {/* Fullscreen hint */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm rounded-full p-3">
+                    <Maximize2 className="h-6 w-6" />
+                  </div>
+                </div>
+                
                 {photo.status === 'winner' && (
-                  <Badge className="absolute top-4 left-4 bg-accent gap-1 text-base px-4 py-2">
-                    <Trophy className="h-4 w-4" />
+                  <Badge className="absolute top-4 left-4 bg-accent gap-1 text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2">
+                    <Trophy className="h-3 w-3 sm:h-4 sm:w-4" />
                     Winner
                   </Badge>
                 )}
@@ -546,6 +559,29 @@ const PhotoDetail = () => {
           }
         })
       }} />
+
+      {/* Fullscreen Image Modal */}
+      {isFullscreen && (
+        <div 
+          className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+          onClick={() => setIsFullscreen(false)}
+        >
+          <button
+            onClick={() => setIsFullscreen(false)}
+            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            aria-label="Close fullscreen"
+          >
+            <X className="h-6 w-6 text-white" />
+          </button>
+          
+          <img
+            src={photo.image_url}
+            alt={imageAlt}
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 };
