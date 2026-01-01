@@ -225,53 +225,54 @@ const Gallery = () => {
         <div className="container mx-auto px-4 pb-6">
           <div className="flex flex-col gap-4">
             {/* Search Bar */}
-            <div className="flex flex-wrap gap-2 items-center">
-              <div className="relative flex-1 min-w-[200px] max-w-md">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="Search photos..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 w-full"
                 />
               </div>
               
-              {/* Sort Dropdown */}
-              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-                <SelectTrigger className="w-[160px]">
-                  <ArrowUpDown className="h-4 w-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SORT_OPTIONS.map(option => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex flex-wrap gap-2 items-center">
+                {/* Sort Dropdown */}
+                <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                  <SelectTrigger className="w-full sm:w-[160px]">
+                    <ArrowUpDown className="h-4 w-4 mr-2 shrink-0" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SORT_OPTIONS.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className="gap-2"
-              >
-                <Filter className="h-4 w-4" />
-                Filters
-                {activeFiltersCount > 0 && (
-                  <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </Button>
-              {activeFiltersCount > 0 && (
-                <Button type="button" variant="ghost" onClick={clearFilters} className="gap-2">
-                  <X className="h-4 w-4" />
-                  Clear
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="gap-2 flex-1 sm:flex-none"
+                >
+                  <Filter className="h-4 w-4 shrink-0" />
+                  <span className="hidden xs:inline">Filters</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                      {activeFiltersCount}
+                    </span>
+                  )}
                 </Button>
-              )}
+                {activeFiltersCount > 0 && (
+                  <Button type="button" variant="ghost" onClick={clearFilters} size="icon" className="shrink-0">
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Expandable Filters */}
@@ -344,7 +345,17 @@ const Gallery = () => {
                         defaultMonth={dateRange?.from}
                         selected={dateRange}
                         onSelect={setDateRange}
+                        numberOfMonths={1}
+                        className="sm:hidden"
+                      />
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={setDateRange}
                         numberOfMonths={2}
+                        className="hidden sm:block"
                       />
                     </PopoverContent>
                   </Popover>
