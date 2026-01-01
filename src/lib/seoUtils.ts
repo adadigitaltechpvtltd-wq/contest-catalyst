@@ -12,10 +12,10 @@ export const getGalleryCanonicalUrl = (category: string, contestSlug: string, ph
 };
 
 /**
- * Generate canonical URL for a contest (with category)
+ * Generate canonical URL for a campaign (with category)
  */
 export const getContestCanonicalUrl = (category: string, contestSlug: string): string => {
-  return `${BASE_URL}/contest/${category}/${contestSlug}`;
+  return `${BASE_URL}/campaign/${category}/${contestSlug}`;
 };
 
 /**
@@ -26,10 +26,10 @@ export const getLegacyPhotoUrl = (contestSlug: string, photoSlug: string): strin
 };
 
 /**
- * Legacy URL for redirects - contest (without category)
+ * Legacy URL for redirects - campaign (without category)
  */
 export const getLegacyContestUrl = (contestSlug: string): string => {
-  return `${BASE_URL}/contest/${contestSlug}`;
+  return `${BASE_URL}/campaign/${contestSlug}`;
 };
 
 /**
@@ -70,7 +70,7 @@ export const getPhotoBreadcrumbSchema = (
         "@type": "ListItem",
         "position": 4,
         "name": contestTitle,
-        "item": `${BASE_URL}/contest/${category}/${contestSlug}`
+        "item": `${BASE_URL}/campaign/${category}/${contestSlug}`
       },
       {
         "@type": "ListItem",
@@ -104,7 +104,7 @@ export const getContestSchema = (
     "@context": "https://schema.org",
     "@type": "Event",
     "name": contest.title,
-    "description": contest.description || `${contest.title} photography contest on GAAL`,
+    "description": contest.description || `${contest.title} photography campaign on GAAL`,
     "startDate": contest.start_date,
     "endDate": contest.end_date,
     "eventStatus": "https://schema.org/EventScheduled",

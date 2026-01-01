@@ -401,7 +401,7 @@ const SubmitPhoto = () => {
               <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">Already Submitted!</h2>
               <p className="text-muted-foreground mb-6">
-                You have already submitted a photo for this contest.
+                You have already submitted a photo for this campaign.
               </p>
               <Button asChild>
                 <Link to="/submissions">View My Submissions</Link>
@@ -425,7 +425,7 @@ const SubmitPhoto = () => {
               <Clock className="h-16 w-16 text-destructive mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">Submissions Closed</h2>
               <p className="text-muted-foreground mb-6">
-                The deadline for this contest has passed.
+                The deadline for this campaign has passed.
               </p>
               <Button asChild>
                 <Link to="/contests">Browse Other Campaigns</Link>

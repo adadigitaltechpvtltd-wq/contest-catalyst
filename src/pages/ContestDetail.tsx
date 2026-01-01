@@ -75,11 +75,11 @@ const ContestDetail = () => {
   useEffect(() => {
     if (contest && !category) {
       const contestCategory = contest.category || 'general';
-      navigate(`/contest/${contestCategory}/${contest.slug || contest.id}`, { replace: true });
+      navigate(`/campaign/${contestCategory}/${contest.slug || contest.id}`, { replace: true });
     } else if (contest && category) {
       const contestCategory = contest.category || 'general';
       if (category !== contestCategory) {
-        navigate(`/contest/${contestCategory}/${contest.slug || contest.id}`, { replace: true });
+        navigate(`/campaign/${contestCategory}/${contest.slug || contest.id}`, { replace: true });
       }
     }
   }, [contest, category, navigate]);
@@ -115,7 +115,7 @@ const ContestDetail = () => {
   };
 
   const handleImageShare = (submission: ContestSubmission, platform: string) => {
-    const imageShareUrl = `${window.location.origin}/contest/${contest?.slug || slug}#submission-${submission.id}`;
+    const imageShareUrl = `${window.location.origin}/campaign/${contest?.category || 'general'}/${contest?.slug || slug}#submission-${submission.id}`;
     const imageShareText = `Check out "${submission.title}" on GAAL!`;
     const encodedUrl = encodeURIComponent(imageShareUrl);
     const encodedText = encodeURIComponent(imageShareText);
@@ -375,7 +375,7 @@ const ContestDetail = () => {
         <div className="container mx-auto px-4 py-20 text-center">
           <h1 className="text-2xl font-display font-bold text-foreground mb-4">Campaign Not Found</h1>
           <p className="text-muted-foreground mb-6">The campaign you're looking for doesn't exist.</p>
-          <Link to="/contests">
+          <Link to="/campaigns">
             <Button>Back to Campaigns</Button>
           </Link>
         </div>

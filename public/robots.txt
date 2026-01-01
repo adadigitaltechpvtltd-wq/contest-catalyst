@@ -1,8 +1,8 @@
 User-agent: *
 Allow: /
-Allow: /contests
-Allow: /contest/*
-Allow: /photo/*
+Allow: /campaigns
+Allow: /campaign/*
+Allow: /gallery/*
 
 Disallow: /admin/*
 Disallow: /dashboard

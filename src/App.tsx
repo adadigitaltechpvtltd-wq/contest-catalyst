@@ -75,11 +75,13 @@ const AppContent = () => {
         <Route path="/login" element={<Auth />} />
         <Route path="/signup" element={<Auth />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/contests" element={<Contests />} />
+        <Route path="/campaigns" element={<Contests />} />
         {/* New URL structure with category */}
-        <Route path="/contest/:category/:slug" element={<ContestDetail />} />
+        <Route path="/campaign/:category/:slug" element={<ContestDetail />} />
         <Route path="/gallery/:category/:contestSlug/:photoSlug" element={<PhotoDetail />} />
         {/* Legacy redirects - handled by components */}
+        <Route path="/contests" element={<Contests />} />
+        <Route path="/contest/:category/:slug" element={<ContestDetail />} />
         <Route path="/contest/:slug" element={<ContestDetail />} />
         <Route path="/photo/:contestSlug/:photoSlug" element={<PhotoDetail />} />
         <Route path="/gallery" element={<Gallery />} />
@@ -99,10 +101,10 @@ const AppContent = () => {
       {/* Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
         <Route index element={<AdminDashboard />} />
-        <Route path="contests" element={<AdminContests />} />
-        <Route path="contests/new" element={<CreateContest />} />
-        <Route path="contests/:id/edit" element={<EditContest />} />
-        <Route path="contests/:contestId/winner" element={<WinnerSelection />} />
+        <Route path="campaigns" element={<AdminContests />} />
+        <Route path="campaigns/new" element={<CreateContest />} />
+        <Route path="campaigns/:id/edit" element={<EditContest />} />
+        <Route path="campaigns/:contestId/winner" element={<WinnerSelection />} />
         <Route path="submissions" element={<AdminSubmissions />} />
         <Route path="payments" element={<AdminPayments />} />
         <Route path="users" element={<AdminUsers />} />
@@ -116,7 +118,7 @@ const AppContent = () => {
       {/* Legal Pages */}
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
-      <Route path="/contest-rules" element={<ContestRules />} />
+      <Route path="/campaign-rules" element={<ContestRules />} />
       <Route path="/copyright" element={<Copyright />} />
       <Route path="/age-policy" element={<AgePolicy />} />
       <Route path="/how-gaal-works" element={<HowGaalWorks />} />

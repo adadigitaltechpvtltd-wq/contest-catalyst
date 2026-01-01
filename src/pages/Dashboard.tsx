@@ -98,9 +98,9 @@ const Dashboard = () => {
               </Button>
             )}
             <Button asChild className="gradient-primary">
-              <Link to="/contests">
+              <Link to="/campaigns">
                 <Camera className="h-4 w-4 mr-2" />
-                Enter Contest
+                Enter Campaign
               </Link>
             </Button>
           </div>

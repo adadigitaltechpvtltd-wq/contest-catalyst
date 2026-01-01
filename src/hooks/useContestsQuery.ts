@@ -19,6 +19,7 @@ export interface Contest {
   featured_in_hero?: boolean;
   brand_logo_url?: string | null;
   brand_image_url?: string | null;
+  category?: string | null;
 }
 
 export interface ContestWithCount extends Contest {

@@ -107,7 +107,7 @@ const WinnerSelection = () => {
         type: 'success',
         title: '🏆 Congratulations! You Won!',
         message: `You've won the "${contest.title}" contest! Prize: $${contest.prize_amount}. Your earnings will be transferred soon.`,
-        link: `/contest/${contest.id}`,
+        link: `/campaign/general/${contest.id}`,
       });
 
       toast({
@@ -178,8 +178,8 @@ const WinnerSelection = () => {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Contest not found</p>
-        <Button variant="outline" className="mt-4" onClick={() => navigate('/admin/contests')}>
-          Back to Contests
+        <Button variant="outline" className="mt-4" onClick={() => navigate('/admin/campaigns')}>
+          Back to Campaigns
         </Button>
       </div>
     );

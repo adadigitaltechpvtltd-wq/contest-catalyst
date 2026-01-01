@@ -242,7 +242,7 @@ const AdminSEO = () => {
                           <div>
                             <p className="font-medium">{contest.title}</p>
                             {contest.slug && (
-                              <p className="text-xs text-muted-foreground">/contest/{contest.slug}</p>
+                              <p className="text-xs text-muted-foreground">/campaign/{contest.slug}</p>
                             )}
                           </div>
                         </div>
@@ -287,7 +287,7 @@ const AdminSEO = () => {
                       </TableCell>
                       <TableCell>
                         <Button asChild variant="ghost" size="sm">
-                          <Link to={`/admin/contests/${contest.id}/edit`}>
+                          <Link to={`/admin/campaigns/${contest.id}/edit`}>
                             Edit
                           </Link>
                         </Button>
