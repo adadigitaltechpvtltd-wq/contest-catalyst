@@ -25,7 +25,7 @@ import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
-import ContestRules from "./pages/ContestRules";
+import CampaignRules from "./pages/CampaignRules";
 import Copyright from "./pages/Copyright";
 import AgePolicy from "./pages/AgePolicy";
 import HowGaalWorks from "./pages/HowGaalWorks";
@@ -118,7 +118,7 @@ const AppContent = () => {
       {/* Legal Pages */}
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
-      <Route path="/campaign-rules" element={<ContestRules />} />
+      <Route path="/campaign-rules" element={<CampaignRules />} />
       <Route path="/copyright" element={<Copyright />} />
       <Route path="/age-policy" element={<AgePolicy />} />
       <Route path="/how-gaal-works" element={<HowGaalWorks />} />
