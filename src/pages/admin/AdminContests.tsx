@@ -224,9 +224,9 @@ const AdminContests = () => {
           const notifications = uniqueUserIds.map(userId => ({
             user_id: userId,
             type: 'warning',
-            title: 'Contest Cancelled',
-            message: `The contest "${cancelContest.title}" has been cancelled. We apologize for any inconvenience.`,
-            link: `/contests`,
+            title: 'Campaign Cancelled',
+            message: `The campaign "${cancelContest.title}" has been cancelled. We apologize for any inconvenience.`,
+            link: `/campaigns`,
           }));
 
           const { error: notifyError } = await supabase
@@ -346,9 +346,9 @@ const AdminContests = () => {
           const notifications = uniqueUserIds.map(userId => ({
             user_id: userId,
             type: 'success',
-            title: 'Contest Reactivated!',
-            message: `Great news! The contest "${reactivateContest.title}" has been reactivated and is now accepting submissions again.`,
-            link: `/contest/${reactivateContest.slug || reactivateContest.id}`,
+            title: 'Campaign Reactivated!',
+            message: `Great news! The campaign "${reactivateContest.title}" has been reactivated and is now accepting submissions again.`,
+            link: `/campaign/${reactivateContest.slug || reactivateContest.id}`,
           }));
 
           const { error: notifyError } = await supabase
@@ -405,13 +405,13 @@ const AdminContests = () => {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-display font-bold">Contests</h1>
-          <p className="text-muted-foreground">Manage photography contests</p>
+          <h1 className="text-3xl font-display font-bold">Campaigns</h1>
+          <p className="text-muted-foreground">Manage photography campaigns</p>
         </div>
         <Button asChild className="gradient-primary">
-          <Link to="/admin/contests/new">
+          <Link to="/admin/campaigns/new">
             <Plus className="h-4 w-4 mr-2" />
-            Create Contest
+            Create Campaign
           </Link>
         </Button>
       </div>
@@ -424,12 +424,12 @@ const AdminContests = () => {
         <Card className="glass-card">
           <CardContent className="p-12 text-center">
             <Trophy className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No Contests Yet</h3>
+            <h3 className="text-xl font-semibold mb-2">No Campaigns Yet</h3>
             <p className="text-muted-foreground mb-6">
-              Create your first photography contest to get started.
+              Create your first photography campaign to get started.
             </p>
             <Button asChild>
-              <Link to="/admin/contests/new">Create Contest</Link>
+              <Link to="/admin/campaigns/new">Create Campaign</Link>
             </Button>
           </CardContent>
         </Card>
@@ -484,14 +484,14 @@ const AdminContests = () => {
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/contest/${contest.slug || contest.id}`}>
+                        <Link to={`/campaign/${contest.slug || contest.id}`}>
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Link>
                       </Button>
                       {contest.status !== 'cancelled' && (
                         <Button variant="outline" size="sm" asChild>
-                          <Link to={`/admin/contests/${contest.id}/edit`}>
+                          <Link to={`/admin/campaigns/${contest.id}/edit`}>
                             <Edit className="h-4 w-4 mr-1" />
                             Edit
                           </Link>
@@ -532,14 +532,14 @@ const AdminContests = () => {
                       )}
                       {needsWinner ? (
                         <Button size="sm" className="bg-amber-500 hover:bg-amber-600" asChild>
-                          <Link to={`/admin/contests/${contest.id}/winner`}>
+                          <Link to={`/admin/campaigns/${contest.id}/winner`}>
                             <Crown className="h-4 w-4 mr-1" />
                             Select Winner
                           </Link>
                         </Button>
                       ) : contest.status === 'completed' && !contest.winner_id ? (
                         <Button size="sm" className="bg-amber-500 hover:bg-amber-600" asChild>
-                          <Link to={`/admin/contests/${contest.id}/winner`}>
+                          <Link to={`/admin/campaigns/${contest.id}/winner`}>
                             <Crown className="h-4 w-4 mr-1" />
                             Select Winner
                           </Link>
