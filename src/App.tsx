@@ -31,9 +31,9 @@ import AgePolicy from "./pages/AgePolicy";
 import HowGaalWorks from "./pages/HowGaalWorks";
 import ReportAbuse from "./pages/ReportAbuse";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminContests from "./pages/admin/AdminContests";
-import CreateContest from "./pages/admin/CreateContest";
-import EditContest from "./pages/admin/EditContest";
+import AdminCampaigns from "./pages/admin/AdminCampaigns";
+import CreateCampaign from "./pages/admin/CreateCampaign";
+import EditCampaign from "./pages/admin/EditCampaign";
 import AdminSubmissions from "./pages/admin/AdminSubmissions";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -101,9 +101,9 @@ const AppContent = () => {
       {/* Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
         <Route index element={<AdminDashboard />} />
-        <Route path="campaigns" element={<AdminContests />} />
-        <Route path="campaigns/new" element={<CreateContest />} />
-        <Route path="campaigns/:id/edit" element={<EditContest />} />
+        <Route path="campaigns" element={<AdminCampaigns />} />
+        <Route path="campaigns/new" element={<CreateCampaign />} />
+        <Route path="campaigns/:id/edit" element={<EditCampaign />} />
         <Route path="campaigns/:contestId/winner" element={<WinnerSelection />} />
         <Route path="submissions" element={<AdminSubmissions />} />
         <Route path="payments" element={<AdminPayments />} />
