@@ -211,7 +211,7 @@ const CreateContest = () => {
     if (!title.trim()) {
       toast({
         title: 'Title required',
-        description: 'Please enter a contest title.',
+        description: 'Please enter a campaign title.',
         variant: 'destructive',
       });
       return;
@@ -222,7 +222,7 @@ const CreateContest = () => {
     if (!finalCategory?.trim()) {
       toast({
         title: 'Category required',
-        description: 'Please select or enter a contest category.',
+        description: 'Please select or enter a campaign category.',
         variant: 'destructive',
       });
       return;
@@ -307,16 +307,16 @@ const CreateContest = () => {
 
     if (error) {
       toast({
-        title: 'Failed to create contest',
+        title: 'Failed to create campaign',
         description: error.message,
         variant: 'destructive',
       });
     } else {
       toast({
-        title: 'Contest created!',
-        description: status === 'active' ? 'Contest is now live.' : 'Contest saved as draft.',
+        title: 'Campaign created!',
+        description: status === 'active' ? 'Campaign is now live.' : 'Campaign saved as draft.',
       });
-      navigate('/admin/contests');
+      navigate('/admin/campaigns');
     }
 
     setIsSubmitting(false);
@@ -325,8 +325,8 @@ const CreateContest = () => {
   return (
     <div className="max-w-3xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold">Create Contest</h1>
-        <p className="text-muted-foreground">Set up a new photography contest</p>
+        <h1 className="text-3xl font-display font-bold">Create Campaign</h1>
+        <p className="text-muted-foreground">Set up a new photography campaign</p>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -337,7 +337,7 @@ const CreateContest = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Contest Title *</Label>
+              <Label htmlFor="title">Campaign Title *</Label>
               <Input
                 id="title"
                 value={title}
@@ -400,9 +400,9 @@ const CreateContest = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
-              Contest Cover Image
+              Campaign Cover Image
             </CardTitle>
-            <CardDescription>Single image used across listings and contest page</CardDescription>
+            <CardDescription>Single image used across listings and campaign page</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {coverImageUrl ? (

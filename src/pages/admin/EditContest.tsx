@@ -102,11 +102,11 @@ const EditContest = () => {
 
       if (error || !data) {
         toast({
-          title: 'Contest not found',
-          description: error?.message ?? 'Unable to load contest',
+          title: 'Campaign not found',
+          description: error?.message ?? 'Unable to load campaign',
           variant: 'destructive',
         });
-        navigate('/admin/contests');
+        navigate('/admin/campaigns');
         return;
       }
 
@@ -372,16 +372,16 @@ const EditContest = () => {
 
     if (error) {
       toast({
-        title: 'Failed to update contest',
+        title: 'Failed to update campaign',
         description: error.message,
         variant: 'destructive',
       });
     } else {
       toast({
-        title: 'Contest updated!',
+        title: 'Campaign updated!',
         description: 'Changes saved successfully.',
       });
-      navigate('/admin/contests');
+      navigate('/admin/campaigns');
     }
 
     setIsSubmitting(false);
@@ -398,8 +398,8 @@ const EditContest = () => {
   return (
     <div className="max-w-3xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold">Edit Contest</h1>
-        <p className="text-muted-foreground">Update contest details</p>
+        <h1 className="text-3xl font-display font-bold">Edit Campaign</h1>
+        <p className="text-muted-foreground">Update campaign details</p>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -410,7 +410,7 @@ const EditContest = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Contest Title *</Label>
+              <Label htmlFor="title">Campaign Title *</Label>
               <Input
                 id="title"
                 value={title}
@@ -423,7 +423,7 @@ const EditContest = () => {
               <Label htmlFor="category">
                 Category *
                 {!isCategoryEditable && (
-                  <span className="text-xs text-muted-foreground ml-2">(Cannot be changed after contest goes live)</span>
+                  <span className="text-xs text-muted-foreground ml-2">(Cannot be changed after campaign goes live)</span>
                 )}
               </Label>
               <Select value={category} onValueChange={setCategory} disabled={!isCategoryEditable}>
