@@ -412,7 +412,7 @@ const AdminSubmissions = () => {
             type: 'success',
             title: '🏆 Congratulations! You Won!',
             message: `You've won the "${selectedSubmission.contest.title}" contest! Prize: $${prizeAmount}. Your earnings will be transferred soon.`,
-            link: `/contest/${selectedSubmission.contest.id}`,
+            link: `/campaign/${selectedSubmission.contest.category || 'general'}/${selectedSubmission.contest.slug || selectedSubmission.contest.id}`,
           });
         }
       }

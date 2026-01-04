@@ -267,7 +267,7 @@ function generateGalleryItemHTML(data: {
   keywords: string[];
 }) {
   const canonicalUrl = `${BASE_URL}/gallery/${data.category}/${data.contestSlug}/${data.photoSlug}`;
-  const contestUrl = `${BASE_URL}/contest/${data.category}/${data.contestSlug}`;
+  const contestUrl = `${BASE_URL}/campaign/${data.category}/${data.contestSlug}`;
   const keywordsMeta = data.keywords.length > 0 
     ? `<meta name="keywords" content="${escapeHtml(data.keywords.join(', '))}">` 
     : '';
@@ -322,7 +322,7 @@ function generateGalleryItemHTML(data: {
     <nav>
       <a href="${BASE_URL}">GAAL</a>
       <a href="${BASE_URL}/gallery">Gallery</a>
-      <a href="${BASE_URL}/contests">Contests</a>
+      <a href="${BASE_URL}/campaigns">Campaigns</a>
     </nav>
   </header>
   <main>
@@ -331,12 +331,12 @@ function generateGalleryItemHTML(data: {
       <p>By ${escapeHtml(data.photographerName)}</p>
       <img src="${data.imageUrl}" alt="${escapeHtml(data.title)}" width="1200" height="800">
       <p>${escapeHtml(data.description)}</p>
-      <p>Part of <a href="${contestUrl}">${escapeHtml(data.contestTitle)}</a> contest</p>
+      <p>Part of <a href="${contestUrl}">${escapeHtml(data.contestTitle)}</a> campaign</p>
       <p>Views: ${data.viewCount} | Likes: ${data.likeCount}</p>
     </article>
   </main>
   <footer>
-    <p>&copy; GAAL Photography Contests</p>
+    <p>&copy; GAAL Photography Campaigns</p>
   </footer>
 </body>
 </html>`;
@@ -355,7 +355,7 @@ function generateContestHTML(data: {
   slug: string;
   keywords: string[];
 }) {
-  const canonicalUrl = `${BASE_URL}/contest/${data.category}/${data.slug}`;
+  const canonicalUrl = `${BASE_URL}/campaign/${data.category}/${data.slug}`;
   const keywordsMeta = data.keywords.length > 0 
     ? `<meta name="keywords" content="${escapeHtml(data.keywords.join(', '))}">` 
     : '';
@@ -366,14 +366,14 @@ function generateContestHTML(data: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(data.title)} - Photo Contest | GAAL</title>
+  <title>${escapeHtml(data.title)} - Photo Campaign | GAAL</title>
   <meta name="description" content="${escapeHtml(data.description)}">
   ${keywordsMeta}
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="${canonicalUrl}">
   
   <meta property="og:type" content="website">
-  <meta property="og:title" content="${escapeHtml(data.title)} - Photo Contest">
+  <meta property="og:title" content="${escapeHtml(data.title)} - Photo Campaign">
   <meta property="og:description" content="${escapeHtml(data.description)}">
   <meta property="og:image" content="${imageUrl}">
   <meta property="og:url" content="${canonicalUrl}">
@@ -411,7 +411,7 @@ function generateContestHTML(data: {
   <header>
     <nav>
       <a href="${BASE_URL}">GAAL</a>
-      <a href="${BASE_URL}/contests">Contests</a>
+      <a href="${BASE_URL}/campaigns">Campaigns</a>
     </nav>
   </header>
   <main>
@@ -420,11 +420,11 @@ function generateContestHTML(data: {
       ${data.theme ? `<h2>Theme: ${escapeHtml(data.theme)}</h2>` : ''}
       <p>${escapeHtml(data.description)}</p>
       <p>Prize: $${data.prizeAmount} ${data.prizeCurrency}</p>
-      <p>Contest runs from ${new Date(data.startDate).toLocaleDateString()} to ${new Date(data.endDate).toLocaleDateString()}</p>
+      <p>Campaign runs from ${new Date(data.startDate).toLocaleDateString()} to ${new Date(data.endDate).toLocaleDateString()}</p>
     </article>
   </main>
   <footer>
-    <p>&copy; GAAL Photography Contests</p>
+    <p>&copy; GAAL Photography Campaigns</p>
   </footer>
 </body>
 </html>`;
@@ -436,14 +436,14 @@ function generateDefaultHTML() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GAAL - Photography Contests</title>
-  <meta name="description" content="GAAL is a photography contest platform where creators compete, showcase their work, and win prizes.">
+  <title>GAAL - Photography Campaigns</title>
+  <meta name="description" content="GAAL is a photography campaign platform where creators compete, showcase their work, and win prizes.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="${BASE_URL}">
 </head>
 <body>
   <header><nav><a href="${BASE_URL}">GAAL</a></nav></header>
-  <main><h1>GAAL Photography Contests</h1></main>
+  <main><h1>GAAL Photography Campaigns</h1></main>
   <footer><p>&copy; GAAL</p></footer>
 </body>
 </html>`;
@@ -456,7 +456,7 @@ function generateGalleryHTML() {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gallery - Photography Showcase | GAAL</title>
-  <meta name="description" content="Explore authentic user-submitted photography from GAAL contests.">
+  <meta name="description" content="Explore authentic user-submitted photography from GAAL campaigns.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="${BASE_URL}/gallery">
 </head>
@@ -481,7 +481,7 @@ function generate404HTML() {
 }
 
 function generate410HTML(category?: string, contestSlug?: string) {
-  const redirectUrl = category && contestSlug ? `${BASE_URL}/contest/${category}/${contestSlug}` : `${BASE_URL}/gallery`;
+  const redirectUrl = category && contestSlug ? `${BASE_URL}/campaign/${category}/${contestSlug}` : `${BASE_URL}/gallery`;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>

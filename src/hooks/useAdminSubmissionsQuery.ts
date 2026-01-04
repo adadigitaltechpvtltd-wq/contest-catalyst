@@ -37,6 +37,8 @@ export interface AdminSubmission {
     status: string;
     prize_amount: number;
     prize_currency: string;
+    category: string | null;
+    slug: string | null;
   };
   profile: {
     id: string;
@@ -76,7 +78,7 @@ async function fetchSubmissions(statusFilter: string): Promise<AdminSubmission[]
       analysis_completed_at,
       created_at,
       seo_approved,
-      contest:contests!submissions_contest_id_fkey(id, title, status, prize_amount, prize_currency),
+      contest:contests!submissions_contest_id_fkey(id, title, status, prize_amount, prize_currency, category, slug),
       profile:profiles!submissions_user_id_profiles_fkey(id, full_name, email)
     `)
     .order('risk_score', { ascending: false });
