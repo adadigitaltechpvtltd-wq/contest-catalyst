@@ -169,7 +169,7 @@ const SubmitPhoto = () => {
         description: 'This campaign may have ended or does not exist.',
         variant: 'destructive',
       });
-      navigate('/contests');
+      navigate('/campaigns');
     }
   }, [isLoadingContest, contest, slug, navigate, toast]);
 
@@ -428,7 +428,7 @@ const SubmitPhoto = () => {
                 The deadline for this campaign has passed.
               </p>
               <Button asChild>
-                <Link to="/contests">Browse Other Campaigns</Link>
+                <Link to="/campaigns">Browse Other Campaigns</Link>
               </Button>
             </CardContent>
           </Card>
