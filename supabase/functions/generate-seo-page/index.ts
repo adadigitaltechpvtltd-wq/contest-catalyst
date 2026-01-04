@@ -154,18 +154,18 @@ function generateSeoHTML(submission: any): string {
   const safeTitle = String(title || 'Photo');
   const creatorName = String(profile?.full_name || profile?.username || 'Anonymous');
   const category = contest?.category || 'general';
-  const contestTitle = contest?.title || 'Photo Contest';
-  const contestSlug = contest?.slug || 'contest';
+  const campaignTitle = contest?.title || 'Photo Campaign';
+  const campaignSlug = contest?.slug || 'campaign';
 
   const pageTitle = (typeof seo_title === 'string' && seo_title.trim())
     ? seo_title
-    : `${safeTitle} | ${contestTitle} | GAAL`;
+    : `${safeTitle} | ${campaignTitle} | GAAL`;
 
-  const pageDescription = String(meta_description || description || contest?.description || `${safeTitle} - Photography submission for ${contestTitle} on GAAL.`);
+  const pageDescription = String(meta_description || description || contest?.description || `${safeTitle} - Photography submission for ${campaignTitle} on GAAL.`);
   
   // Use correct gallery URL format
-  const canonicalUrl = `https://gaal.app/gallery/${category}/${contestSlug}/${slug}`;
-  const contestUrl = `https://gaal.app/contest/${category}/${contestSlug}`;
+  const canonicalUrl = `https://gaal.app/gallery/${category}/${campaignSlug}/${slug}`;
+  const campaignUrl = `https://gaal.app/campaign/${category}/${campaignSlug}`;
   
   // Escape HTML entities
   const escapeHtml = (text: string) => {
@@ -189,7 +189,7 @@ function generateSeoHTML(submission: any): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${escapeHtml(pageTitle)}</title>
     <meta name="description" content="${escapeHtml(pageDescription)}">
-    <meta name="keywords" content="${escapeHtml(safeTitle)}, ${escapeHtml(contestTitle)}, ${escapeHtml(formattedCategory)}, photography, contest, GAAL">
+    <meta name="keywords" content="${escapeHtml(safeTitle)}, ${escapeHtml(campaignTitle)}, ${escapeHtml(formattedCategory)}, photography, campaign, GAAL">
     <meta name="robots" content="index, follow">
     
     <!-- Open Graph -->
@@ -255,8 +255,8 @@ function generateSeoHTML(submission: any): string {
         {
           "@type": "ListItem",
           "position": 4,
-          "name": "${escapeHtml(contestTitle)}",
-          "item": "${contestUrl}"
+          "name": "${escapeHtml(campaignTitle)}",
+          "item": "${campaignUrl}"
         },
         {
           "@type": "ListItem",
@@ -348,7 +348,7 @@ function generateSeoHTML(submission: any): string {
         <a href="https://gaal.app">Home</a> / 
         <a href="https://gaal.app/gallery">Gallery</a> / 
         <a href="https://gaal.app/gallery?category=${category}">${escapeHtml(formattedCategory)}</a> / 
-        <a href="${contestUrl}">${escapeHtml(contestTitle)}</a> / 
+        <a href="${campaignUrl}">${escapeHtml(campaignTitle)}</a> / 
         <span>${escapeHtml(safeTitle)}</span>
       </nav>
       
@@ -369,8 +369,8 @@ function generateSeoHTML(submission: any): string {
         
         <div class="photo-meta">
           <div class="meta-item">
-            <div class="meta-label">Contest</div>
-            <div class="meta-value">${escapeHtml(contestTitle)}</div>
+            <div class="meta-label">Campaign</div>
+            <div class="meta-value">${escapeHtml(campaignTitle)}</div>
           </div>
           <div class="meta-item">
             <div class="meta-label">Category</div>
@@ -387,7 +387,7 @@ function generateSeoHTML(submission: any): string {
         </div>
         
         <div class="cta">
-          <a href="${contestUrl}" class="btn">View Contest</a>
+          <a href="${campaignUrl}" class="btn">View Campaign</a>
           <a href="https://gaal.app/gallery" class="btn btn-secondary">Explore Gallery</a>
         </div>
       </article>

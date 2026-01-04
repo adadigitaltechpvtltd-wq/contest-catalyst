@@ -134,7 +134,7 @@ const Notifications = () => {
                   You are all caught up! Notifications about your campaigns and submissions will appear here.
                 </p>
                 <Button asChild>
-                  <Link to="/contests">Browse Campaigns</Link>
+                  <Link to="/campaigns">Browse Campaigns</Link>
                 </Button>
               </CardContent>
             </Card>

@@ -17,7 +17,7 @@ export interface WinnerSubmission {
   };
 }
 
-export interface WinnerContest {
+export interface WinnerCampaign {
   id: string;
   title: string;
   theme: string | null;
@@ -30,7 +30,7 @@ export interface WinnerContest {
 }
 
 interface WinnerSelectionData {
-  contest: WinnerContest;
+  campaign: WinnerCampaign;
   submissions: WinnerSubmission[];
 }
 
@@ -65,7 +65,7 @@ async function fetchWinnerSelectionData(contestId: string): Promise<WinnerSelect
   if (submissionsError) throw submissionsError;
 
   return {
-    contest: contestData as WinnerContest,
+    campaign: contestData as WinnerCampaign,
     submissions: (submissionsData as unknown as WinnerSubmission[]) ?? [],
   };
 }

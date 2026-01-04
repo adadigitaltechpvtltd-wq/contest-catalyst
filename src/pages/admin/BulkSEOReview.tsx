@@ -213,7 +213,7 @@ const BulkSEOReview = () => {
       const seoTitle = s.editedTitle.slice(0, 60);
       const metaDesc = s.editedDescription 
         ? s.editedDescription.slice(0, 160)
-        : `${s.editedTitle} - Photo submission in ${s.contest?.title || 'contest'} by ${s.profile?.full_name || 'photographer'}`;
+        : `${s.editedTitle} - Photo submission in ${s.contest?.title || 'campaign'} by ${s.profile?.full_name || 'photographer'}`;
       
       return {
         ...s,
@@ -536,7 +536,7 @@ const BulkSEOReview = () => {
                           {submission.editedSeoTitle || submission.editedTitle} | GAAL
                         </p>
                         <p className="text-xs text-success truncate">
-                          gaal.app/photo/{submission.contest?.slug || 'contest'}/{submission.slug || 'photo'}
+                          gaal.app/photo/{submission.contest?.slug || 'campaign'}/{submission.slug || 'photo'}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {submission.editedMetaDescription || submission.editedDescription || 'No description'}

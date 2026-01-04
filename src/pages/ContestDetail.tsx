@@ -328,7 +328,7 @@ const ContestDetail = () => {
   };
 
   const getImageTags = (submission: ContestSubmission) => {
-    const baseTags = ['Photography', 'Contest'];
+    const baseTags = ['Photography', 'Campaign'];
     if (contest?.theme) baseTags.push(contest.theme);
     return baseTags;
   };
