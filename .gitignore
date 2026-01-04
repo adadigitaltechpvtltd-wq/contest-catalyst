@@ -22,8 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-<<<<<<< HEAD
-=======
 
 # Android signing
 *.keystore
@@ -33,4 +31,18 @@ android/keystore/
 # Local configs
 local.properties
 gradle.properties
->>>>>>> 70d9286 (commit)
+
+
+# Android / Gradle
+.gradle/
+android/.gradle/
+android/caches/
+android/build/
+android/wrapper/
+build/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
