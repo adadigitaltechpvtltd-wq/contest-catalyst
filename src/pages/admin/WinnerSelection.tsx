@@ -106,7 +106,7 @@ const WinnerSelection = () => {
         user_id: selectedSubmission.profile?.id,
         type: 'success',
         title: '🏆 Congratulations! You Won!',
-        message: `You've won the "${contest.title}" contest! Prize: $${contest.prize_amount}. Your earnings will be transferred soon.`,
+        message: `You've won the "${contest.title}" campaign! Prize: $${contest.prize_amount}. Your earnings will be transferred soon.`,
         link: `/campaign/general/${contest.id}`,
       });
 
@@ -168,7 +168,7 @@ const WinnerSelection = () => {
     return (
       <ErrorState 
         title="Failed to load data" 
-        message="Could not load contest data." 
+        message="Could not load campaign data." 
         onRetry={refetch} 
       />
     );
@@ -177,7 +177,7 @@ const WinnerSelection = () => {
   if (!contest) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Contest not found</p>
+        <p className="text-muted-foreground">Campaign not found</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate('/admin/campaigns')}>
           Back to Campaigns
         </Button>
@@ -191,11 +191,11 @@ const WinnerSelection = () => {
   return (
     <div>
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/admin/contests')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/admin/campaigns')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-display font-bold">Winner Selection</h1>
+          <h1 className="text-2xl font-display font-bold">Campaign Winner Selection</h1>
           <p className="text-muted-foreground">{contest.title}</p>
         </div>
         {hasWinner && (
@@ -236,13 +236,13 @@ const WinnerSelection = () => {
         </CardContent>
       </Card>
 
-      {/* Warning if contest is still active */}
+      {/* Warning if campaign is still active */}
       {!isEnded && (
         <Card className="border-amber-500/50 bg-amber-500/10 mb-6">
           <CardContent className="p-4 flex items-center gap-3">
             <Trophy className="h-5 w-5 text-amber-500" />
             <p className="text-amber-200">
-              This contest is still active. You can select a winner, but it's recommended to wait until the contest ends.
+              This campaign is still active. You can select a winner, but it's recommended to wait until the campaign ends.
             </p>
           </CardContent>
         </Card>
@@ -384,7 +384,7 @@ const WinnerSelection = () => {
               This will:
               <ul className="list-disc ml-6 mt-2">
                 <li>Mark this submission as the winner</li>
-                <li>Update the contest status to "Completed"</li>
+                <li>Update the campaign status to "Completed"</li>
                 <li>Add <strong>${contest.prize_amount}</strong> to winner's wallet (pending payout)</li>
                 <li>Notify the winner</li>
                 <li>Update the leaderboard</li>
