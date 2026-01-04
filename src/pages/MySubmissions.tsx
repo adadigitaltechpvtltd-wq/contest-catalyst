@@ -204,12 +204,12 @@ const MySubmissions = () => {
                 <h3 className="text-xl font-semibold mb-2">No Submissions Yet</h3>
                 <p className="text-muted-foreground mb-6">
                   {activeTab === 'all'
-                    ? "You haven't submitted any photos yet. Join a contest to get started!"
+                    ? "You haven't submitted any photos yet. Join a campaign to get started!"
                     : `No ${activeTab} submissions found.`}
                 </p>
                 {activeTab === 'all' && (
                   <Button asChild>
-                    <Link to="/contests">Browse Campaigns</Link>
+                    <Link to="/campaigns">Browse Campaigns</Link>
                   </Button>
                 )}
               </CardContent>

@@ -40,7 +40,7 @@ const WinnerSelection = () => {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, refetch } = useWinnerSelectionQuery(contestId);
-  const contest = data?.contest ?? null;
+  const contest = data?.campaign ?? null;
   const submissions = data?.submissions ?? [];
 
   const [selectedSubmission, setSelectedSubmission] = useState<WinnerSubmission | null>(null);
