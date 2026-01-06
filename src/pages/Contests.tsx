@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Clock, Users, ArrowRight, Share2, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow, isPast, isFuture, differenceInDays } from 'date-fns';
-import { useContestsQuery, ContestWithCount } from '@/hooks/useContestsQuery';
+import { useCampaignsQuery, CampaignWithCount } from '@/hooks/useCampaignsQuery';
 
 const gradientBorders = [
   "from-orange-500 via-red-500 to-pink-500",
@@ -19,22 +19,22 @@ const gradientBorders = [
   "from-indigo-500 via-purple-500 to-pink-500",
 ];
 
-const getContestDisplayStatus = (contest: ContestWithCount): "live" | "soon" | "ended" => {
+const getCampaignDisplayStatus = (campaign: CampaignWithCount): "live" | "soon" | "ended" => {
   const now = new Date();
-  const start = new Date(contest.start_date);
-  const end = new Date(contest.end_date);
+  const start = new Date(campaign.start_date);
+  const end = new Date(campaign.end_date);
 
-  if (contest.status === "completed" || isPast(end)) return "ended";
+  if (campaign.status === "completed" || isPast(end)) return "ended";
   if (isFuture(start)) return "soon";
   return "live";
 };
 
-const getTimeDisplay = (contest: ContestWithCount, status: "live" | "soon" | "ended"): string => {
+const getTimeDisplay = (campaign: CampaignWithCount, status: "live" | "soon" | "ended"): string => {
   if (status === "ended") return "Ended";
   if (status === "soon") {
-    return `Starts ${formatDistanceToNow(new Date(contest.start_date), { addSuffix: true })}`;
+    return `Starts ${formatDistanceToNow(new Date(campaign.start_date), { addSuffix: true })}`;
   }
-  return formatDistanceToNow(new Date(contest.end_date), { addSuffix: false }) + " left";
+  return formatDistanceToNow(new Date(campaign.end_date), { addSuffix: false }) + " left";
 };
 
 const getDaysLeft = (endDate: string): number => {
@@ -49,19 +49,19 @@ const formatPrize = (amount: number, currency: string) => {
 
 const Contests = () => {
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
-  const { data: contests = [], isLoading, error, refetch } = useContestsQuery();
+  const { data: campaigns = [], isLoading, error, refetch } = useCampaignsQuery();
 
   const now = new Date();
-  const activeContests = contests.filter((c) => 
+  const activeCampaigns = campaigns.filter((c) => 
     (c.status === 'active' || c.status === 'voting') && new Date(c.end_date) > now
   );
-  const completedContests = contests.filter((c) => 
+  const completedCampaigns = campaigns.filter((c) => 
     c.status === 'completed' || new Date(c.end_date) <= now
   );
 
-  const ContestCard = ({ contest, index }: { contest: ContestWithCount; index: number }) => {
-    const status = getContestDisplayStatus(contest);
-    const timeDisplay = getTimeDisplay(contest, status);
+  const CampaignCard = ({ campaign, index }: { campaign: CampaignWithCount; index: number }) => {
+    const status = getCampaignDisplayStatus(campaign);
+    const timeDisplay = getTimeDisplay(campaign, status);
     const gradientBorder = gradientBorders[index % gradientBorders.length];
 
     return (
@@ -72,11 +72,11 @@ const Contests = () => {
       >
         {/* Image Banner */}
         <div className="relative w-full h-48 overflow-hidden bg-muted">
-          {contest.cover_image_url ? (
+          {campaign.cover_image_url ? (
             <>
               <img 
-                src={contest.cover_image_url} 
-                alt={contest.title} 
+                src={campaign.cover_image_url} 
+                alt={campaign.title} 
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
               />
               {/* Image Overlay */}
@@ -106,8 +106,8 @@ const Contests = () => {
               size="icon"
               className="h-8 w-8 bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm rounded-full"
               onClick={() => {
-                const url = window.location.origin + `/campaign/${contest.category || 'general'}/${contest.slug || contest.id}`;
-                navigator.share?.({ title: contest.title, url }) || navigator.clipboard.writeText(url);
+                const url = window.location.origin + `/campaign/${campaign.category || 'general'}/${campaign.slug || campaign.id}`;
+                navigator.share?.({ title: campaign.title, url }) || navigator.clipboard.writeText(url);
               }}
             >
               <Share2 className="w-4 h-4" />
@@ -115,7 +115,7 @@ const Contests = () => {
             
             {status === "live" && (
               <div className="bg-white/20 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-semibold">
-                {getDaysLeft(contest.end_date)} {getDaysLeft(contest.end_date) === 1 ? 'day' : 'days'} left
+                {getDaysLeft(campaign.end_date)} {getDaysLeft(campaign.end_date) === 1 ? 'day' : 'days'} left
               </div>
             )}
           </div>
@@ -125,31 +125,30 @@ const Contests = () => {
         <div className="relative p-5 flex-grow flex flex-col">
           {/* Header */}
           <div className="mb-3">
-            <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">{contest.theme || "Participation Campaign"}</span>
-            <h3 className="font-display font-bold text-lg text-foreground line-clamp-2 mt-1">"{contest.title}"</h3>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">{campaign.theme || "Participation Campaign"}</span>
+            <h3 className="font-display font-bold text-lg text-foreground line-clamp-2 mt-1">"{campaign.title}"</h3>
           </div>
 
           {/* Description */}
           <p className="text-sm text-muted-foreground mb-4 line-clamp-2 flex-grow">
-            {contest.description || "Join this participation campaign and share your authentic experience!"}
+            {campaign.description || "Join this participation campaign and share your authentic experience!"}
           </p>
-
 
           {/* Stats */}
           <div className="flex items-center gap-4 mb-4 text-sm border-t border-border pt-4">
             <span className="flex items-center gap-2">
-              {contest.prize_amount === 0 ? (
+              {campaign.prize_amount === 0 ? (
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold">🎉 FREE</span>
               ) : (
                 <>
                   <span className="text-primary font-semibold">🏆</span>
-                  <span className="text-foreground font-semibold">{formatPrize(contest.prize_amount, contest.prize_currency)}</span>
+                  <span className="text-foreground font-semibold">{formatPrize(campaign.prize_amount, campaign.prize_currency)}</span>
                 </>
               )}
             </span>
             <span className="flex items-center gap-1.5 text-muted-foreground ml-auto">
               <Users className="w-4 h-4" />
-              <span className="text-foreground font-medium">{contest.participantCount}</span>
+              <span className="text-foreground font-medium">{campaign.participantCount}</span>
             </span>
             <span className="flex items-center gap-1.5 text-muted-foreground">
               <Clock className="w-4 h-4" />
@@ -159,7 +158,7 @@ const Contests = () => {
 
           {/* Action Button */}
           {status === "live" ? (
-            <Link to={`/campaign/${contest.category || 'general'}/${contest.slug || contest.id}`} className="w-full">
+            <Link to={`/campaign/${campaign.category || 'general'}/${campaign.slug || campaign.id}`} className="w-full">
               <Button className="w-full">
                 Join Campaign <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
@@ -169,7 +168,7 @@ const Contests = () => {
               Coming Soon
             </Button>
           ) : (
-            <Link to={`/campaign/${contest.category || 'general'}/${contest.slug || contest.id}`} className="w-full">
+            <Link to={`/campaign/${campaign.category || 'general'}/${campaign.slug || campaign.id}`} className="w-full">
               <Button variant="ghost" className="w-full text-muted-foreground">
                 View Results <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
@@ -227,10 +226,10 @@ const Contests = () => {
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'active' | 'completed')}>
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
             <TabsTrigger value="active">
-              Live ({activeContests.length})
+              Live ({activeCampaigns.length})
             </TabsTrigger>
             <TabsTrigger value="completed">
-              Completed ({completedContests.length})
+              Completed ({completedCampaigns.length})
             </TabsTrigger>
           </TabsList>
 
@@ -245,7 +244,7 @@ const Contests = () => {
           ) : (
             <>
               <TabsContent value="active">
-                {activeContests.length === 0 ? (
+                {activeCampaigns.length === 0 ? (
                   <div className="text-center py-12">
                     <Trophy className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                     <h3 className="text-xl font-semibold mb-2">No Live Campaigns</h3>
@@ -255,15 +254,15 @@ const Contests = () => {
                   </div>
                 ) : (
                   <div className="grid md:grid-cols-2 gap-6">
-                    {activeContests.map((contest, index) => (
-                      <ContestCard key={contest.id} contest={contest} index={index} />
+                    {activeCampaigns.map((campaign, index) => (
+                      <CampaignCard key={campaign.id} campaign={campaign} index={index} />
                     ))}
                   </div>
                 )}
               </TabsContent>
 
               <TabsContent value="completed">
-                {completedContests.length === 0 ? (
+                {completedCampaigns.length === 0 ? (
                   <div className="text-center py-12">
                     <Trophy className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                     <h3 className="text-xl font-semibold mb-2">No Completed Campaigns Yet</h3>
@@ -273,8 +272,8 @@ const Contests = () => {
                   </div>
                 ) : (
                   <div className="grid md:grid-cols-2 gap-6">
-                    {completedContests.map((contest, index) => (
-                      <ContestCard key={contest.id} contest={contest} index={index} />
+                    {completedCampaigns.map((campaign, index) => (
+                      <CampaignCard key={campaign.id} campaign={campaign} index={index} />
                     ))}
                   </div>
                 )}
