@@ -4,7 +4,7 @@ import WhatIsGaal from "@/components/home/WhatIsGaal";
 import WhyPeopleJoin from "@/components/home/WhyPeopleJoin";
 import WhyBrandsUse from "@/components/home/WhyBrandsUse";
 import HowItWorks from "@/components/HowItWorks";
-import ActiveContests from "@/components/ActiveContests";
+import ActiveCampaigns from "@/components/ActiveCampaigns";
 import TrustSection from "@/components/home/TrustSection";
 import Footer from "@/components/Footer";
 
@@ -17,7 +17,7 @@ const Index = () => {
       <WhyPeopleJoin />
       <WhyBrandsUse />
       <HowItWorks />
-      <ActiveContests />
+      <ActiveCampaigns />
       <TrustSection />
       <Footer />
     </div>
