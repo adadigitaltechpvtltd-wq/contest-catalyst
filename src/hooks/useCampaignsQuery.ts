@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type ContestStatus = "active" | "voting" | "completed" | "draft" | "cancelled";
+export type CampaignStatus = "active" | "voting" | "completed" | "draft" | "cancelled";
 
-export interface Contest {
+export interface Campaign {
   id: string;
   slug: string | null;
   title: string;
@@ -15,22 +15,27 @@ export interface Contest {
   min_participants: number;
   start_date: string;
   end_date: string;
-  status: ContestStatus;
+  status: CampaignStatus;
   featured_in_hero?: boolean;
   brand_logo_url?: string | null;
   brand_image_url?: string | null;
   category?: string | null;
 }
 
-export interface ContestWithCount extends Contest {
+export interface CampaignWithCount extends Campaign {
   participantCount: number;
 }
 
-// Fetch all contests with participant counts
-export const useContestsQuery = () => {
+// Legacy type aliases for backwards compatibility
+export type ContestStatus = CampaignStatus;
+export type Contest = Campaign;
+export type ContestWithCount = CampaignWithCount;
+
+// Fetch all campaigns with participant counts
+export const useCampaignsQuery = () => {
   return useQuery({
-    queryKey: ["contests", "list"],
-    queryFn: async (): Promise<ContestWithCount[]> => {
+    queryKey: ["campaigns", "list"],
+    queryFn: async (): Promise<CampaignWithCount[]> => {
       const { data, error } = await supabase
         .from("contests")
         .select("*")
@@ -41,28 +46,31 @@ export const useContestsQuery = () => {
       if (!data) return [];
 
       // Fetch participant counts
-      const contestsWithCounts = await Promise.all(
-        data.map(async (contest) => {
+      const campaignsWithCounts = await Promise.all(
+        data.map(async (campaign) => {
           const { count } = await supabase
             .from("submissions")
             .select("*", { count: "exact" })
-            .eq("contest_id", contest.id).limit(0);
+            .eq("contest_id", campaign.id).limit(0);
           return {
-            ...contest,
+            ...campaign,
             participantCount: count ?? 0,
-          } as ContestWithCount;
+          } as CampaignWithCount;
         })
       );
 
-      return contestsWithCounts;
+      return campaignsWithCounts;
     },
   });
 };
 
-// Fetch featured hero contest
-export const useFeaturedContestQuery = () => {
+// Legacy alias
+export const useContestsQuery = useCampaignsQuery;
+
+// Fetch featured hero campaign
+export const useFeaturedCampaignQuery = () => {
   return useQuery({
-    queryKey: ["contests", "featured"],
+    queryKey: ["campaigns", "featured"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contests")
@@ -90,11 +98,14 @@ export const useFeaturedContestQuery = () => {
   });
 };
 
-// Fetch active contests for home page (non-featured)
-export const useActiveContestsQuery = (limit = 4) => {
+// Legacy alias
+export const useFeaturedContestQuery = useFeaturedCampaignQuery;
+
+// Fetch active campaigns for home page (non-featured)
+export const useActiveCampaignsQuery = (limit = 4) => {
   return useQuery({
-    queryKey: ["contests", "active", limit],
-    queryFn: async (): Promise<ContestWithCount[]> => {
+    queryKey: ["campaigns", "active", limit],
+    queryFn: async (): Promise<CampaignWithCount[]> => {
       const { data, error } = await supabase
         .from("contests")
         .select("id, slug, title, description, prize_amount, prize_currency, start_date, end_date, status, theme, cover_image_url")
@@ -107,20 +118,23 @@ export const useActiveContestsQuery = (limit = 4) => {
       if (!data) return [];
 
       // Fetch participant counts
-      const contestsWithCounts = await Promise.all(
-        data.map(async (contest) => {
+      const campaignsWithCounts = await Promise.all(
+        data.map(async (campaign) => {
           const { count } = await supabase
             .from("submissions")
             .select("*", { count: "exact" })
-            .eq("contest_id", contest.id).limit(0);
+            .eq("contest_id", campaign.id).limit(0);
           return {
-            ...contest,
+            ...campaign,
             participantCount: count ?? 0,
-          } as ContestWithCount;
+          } as CampaignWithCount;
         })
       );
 
-      return contestsWithCounts;
+      return campaignsWithCounts;
     },
   });
 };
+
+// Legacy alias
+export const useActiveContestsQuery = useActiveCampaignsQuery;

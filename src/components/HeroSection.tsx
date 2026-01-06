@@ -3,17 +3,17 @@ import { Play, Trophy, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useFeaturedContestQuery } from "@/hooks/useContestsQuery";
+import { useFeaturedCampaignQuery } from "@/hooks/useCampaignsQuery";
 
 const HeroSection = () => {
-  const { data: contestData, isLoading } = useFeaturedContestQuery();
+  const { data: campaignData, isLoading } = useFeaturedCampaignQuery();
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
 
   useEffect(() => {
-    if (!contestData?.end_date) return;
+    if (!campaignData?.end_date) return;
 
     const updateCountdown = () => {
-      const endTime = new Date(contestData.end_date).getTime();
+      const endTime = new Date(campaignData.end_date).getTime();
       const now = Date.now();
       const diff = Math.max(0, endTime - now);
 
@@ -28,7 +28,7 @@ const HeroSection = () => {
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [contestData?.end_date]);
+  }, [campaignData?.end_date]);
 
   const formatPrize = (amount: number, currency: string) => {
     if (currency === "USD") return `$${amount.toLocaleString()}`;
@@ -69,7 +69,7 @@ const HeroSection = () => {
           <div className="flex justify-center mb-7">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/15 border border-primary/25 text-primary text-sm font-semibold">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              {contestData ? "Campaign Live" : "New Campaign Coming"}
+              {campaignData ? "Campaign Live" : "New Campaign Coming"}
             </div>
           </div>
 
@@ -117,7 +117,7 @@ const HeroSection = () => {
               <Skeleton className="mt-4 h-5 w-full max-w-md" />
               <Skeleton className="mt-6 h-24 w-full rounded-2xl" />
             </div>
-          ) : contestData ? (
+          ) : campaignData ? (
             <div className="mt-12 mx-auto max-w-4xl glass-card rounded-3xl">
               <div className="p-6 md:p-8">
                 {/* Top row */}
@@ -128,7 +128,7 @@ const HeroSection = () => {
                     </div>
                     <div className="text-left">
                       <div className="text-sm text-muted-foreground">Live Campaign</div>
-                      <div className="font-display text-2xl font-bold text-foreground">"{contestData.title}"</div>
+                      <div className="font-display text-2xl font-bold text-foreground">"{campaignData.title}"</div>
                     </div>
                   </div>
                   <span className="px-4 py-2 rounded-full bg-primary/90 text-primary-foreground text-sm font-semibold">
@@ -137,7 +137,7 @@ const HeroSection = () => {
                 </div>
 
                 <p className="mt-4 text-left text-muted-foreground">
-                  {contestData.description || contestData.theme || "Join this exciting participation campaign!"}
+                  {campaignData.description || campaignData.theme || "Join this exciting participation campaign!"}
                 </p>
 
                 {/* Countdown row */}
@@ -162,19 +162,19 @@ const HeroSection = () => {
                   <div className="flex items-center gap-6 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4" />
-                      <span>{contestData.participantCount.toLocaleString()} participants</span>
+                      <span>{campaignData.participantCount.toLocaleString()} participants</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Trophy className="w-4 h-4" />
-                      {contestData.prize_amount === 0 ? (
+                      {campaignData.prize_amount === 0 ? (
                         <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold">🎉 FREE</span>
                       ) : (
-                        <span>Up to {formatPrize(contestData.prize_amount, contestData.prize_currency)} in rewards</span>
+                        <span>Up to {formatPrize(campaignData.prize_amount, campaignData.prize_currency)} in rewards</span>
                       )}
                     </div>
                   </div>
 
-                  <Link to={`/contest/${contestData.slug || contestData.id}`}>
+                  <Link to={`/campaign/${campaignData.slug || campaignData.id}`}>
                     <Button size="lg" className="rounded-2xl px-10">
                       Join Now
                     </Button>

@@ -3,25 +3,25 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow, isPast, isFuture, differenceInDays } from "date-fns";
-import { useActiveContestsQuery, ContestWithCount } from "@/hooks/useContestsQuery";
+import { useActiveCampaignsQuery, CampaignWithCount } from "@/hooks/useCampaignsQuery";
 import { useState } from "react";
 
-const getContestStatus = (contest: ContestWithCount): "live" | "soon" | "ended" => {
+const getCampaignStatus = (campaign: CampaignWithCount): "live" | "soon" | "ended" => {
   const now = new Date();
-  const start = new Date(contest.start_date);
-  const end = new Date(contest.end_date);
+  const start = new Date(campaign.start_date);
+  const end = new Date(campaign.end_date);
 
-  if (contest.status === "completed" || isPast(end)) return "ended";
+  if (campaign.status === "completed" || isPast(end)) return "ended";
   if (isFuture(start)) return "soon";
   return "live";
 };
 
-const getTimeDisplay = (contest: ContestWithCount, status: "live" | "soon" | "ended"): string => {
+const getTimeDisplay = (campaign: CampaignWithCount, status: "live" | "soon" | "ended"): string => {
   if (status === "ended") return "Ended";
   if (status === "soon") {
-    return `Starts ${formatDistanceToNow(new Date(contest.start_date), { addSuffix: true })}`;
+    return `Starts ${formatDistanceToNow(new Date(campaign.start_date), { addSuffix: true })}`;
   }
-  return formatDistanceToNow(new Date(contest.end_date), { addSuffix: false }) + " left";
+  return formatDistanceToNow(new Date(campaign.end_date), { addSuffix: false }) + " left";
 };
 
 const getDaysLeft = (endDate: string): number => {
@@ -44,7 +44,7 @@ const gradientBorders = [
 ];
 
 const ActiveCampaigns = () => {
-  const { data: contests = [], isLoading } = useActiveContestsQuery(4);
+  const { data: campaigns = [], isLoading } = useActiveCampaignsQuery(4);
 
   if (isLoading) {
     return (
@@ -101,31 +101,31 @@ const ActiveCampaigns = () => {
         </div>
 
         {/* Campaign Grid */}
-        {contests.length === 0 ? (
+        {campaigns.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No active campaigns at the moment. Check back soon!</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            {contests.map((contest, i) => {
-              const status = getContestStatus(contest);
-              const timeDisplay = getTimeDisplay(contest, status);
+            {campaigns.map((campaign, i) => {
+              const status = getCampaignStatus(campaign);
+              const timeDisplay = getTimeDisplay(campaign, status);
               const gradientBorder = gradientBorders[i % gradientBorders.length];
 
               return (
                 <div 
-                  key={contest.id}
+                  key={campaign.id}
                   className={`group relative overflow-hidden rounded-2xl bg-card transition-all duration-300 hover:shadow-lg hover:scale-[1.02] flex flex-col ${
                     status === "ended" ? "opacity-60" : ""
                   }`}
                 >
                   {/* Image Banner */}
                   <div className="relative w-full h-48 overflow-hidden bg-muted">
-                    {contest.cover_image_url ? (
+                    {campaign.cover_image_url ? (
                       <>
                         <img 
-                          src={contest.cover_image_url} 
-                          alt={contest.title} 
+                          src={campaign.cover_image_url} 
+                          alt={campaign.title} 
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                         />
                         {/* Image Overlay */}
@@ -155,8 +155,8 @@ const ActiveCampaigns = () => {
                         size="icon"
                         className="h-8 w-8 bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm rounded-full"
                         onClick={() => {
-                          const url = window.location.origin + `/campaign/${contest.category || 'general'}/${contest.slug || contest.id}`;
-                          navigator.share?.({ title: contest.title, url }) || navigator.clipboard.writeText(url);
+                          const url = window.location.origin + `/campaign/${campaign.category || 'general'}/${campaign.slug || campaign.id}`;
+                          navigator.share?.({ title: campaign.title, url }) || navigator.clipboard.writeText(url);
                         }}
                       >
                         <Share2 className="w-4 h-4" />
@@ -164,7 +164,7 @@ const ActiveCampaigns = () => {
                       
                       {status === "live" && (
                         <div className="bg-white/20 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-semibold">
-                          {getDaysLeft(contest.end_date)} {getDaysLeft(contest.end_date) === 1 ? 'day' : 'days'} left
+                          {getDaysLeft(campaign.end_date)} {getDaysLeft(campaign.end_date) === 1 ? 'day' : 'days'} left
                         </div>
                       )}
                     </div>
@@ -174,30 +174,30 @@ const ActiveCampaigns = () => {
                   <div className="relative p-5 flex-grow flex flex-col">
                     {/* Header */}
                     <div className="mb-3">
-                      <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">{contest.theme || "Photography"}</span>
-                      <h3 className="font-display font-bold text-lg text-foreground line-clamp-2 mt-1">"{contest.title}"</h3>
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">{campaign.theme || "Photography"}</span>
+                      <h3 className="font-display font-bold text-lg text-foreground line-clamp-2 mt-1">"{campaign.title}"</h3>
                     </div>
 
                     {/* Description */}
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-2 flex-grow">
-                      {contest.description || "Join this exciting photography challenge!"}
+                      {campaign.description || "Join this exciting photography challenge!"}
                     </p>
 
                     {/* Stats */}
                     <div className="flex items-center gap-4 mb-4 text-sm border-t border-border pt-4">
                       <span className="flex items-center gap-2">
-                        {contest.prize_amount === 0 ? (
+                        {campaign.prize_amount === 0 ? (
                           <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold">🎉 FREE</span>
                         ) : (
                           <>
                             <span className="text-primary font-semibold">🏆</span>
-                            <span className="text-foreground font-semibold">{formatPrize(contest.prize_amount, contest.prize_currency)}</span>
+                            <span className="text-foreground font-semibold">{formatPrize(campaign.prize_amount, campaign.prize_currency)}</span>
                           </>
                         )}
                       </span>
                       <span className="flex items-center gap-1.5 text-muted-foreground ml-auto">
                         <Users className="w-4 h-4" />
-                        <span className="text-foreground font-medium">{contest.participantCount}</span>
+                        <span className="text-foreground font-medium">{campaign.participantCount}</span>
                       </span>
                       <span className="flex items-center gap-1.5 text-muted-foreground">
                         <Clock className="w-4 h-4" />
@@ -207,7 +207,7 @@ const ActiveCampaigns = () => {
 
                     {/* Action Button */}
                     {status === "live" ? (
-                      <Link to={`/campaign/${contest.category || 'general'}/${contest.slug || contest.id}`} className="w-full">
+                      <Link to={`/campaign/${campaign.category || 'general'}/${campaign.slug || campaign.id}`} className="w-full">
                         <Button className="w-full">
                           Enter Campaign <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
@@ -217,7 +217,7 @@ const ActiveCampaigns = () => {
                         Coming Soon
                       </Button>
                     ) : (
-                      <Link to={`/campaign/${contest.category || 'general'}/${contest.slug || contest.id}`} className="w-full">
+                      <Link to={`/campaign/${campaign.category || 'general'}/${campaign.slug || campaign.id}`} className="w-full">
                         <Button variant="ghost" className="w-full text-muted-foreground">
                           View Winners <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
