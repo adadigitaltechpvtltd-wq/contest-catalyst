@@ -43,7 +43,7 @@ const gradientBorders = [
   "from-indigo-500 via-purple-500 to-pink-500",
 ];
 
-const ActiveContests = () => {
+const ActiveCampaigns = () => {
   const { data: contests = [], isLoading } = useActiveContestsQuery(4);
 
   if (isLoading) {
@@ -243,4 +243,4 @@ const ActiveContests = () => {
   );
 };
 
-export default ActiveContests;
+export default ActiveCampaigns;
