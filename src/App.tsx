@@ -12,7 +12,7 @@ import OfflineBanner from "@/components/OfflineBanner";
 import AdminLayout from "@/components/AdminLayout";
 import Index from "./pages/Index";
 import PhotoDetail from "./pages/PhotoDetail";
-import ContestDetail from "./pages/ContestDetail";
+import CampaignDetail from "./pages/CampaignDetail";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
@@ -77,12 +77,12 @@ const AppContent = () => {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/campaigns" element={<Campaigns />} />
         {/* New URL structure with category */}
-        <Route path="/campaign/:category/:slug" element={<ContestDetail />} />
+        <Route path="/campaign/:category/:slug" element={<CampaignDetail />} />
         <Route path="/gallery/:category/:contestSlug/:photoSlug" element={<PhotoDetail />} />
         {/* Legacy redirects - handled by components */}
         <Route path="/contests" element={<Campaigns />} />
-        <Route path="/contest/:category/:slug" element={<ContestDetail />} />
-        <Route path="/contest/:slug" element={<ContestDetail />} />
+        <Route path="/contest/:category/:slug" element={<CampaignDetail />} />
+        <Route path="/contest/:slug" element={<CampaignDetail />} />
         <Route path="/photo/:contestSlug/:photoSlug" element={<PhotoDetail />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />

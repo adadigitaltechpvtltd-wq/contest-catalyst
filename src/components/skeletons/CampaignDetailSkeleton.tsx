@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-const ContestDetailSkeleton = () => {
+const CampaignDetailSkeleton = () => {
   return (
     <div className="container mx-auto px-4 pt-8">
       {/* Back link skeleton */}
@@ -51,4 +51,4 @@ const ContestDetailSkeleton = () => {
   );
 };
 
-export default ContestDetailSkeleton;
+export default CampaignDetailSkeleton;

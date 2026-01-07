@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const ContestCardSkeleton = () => {
+const CampaignCardSkeleton = () => {
   return (
     <Card className="glass-card overflow-hidden">
       <Skeleton className="aspect-video w-full" />
@@ -20,4 +20,4 @@ const ContestCardSkeleton = () => {
   );
 };
 
-export default ContestCardSkeleton;
+export default CampaignCardSkeleton;
