@@ -1,7 +1,7 @@
 import { Clock, Users, Trophy, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface ContestCardProps {
+interface CampaignCardProps {
   theme: string;
   brand?: string;
   prize: string;
@@ -13,8 +13,8 @@ interface ContestCardProps {
   featured?: boolean;
 }
 
-const ContestCard = ({ theme, brand, prize, prizeAmount, timeLeft, participants, image, coverImage, featured }: ContestCardProps) => {
-  const isFreeContest = prizeAmount === 0;
+const CampaignCard = ({ theme, brand, prize, prizeAmount, timeLeft, participants, image, coverImage, featured }: CampaignCardProps) => {
+  const isFreeCampaign = prizeAmount === 0;
   const displayImage = coverImage || image;
   
   return (
@@ -39,8 +39,8 @@ const ContestCard = ({ theme, brand, prize, prizeAmount, timeLeft, participants,
           </div>
         )}
         
-        {/* Free contest badge */}
-        {isFreeContest && (
+        {/* Free campaign badge */}
+        {isFreeCampaign && (
           <div className={`absolute ${brand ? 'top-14' : 'top-4'} left-4 px-3 py-1.5 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg`}>
             🎉 FREE
           </div>
@@ -72,7 +72,7 @@ const ContestCard = ({ theme, brand, prize, prizeAmount, timeLeft, participants,
 
         <Button variant={featured ? "hero" : "default"} size={featured ? "lg" : "default"} className="w-full">
           <Camera className="w-4 h-4" />
-          Enter Contest
+          Enter Campaign
         </Button>
       </div>
 
@@ -84,4 +84,4 @@ const ContestCard = ({ theme, brand, prize, prizeAmount, timeLeft, participants,
   );
 };
 
-export default ContestCard;
+export default CampaignCard;

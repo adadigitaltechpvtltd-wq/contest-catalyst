@@ -1,7 +1,7 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface Contest {
+export interface Campaign {
   id: string;
   slug: string | null;
   category: string | null;
@@ -36,7 +36,7 @@ export interface Contest {
   keywords: string[] | null;
 }
 
-export interface ContestSubmission {
+export interface CampaignSubmission {
   id: string;
   title: string;
   image_url: string;
@@ -52,11 +52,15 @@ export interface ContestSubmission {
   };
 }
 
+// Legacy type aliases for backwards compatibility
+export type Contest = Campaign;
+export type ContestSubmission = CampaignSubmission;
+
 const SUBMISSIONS_PER_PAGE = 12;
 
-export const useContestDetailQuery = (slug: string | undefined) => {
+export const useCampaignDetailQuery = (slug: string | undefined) => {
   return useQuery({
-    queryKey: ['contest-detail', slug],
+    queryKey: ['campaign-detail', slug],
     queryFn: async () => {
       if (!slug) return null;
 
@@ -71,78 +75,90 @@ export const useContestDetailQuery = (slug: string | undefined) => {
 
       if (error) throw error;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (data as any) as Contest | null;
+      return (data as any) as Campaign | null;
     },
     enabled: !!slug,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 };
 
-export const useContestParticipantCount = (contestId: string | undefined) => {
+// Legacy alias
+export const useContestDetailQuery = useCampaignDetailQuery;
+
+export const useCampaignParticipantCount = (campaignId: string | undefined) => {
   return useQuery({
-    queryKey: ['contest-participants', contestId],
+    queryKey: ['campaign-participants', campaignId],
     queryFn: async () => {
-      if (!contestId) return 0;
+      if (!campaignId) return 0;
 
       const { count, error } = await supabase
         .from('submissions')
         .select('*', { count: 'exact', head: true })
-        .eq('contest_id', contestId);
+        .eq('contest_id', campaignId);
 
       if (error) throw error;
       return count || 0;
     },
-    enabled: !!contestId,
+    enabled: !!campaignId,
     staleTime: 2 * 60 * 1000,
   });
 };
 
-export const useUserContestSubmission = (contestId: string | undefined, userId: string | undefined) => {
+// Legacy alias
+export const useContestParticipantCount = useCampaignParticipantCount;
+
+export const useUserCampaignSubmission = (campaignId: string | undefined, userId: string | undefined) => {
   return useQuery({
-    queryKey: ['user-contest-submission', contestId, userId],
+    queryKey: ['user-campaign-submission', campaignId, userId],
     queryFn: async () => {
-      if (!contestId || !userId) return null;
+      if (!campaignId || !userId) return null;
 
       const { data, error } = await supabase
         .from('submissions')
         .select('id, title')
-        .eq('contest_id', contestId)
+        .eq('contest_id', campaignId)
         .eq('user_id', userId)
         .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!contestId && !!userId,
+    enabled: !!campaignId && !!userId,
     staleTime: 2 * 60 * 1000,
   });
 };
 
-export const useContestApprovedCount = (contestId: string | undefined) => {
+// Legacy alias
+export const useUserContestSubmission = useUserCampaignSubmission;
+
+export const useCampaignApprovedCount = (campaignId: string | undefined) => {
   return useQuery({
-    queryKey: ['contest-approved-count', contestId],
+    queryKey: ['campaign-approved-count', campaignId],
     queryFn: async () => {
-      if (!contestId) return 0;
+      if (!campaignId) return 0;
 
       const { count, error } = await supabase
         .from('submissions')
         .select('*', { count: 'exact', head: true })
-        .eq('contest_id', contestId)
+        .eq('contest_id', campaignId)
         .in('status', ['approved', 'winner']);
 
       if (error) throw error;
       return count || 0;
     },
-    enabled: !!contestId,
+    enabled: !!campaignId,
     staleTime: 2 * 60 * 1000,
   });
 };
 
-export const useContestSubmissionsInfinite = (contestId: string | undefined) => {
+// Legacy alias
+export const useContestApprovedCount = useCampaignApprovedCount;
+
+export const useCampaignSubmissionsInfinite = (campaignId: string | undefined) => {
   return useInfiniteQuery({
-    queryKey: ['contest-submissions', contestId],
+    queryKey: ['campaign-submissions', campaignId],
     queryFn: async ({ pageParam = 0 }) => {
-      if (!contestId) return { submissions: [], nextPage: undefined };
+      if (!campaignId) return { submissions: [], nextPage: undefined };
 
       const { data, error } = await supabase
         .from('submissions')
@@ -161,14 +177,14 @@ export const useContestSubmissionsInfinite = (contestId: string | undefined) => 
             avatar_url
           )
         `)
-        .eq('contest_id', contestId)
+        .eq('contest_id', campaignId)
         .in('status', ['approved', 'winner'])
         .order('created_at', { ascending: false })
         .range(pageParam * SUBMISSIONS_PER_PAGE, (pageParam + 1) * SUBMISSIONS_PER_PAGE - 1);
 
       if (error) throw error;
 
-      const submissions = (data || []) as unknown as ContestSubmission[];
+      const submissions = (data || []) as unknown as CampaignSubmission[];
       const hasMore = submissions.length === SUBMISSIONS_PER_PAGE;
 
       return {
@@ -178,10 +194,13 @@ export const useContestSubmissionsInfinite = (contestId: string | undefined) => 
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled: !!contestId,
+    enabled: !!campaignId,
     staleTime: 2 * 60 * 1000,
   });
 };
+
+// Legacy alias
+export const useContestSubmissionsInfinite = useCampaignSubmissionsInfinite;
 
 export const useUserSubmissionLikes = (userId: string | undefined, submissionIds: string[]) => {
   return useQuery({

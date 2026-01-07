@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Clock, Users, Trophy, CheckCircle, Share2, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check, ChevronLeft, ChevronRight, Download, Heart, Facebook, X, Youtube, ExternalLink, Building2 } from "lucide-react";
-import ContestDetailSkeleton from "@/components/skeletons/ContestDetailSkeleton";
+import CampaignDetailSkeleton from "@/components/skeletons/CampaignDetailSkeleton";
 import ErrorState from "@/components/ErrorState";
 import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,15 @@ import SubmissionModal from "@/components/SubmissionModal";
 import InlineAuthDialog from "@/components/InlineAuthDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  useContestDetailQuery, 
-  useContestParticipantCount, 
-  useUserContestSubmission,
-  useContestApprovedCount,
-  useContestSubmissionsInfinite,
+  useCampaignDetailQuery, 
+  useCampaignParticipantCount, 
+  useUserCampaignSubmission,
+  useCampaignApprovedCount,
+  useCampaignSubmissionsInfinite,
   useUserSubmissionLikes,
-  Contest,
-  ContestSubmission 
-} from "@/hooks/useContestDetailQuery";
+  Campaign,
+  CampaignSubmission 
+} from "@/hooks/useCampaignDetailQuery";
 import { formatDistanceToNow, format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -27,13 +27,13 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { getContestCanonicalUrl, getContestSchema } from "@/lib/seoUtils";
 
-const ContestDetail = () => {
+const CampaignDetail = () => {
   const { category, slug } = useParams<{ category?: string; slug: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<ContestSubmission | null>(null);
+  const [selectedImage, setSelectedImage] = useState<CampaignSubmission | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -45,16 +45,16 @@ const ContestDetail = () => {
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   // React Query hooks
-  const { data: contest, isLoading: contestLoading, isError: contestError, refetch: refetchContest } = useContestDetailQuery(slug);
-  const { data: participantCount = 0 } = useContestParticipantCount(contest?.id);
-  const { data: userSubmission } = useUserContestSubmission(contest?.id, user?.id);
-  const { data: totalApproved = 0 } = useContestApprovedCount(contest?.id);
+  const { data: campaign, isLoading: campaignLoading, isError: campaignError, refetch: refetchCampaign } = useCampaignDetailQuery(slug);
+  const { data: participantCount = 0 } = useCampaignParticipantCount(campaign?.id);
+  const { data: userSubmission } = useUserCampaignSubmission(campaign?.id, user?.id);
+  const { data: totalApproved = 0 } = useCampaignApprovedCount(campaign?.id);
   const { 
     data: submissionsData, 
     fetchNextPage, 
     hasNextPage, 
     isFetchingNextPage 
-  } = useContestSubmissionsInfinite(contest?.id);
+  } = useCampaignSubmissionsInfinite(campaign?.id);
 
   // Flatten submissions from infinite query
   const submissions = useMemo(() => {
@@ -73,19 +73,19 @@ const ContestDetail = () => {
 
   // Handle legacy URL redirects
   useEffect(() => {
-    if (contest && !category) {
-      const contestCategory = contest.category || 'general';
-      navigate(`/campaign/${contestCategory}/${contest.slug || contest.id}`, { replace: true });
-    } else if (contest && category) {
-      const contestCategory = contest.category || 'general';
-      if (category !== contestCategory) {
-        navigate(`/campaign/${contestCategory}/${contest.slug || contest.id}`, { replace: true });
+    if (campaign && !category) {
+      const campaignCategory = campaign.category || 'general';
+      navigate(`/campaign/${campaignCategory}/${campaign.slug || campaign.id}`, { replace: true });
+    } else if (campaign && category) {
+      const campaignCategory = campaign.category || 'general';
+      if (category !== campaignCategory) {
+        navigate(`/campaign/${campaignCategory}/${campaign.slug || campaign.id}`, { replace: true });
       }
     }
-  }, [contest, category, navigate]);
+  }, [campaign, category, navigate]);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareText = contest ? `Check out "${contest.title}" campaign on GAAL!` : "Check out this campaign on GAAL!";
+  const shareText = campaign ? `Check out "${campaign.title}" campaign on GAAL!` : "Check out this campaign on GAAL!";
 
   const handleShare = (platform: string) => {
     const encodedUrl = encodeURIComponent(shareUrl);
@@ -114,8 +114,8 @@ const ContestDetail = () => {
     setIsShareDialogOpen(false);
   };
 
-  const handleImageShare = (submission: ContestSubmission, platform: string) => {
-    const imageShareUrl = `${window.location.origin}/campaign/${contest?.category || 'general'}/${contest?.slug || slug}#submission-${submission.id}`;
+  const handleImageShare = (submission: CampaignSubmission, platform: string) => {
+    const imageShareUrl = `${window.location.origin}/campaign/${campaign?.category || 'general'}/${campaign?.slug || slug}#submission-${submission.id}`;
     const imageShareText = `Check out "${submission.title}" on GAAL!`;
     const encodedUrl = encodeURIComponent(imageShareUrl);
     const encodedText = encodeURIComponent(imageShareText);
@@ -262,7 +262,7 @@ const ContestDetail = () => {
     return formatDistanceToNow(end, { addSuffix: false }) + " left";
   };
 
-  const getStatusDisplay = (status: Contest['status']) => {
+  const getStatusDisplay = (status: Campaign['status']) => {
     switch (status) {
       case 'active':
         return { label: "Live Now", className: "bg-primary text-primary-foreground" };
@@ -315,7 +315,7 @@ const ContestDetail = () => {
     }
   };
 
-  const openImageModal = async (submission: ContestSubmission, index: number) => {
+  const openImageModal = async (submission: CampaignSubmission, index: number) => {
     setSelectedImage(submission);
     setSelectedImageIndex(index);
 
@@ -327,9 +327,9 @@ const ContestDetail = () => {
     }
   };
 
-  const getImageTags = (submission: ContestSubmission) => {
+  const getImageTags = (submission: CampaignSubmission) => {
     const baseTags = ['Photography', 'Campaign'];
-    if (contest?.theme) baseTags.push(contest.theme);
+    if (campaign?.theme) baseTags.push(campaign.theme);
     return baseTags;
   };
 
@@ -339,20 +339,20 @@ const ContestDetail = () => {
     return count.toString();
   };
 
-  if (contestLoading) {
+  if (campaignLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="relative">
           <div className="absolute inset-0 h-80 md:h-96 bg-muted animate-pulse" />
-          <ContestDetailSkeleton />
+          <CampaignDetailSkeleton />
         </div>
         <Footer />
       </div>
     );
   }
 
-  if (contestError) {
+  if (campaignError) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -360,7 +360,7 @@ const ContestDetail = () => {
           <ErrorState
             title="Failed to Load Campaign"
             message="We couldn't load the campaign details. Please try again."
-            onRetry={() => refetchContest()}
+            onRetry={() => refetchCampaign()}
           />
         </div>
         <Footer />
@@ -368,7 +368,7 @@ const ContestDetail = () => {
     );
   }
 
-  if (!contest) {
+  if (!campaign) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -384,13 +384,13 @@ const ContestDetail = () => {
     );
   }
 
-  const statusDisplay = getStatusDisplay(contest.status);
-  const prizeFormatted = `$${contest.prize_amount.toLocaleString()}`;
+  const statusDisplay = getStatusDisplay(campaign.status);
+  const prizeFormatted = `$${campaign.prize_amount.toLocaleString()}`;
 
-  const judgingCriteria = contest.judging_criteria?.length 
-    ? contest.judging_criteria.map((criteria, i) => ({
+  const judgingCriteria = campaign.judging_criteria?.length 
+    ? campaign.judging_criteria.map((criteria, i) => ({
         name: criteria,
-        weight: Math.round(100 / (contest.judging_criteria?.length || 1))
+        weight: Math.round(100 / (campaign.judging_criteria?.length || 1))
       }))
     : [
         { name: "Creativity", weight: 40 },
@@ -399,8 +399,8 @@ const ContestDetail = () => {
         { name: "Relevance to Theme", weight: 10 },
       ];
 
-  const rules = contest.rules?.length 
-    ? contest.rules 
+  const rules = campaign.rules?.length 
+    ? campaign.rules 
     : [
         "One entry per person",
         "Photo must be your own original work",
@@ -409,13 +409,13 @@ const ContestDetail = () => {
       ];
 
   // SEO metadata
-  const contestCategory = contest.category || 'general';
-  const seoTitle = contest.seo_title || contest.title;
-  const seoDescription = contest.meta_description 
-    || contest.description 
-    || `Join the ${contest.title} photography contest. Prize: ${prizeFormatted}. ${contest.theme ? `Theme: ${contest.theme}` : ''}`;
-  const canonicalUrl = getContestCanonicalUrl(contestCategory, contest.slug || contest.id);
-  const contestSchema = getContestSchema(contest, contestCategory, contest.slug || contest.id);
+  const campaignCategory = campaign.category || 'general';
+  const seoTitle = campaign.seo_title || campaign.title;
+  const seoDescription = campaign.meta_description 
+    || campaign.description 
+    || `Join the ${campaign.title} photography campaign. Prize: ${prizeFormatted}. ${campaign.theme ? `Theme: ${campaign.theme}` : ''}`;
+  const canonicalUrl = getContestCanonicalUrl(campaignCategory, campaign.slug || campaign.id);
+  const campaignSchema = getContestSchema(campaign, campaignCategory, campaign.slug || campaign.id);
 
   return (
     <div className="min-h-screen bg-background">
@@ -423,48 +423,48 @@ const ContestDetail = () => {
         title={seoTitle}
         description={seoDescription}
         canonicalUrl={canonicalUrl}
-        ogImage={contest.cover_image_url || undefined}
+        ogImage={campaign.cover_image_url || undefined}
         ogType="website"
-        keywords={contest.keywords || undefined}
+        keywords={campaign.keywords || undefined}
       />
       
-      {/* Contest Structured Data */}
+      {/* Campaign Structured Data */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify(contestSchema)
+        __html: JSON.stringify(campaignSchema)
       }} />
       
       <Navbar />
 
-      {/* Contest Header & Brand Section */}
+      {/* Campaign Header & Brand Section */}
       <section className="relative pt-6 pb-8">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-6 auto-rows-max">
-            {/* Left Column - Contest Details (2 cols) */}
+            {/* Left Column - Campaign Details (2 cols) */}
             <div className="md:col-span-2 flex flex-col">
               <div className="bg-card border border-border rounded-2xl p-6 md:p-8 h-full flex flex-col">
                 <div className="flex flex-col gap-6">
                   <div>
                     <div className="flex items-center gap-3 mb-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${statusDisplay.className}`}>
-                        {contest.status === 'active' && <span className="w-2 h-2 rounded-full bg-current animate-pulse" />}
+                        {campaign.status === 'active' && <span className="w-2 h-2 rounded-full bg-current animate-pulse" />}
                         {statusDisplay.label}
                       </span>
                       <span className="text-sm text-muted-foreground flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        Ends {format(new Date(contest.end_date), "MMMM d, yyyy")}
+                        Ends {format(new Date(campaign.end_date), "MMMM d, yyyy")}
                       </span>
                     </div>
 
                     <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
-                      {contest.title}
+                      {campaign.title}
                     </h1>
 
-                    {contest.theme && (
-                      <p className="text-muted-foreground mb-2">Theme: {contest.theme}</p>
+                    {campaign.theme && (
+                      <p className="text-muted-foreground mb-2">Theme: {campaign.theme}</p>
                     )}
 
                     <p className="text-muted-foreground mb-6 max-w-2xl">
-                      {contest.description || "Share your best photos and compete for amazing prizes!"}
+                      {campaign.description || "Share your best photos and compete for amazing prizes!"}
                     </p>
 
                     <div className="flex flex-wrap gap-6">
@@ -491,7 +491,7 @@ const ContestDetail = () => {
                           <Clock className="w-5 h-5 text-muted-foreground" />
                         </div>
                         <div>
-                          <p className="text-foreground font-bold">{formatTimeLeft(contest.end_date)}</p>
+                          <p className="text-foreground font-bold">{formatTimeLeft(campaign.end_date)}</p>
                           <p className="text-xs text-muted-foreground">Time Left</p>
                         </div>
                       </div>
@@ -506,7 +506,7 @@ const ContestDetail = () => {
                           View My Submission
                         </Button>
                       </Link>
-                    ) : contest.status === "active" ? (
+                    ) : campaign.status === "active" ? (
                       <Button 
                         size="lg"
                         className="flex-1"
@@ -516,7 +516,7 @@ const ContestDetail = () => {
                             navigate("/auth");
                             return;
                           }
-                          navigate(`/submit/${contest.slug || contest.id}`);
+                          navigate(`/submit/${campaign.slug || campaign.id}`);
                         }}
                       >
                         Submit Entry
@@ -536,15 +536,15 @@ const ContestDetail = () => {
             </div>
 
             {/* Right Column - Sponsor Details */}
-            {contest.brand_name && (
+            {campaign.brand_name && (
               <div className="md:col-span-1 flex flex-col">
                 <div className="bg-card border border-border rounded-2xl overflow-hidden sticky top-6 h-full flex flex-col">
                   {/* Brand Image Banner */}
-                  {(contest.brand_image_url || contest.brand_logo_url) && (
+                  {(campaign.brand_image_url || campaign.brand_logo_url) && (
                     <div className="relative w-full h-32 overflow-hidden bg-muted group">
                       <img 
-                        src={contest.brand_image_url || contest.brand_logo_url}
-                        alt={contest.brand_name}
+                        src={campaign.brand_image_url || campaign.brand_logo_url}
+                        alt={campaign.brand_name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-foreground/20 to-transparent" />
@@ -555,14 +555,14 @@ const ContestDetail = () => {
                   <div className="p-5">
                     <div className="space-y-4">
                       <div className="flex items-start gap-3">
-                        {contest.brand_logo_url && (
+                        {campaign.brand_logo_url && (
                           <img 
-                            src={contest.brand_logo_url}
-                            alt={`${contest.brand_name} logo`}
+                            src={campaign.brand_logo_url}
+                            alt={`${campaign.brand_name} logo`}
                             className="w-12 h-12 rounded-lg object-cover border border-border bg-white p-1 shrink-0"
                           />
                         )}
-                        {!contest.brand_logo_url && (
+                        {!campaign.brand_logo_url && (
                           <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                             <Building2 className="w-6 h-6 text-primary" />
                           </div>
@@ -570,17 +570,17 @@ const ContestDetail = () => {
                         
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-base text-foreground">Sponsored by</h3>
-                          <p className="text-sm font-bold text-foreground truncate">{contest.brand_name}</p>
+                          <p className="text-sm font-bold text-foreground truncate">{campaign.brand_name}</p>
                         </div>
                       </div>
 
-                      {contest.brand_description && (
-                        <p className="text-xs text-muted-foreground line-clamp-3">{contest.brand_description}</p>
+                      {campaign.brand_description && (
+                        <p className="text-xs text-muted-foreground line-clamp-3">{campaign.brand_description}</p>
                       )}
 
                       <div className="flex flex-col gap-2 pt-2 border-t border-border">
-                        {contest.brand_website_url && (
-                          <a href={contest.brand_website_url} target="_blank" rel="noopener noreferrer" className="w-full">
+                        {campaign.brand_website_url && (
+                          <a href={campaign.brand_website_url} target="_blank" rel="noopener noreferrer" className="w-full">
                             <Button variant="outline" size="sm" className="w-full text-xs">
                               <ExternalLink className="w-3 h-3 mr-1.5" />
                               Visit Website
@@ -590,24 +590,24 @@ const ContestDetail = () => {
                       </div>
 
                       {/* Social Links */}
-                      {(contest.brand_instagram_url || contest.brand_twitter_url || contest.brand_youtube_url) && (
+                      {(campaign.brand_instagram_url || campaign.brand_twitter_url || campaign.brand_youtube_url) && (
                         <div className="flex items-center gap-2 justify-center pt-2">
-                          {contest.brand_instagram_url && (
-                            <a href={contest.brand_instagram_url} target="_blank" rel="noopener noreferrer">
+                          {campaign.brand_instagram_url && (
+                            <a href={campaign.brand_instagram_url} target="_blank" rel="noopener noreferrer">
                               <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <Instagram className="w-4 h-4" />
                               </Button>
                             </a>
                           )}
-                          {contest.brand_twitter_url && (
-                            <a href={contest.brand_twitter_url} target="_blank" rel="noopener noreferrer">
+                          {campaign.brand_twitter_url && (
+                            <a href={campaign.brand_twitter_url} target="_blank" rel="noopener noreferrer">
                               <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <Twitter className="w-4 h-4" />
                               </Button>
                             </a>
                           )}
-                          {contest.brand_youtube_url && (
-                            <a href={contest.brand_youtube_url} target="_blank" rel="noopener noreferrer">
+                          {campaign.brand_youtube_url && (
+                            <a href={campaign.brand_youtube_url} target="_blank" rel="noopener noreferrer">
                               <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <Youtube className="w-4 h-4" />
                               </Button>
@@ -659,8 +659,8 @@ const ContestDetail = () => {
               <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="font-semibold mb-2">No submissions yet</h3>
               <p className="text-muted-foreground text-sm mb-4">Be the first to submit your photo!</p>
-              {contest.status === 'active' && (
-                <Button onClick={() => navigate(`/submit/${contest.slug || contest.id}`)}>
+              {campaign.status === 'active' && (
+                <Button onClick={() => navigate(`/submit/${campaign.slug || campaign.id}`)}>
                   Submit Now
                 </Button>
               )}
@@ -941,10 +941,10 @@ const ContestDetail = () => {
       <SubmissionModal 
         isOpen={isSubmitModalOpen}
         onClose={() => setIsSubmitModalOpen(false)}
-        contestTitle={contest.title}
+        contestTitle={campaign.title}
       />
     </div>
   );
 };
 
-export default ContestDetail;
+export default CampaignDetail;
