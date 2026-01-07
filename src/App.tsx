@@ -16,7 +16,7 @@ import ContestDetail from "./pages/ContestDetail";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
-import Contests from "./pages/Contests";
+import Campaigns from "./pages/Campaigns";
 import SubmitPhoto from "./pages/SubmitPhoto";
 import MySubmissions from "./pages/MySubmissions";
 import SubmissionDetail from "./pages/SubmissionDetail";
@@ -75,12 +75,12 @@ const AppContent = () => {
         <Route path="/login" element={<Auth />} />
         <Route path="/signup" element={<Auth />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/campaigns" element={<Contests />} />
+        <Route path="/campaigns" element={<Campaigns />} />
         {/* New URL structure with category */}
         <Route path="/campaign/:category/:slug" element={<ContestDetail />} />
         <Route path="/gallery/:category/:contestSlug/:photoSlug" element={<PhotoDetail />} />
         {/* Legacy redirects - handled by components */}
-        <Route path="/contests" element={<Contests />} />
+        <Route path="/contests" element={<Campaigns />} />
         <Route path="/contest/:category/:slug" element={<ContestDetail />} />
         <Route path="/contest/:slug" element={<ContestDetail />} />
         <Route path="/photo/:contestSlug/:photoSlug" element={<PhotoDetail />} />
