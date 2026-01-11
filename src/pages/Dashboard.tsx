@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/useNotifications';
-import { useDashboardStatsQuery, useDashboardContestsQuery } from '@/hooks/useDashboardQuery';
+import { useDashboardStatsQuery, useDashboardCampaignsQuery } from '@/hooks/useDashboardQuery';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
@@ -33,15 +33,15 @@ const Dashboard = () => {
   } = useDashboardStatsQuery(user?.id);
   
   const { 
-    data: activeContests = [], 
-    isLoading: contestsLoading,
-    error: contestsError,
-    refetch: refetchContests 
-  } = useDashboardContestsQuery(user?.id);
+    data: activeCampaigns = [], 
+    isLoading: campaignsLoading,
+    error: campaignsError,
+    refetch: refetchCampaigns 
+  } = useDashboardCampaignsQuery(user?.id);
 
   // Temporarily disable query loading states
   const isLoading = authLoading;
-  const error = statsError || contestsError;
+  const error = statsError || campaignsError;
 
   const formatTimeLeft = (endDate: string) => {
     const end = new Date(endDate);
@@ -59,7 +59,7 @@ const Dashboard = () => {
 
   const handleRetry = () => {
     refetchStats();
-    refetchContests();
+    refetchCampaigns();
   };
 
   return (
@@ -88,7 +88,7 @@ const Dashboard = () => {
               Welcome back, {profile?.full_name || 'Photographer'}!
             </h1>
             <p className="text-muted-foreground mt-1">
-              Here's what's happening with your contests
+              Here's what's happening with your campaigns
             </p>
           </div>
           <div className="flex gap-3">
@@ -166,48 +166,48 @@ const Dashboard = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Active Contests */}
+          {/* Active Campaigns */}
           <div className="lg:col-span-2">
             <Card className="glass-card h-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Camera className="h-5 w-5" />
-                  Active Contests
+                  Active Campaigns
                 </CardTitle>
                 <CardDescription>
-                  Participate in these ongoing contests
+                  Participate in these ongoing campaigns
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {activeContests.length === 0 ? (
+                {activeCampaigns.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">
-                    No active contests at the moment. Check back soon!
+                    No active campaigns at the moment. Check back soon!
                   </p>
                 ) : (
                   <div className="space-y-4">
-                    {activeContests.map((contest) => (
+                    {activeCampaigns.map((campaign) => (
                       <div
-                        key={contest.id}
+                        key={campaign.id}
                         className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
                       >
                         <div className="flex-1">
-                          <h3 className="font-semibold">{contest.title}</h3>
+                          <h3 className="font-semibold">{campaign.title}</h3>
                           <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Trophy className="h-4 w-4" />
-                              ${contest.prize_amount}
+                              ${campaign.prize_amount}
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
-                              {formatTimeLeft(contest.end_date)}
+                              {formatTimeLeft(campaign.end_date)}
                             </span>
                           </div>
                         </div>
-                        {contest.hasSubmitted ? (
+                        {campaign.hasSubmitted ? (
                           <Badge variant="secondary">Submitted</Badge>
                         ) : (
                           <Button asChild size="sm">
-                            <Link to={`/submit/${contest.slug || contest.id}`}>
+                            <Link to={`/submit/${campaign.slug || campaign.id}`}>
                               Enter
                               <ArrowRight className="h-4 w-4 ml-1" />
                             </Link>
@@ -218,7 +218,7 @@ const Dashboard = () => {
                   </div>
                 )}
                 <Button asChild variant="outline" className="w-full mt-4">
-                  <Link to="/contests">View All Campaigns</Link>
+                  <Link to="/campaigns">View All Campaigns</Link>
                 </Button>
               </CardContent>
             </Card>

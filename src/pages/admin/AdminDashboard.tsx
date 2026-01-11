@@ -16,8 +16,8 @@ import {
 } from 'lucide-react';
 
 interface DashboardStats {
-  totalContests: number;
-  activeContests: number;
+  totalCampaigns: number;
+  activeCampaigns: number;
   totalSubmissions: number;
   pendingSubmissions: number;
   totalUsers: number;
@@ -26,8 +26,8 @@ interface DashboardStats {
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats>({
-    totalContests: 0,
-    activeContests: 0,
+    totalCampaigns: 0,
+    activeCampaigns: 0,
     totalSubmissions: 0,
     pendingSubmissions: 0,
     totalUsers: 0,
@@ -36,13 +36,13 @@ const AdminDashboard = () => {
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
 
   const fetchStats = useCallback(async () => {
-    // Fetch contests
-    const { data: contests } = await supabase.from('contests').select('status');
-    if (contests) {
+    // Fetch campaigns
+    const { data: campaigns } = await supabase.from('contests').select('status');
+    if (campaigns) {
       setStats((prev) => ({
         ...prev,
-        totalContests: contests.length,
-        activeContests: contests.filter((c) => c.status === 'active').length,
+        totalCampaigns: campaigns.length,
+        activeCampaigns: campaigns.filter((c) => c.status === 'active').length,
       }));
     }
 
@@ -106,9 +106,9 @@ const AdminDashboard = () => {
           <p className="text-muted-foreground">Overview of platform activity</p>
         </div>
         <Button asChild className="gradient-primary">
-          <Link to="/admin/contests/new">
+          <Link to="/admin/campaigns/new">
             <Plus className="h-4 w-4 mr-2" />
-            Create Contest
+            Create Campaign
           </Link>
         </Button>
       </div>
@@ -120,8 +120,8 @@ const AdminDashboard = () => {
             <div className="flex items-center gap-3">
               <Trophy className="h-8 w-8 text-accent" />
               <div>
-                <p className="text-2xl font-bold">{stats.totalContests}</p>
-                <p className="text-xs text-muted-foreground">Total Contests</p>
+                <p className="text-2xl font-bold">{stats.totalCampaigns}</p>
+                <p className="text-xs text-muted-foreground">Total Campaigns</p>
               </div>
             </div>
           </CardContent>
@@ -132,7 +132,7 @@ const AdminDashboard = () => {
             <div className="flex items-center gap-3">
               <TrendingUp className="h-8 w-8 text-success" />
               <div>
-                <p className="text-2xl font-bold">{stats.activeContests}</p>
+                <p className="text-2xl font-bold">{stats.activeCampaigns}</p>
                 <p className="text-xs text-muted-foreground">Active</p>
               </div>
             </div>
@@ -248,9 +248,9 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent className="space-y-2">
             <Button asChild variant="outline" className="w-full justify-start">
-              <Link to="/admin/contests/new">
+              <Link to="/admin/campaigns/new">
                 <Plus className="h-4 w-4 mr-2" />
-                Create New Contest
+                Create New Campaign
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">

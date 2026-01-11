@@ -33,14 +33,14 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const WinnerSelection = () => {
-  const { contestId } = useParams<{ contestId: string }>();
+  const { campaignId } = useParams<{ campaignId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isError, refetch } = useWinnerSelectionQuery(contestId);
-  const contest = data?.campaign ?? null;
+  const { data, isLoading, isError, refetch } = useWinnerSelectionQuery(campaignId);
+  const campaign = data?.campaign ?? null;
   const submissions = data?.submissions ?? [];
 
   const [selectedSubmission, setSelectedSubmission] = useState<WinnerSubmission | null>(null);
@@ -53,7 +53,7 @@ const WinnerSelection = () => {
   };
 
   const confirmWinner = async () => {
-    if (!selectedSubmission || !contest || !user) return;
+    if (!selectedSubmission || !campaign || !user) return;
 
     setIsSubmitting(true);
 
@@ -70,30 +70,30 @@ const WinnerSelection = () => {
 
       if (submissionError) throw submissionError;
 
-      // Update contest with winner info
-      const { error: contestError } = await supabase
+      // Update campaign with winner info
+      const { error: campaignError } = await supabase
         .from('contests')
         .update({
           winner_id: selectedSubmission.profile?.id,
           winning_submission_id: selectedSubmission.id,
           status: 'completed',
         })
-        .eq('id', contest.id);
+        .eq('id', campaign.id);
 
-      if (contestError) throw contestError;
+      if (campaignError) throw campaignError;
 
       // Create wallet transaction for prize (pending status)
       const { error: walletError } = await supabase
         .from('wallet_transactions')
         .insert({
           user_id: selectedSubmission.profile?.id,
-          contest_id: contest.id,
+          contest_id: campaign.id,
           submission_id: selectedSubmission.id,
           type: 'prize',
-          amount: contest.prize_amount,
-          currency: contest.prize_currency || 'USD',
+          amount: campaign.prize_amount,
+          currency: campaign.prize_currency || 'USD',
           status: 'pending',
-          notes: `Prize for winning "${contest.title}"`,
+          notes: `Prize for winning "${campaign.title}"`,
         });
 
       if (walletError) {
@@ -106,17 +106,17 @@ const WinnerSelection = () => {
         user_id: selectedSubmission.profile?.id,
         type: 'success',
         title: '🏆 Congratulations! You Won!',
-        message: `You've won the "${contest.title}" campaign! Prize: $${contest.prize_amount}. Your earnings will be transferred soon.`,
-        link: `/campaign/general/${contest.id}`,
+        message: `You've won the "${campaign.title}" campaign! Prize: $${campaign.prize_amount}. Your earnings will be transferred soon.`,
+        link: `/campaign/general/${campaign.id}`,
       });
 
       toast({
         title: 'Winner Selected!',
-        description: `${selectedSubmission.profile?.full_name || 'Anonymous'} has been selected as the winner. A pending prize of $${contest.prize_amount} has been added to their wallet.`,
+        description: `${selectedSubmission.profile?.full_name || 'Anonymous'} has been selected as the winner. A pending prize of $${campaign.prize_amount} has been added to their wallet.`,
       });
 
       // Refresh data
-      queryClient.invalidateQueries({ queryKey: ['winner-selection', contestId] });
+      queryClient.invalidateQueries({ queryKey: ['winner-selection', campaignId] });
     } catch (error: any) {
       console.error('Error selecting winner:', error);
       toast({
@@ -174,7 +174,7 @@ const WinnerSelection = () => {
     );
   }
 
-  if (!contest) {
+  if (!campaign) {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Campaign not found</p>
@@ -185,8 +185,8 @@ const WinnerSelection = () => {
     );
   }
 
-  const hasWinner = contest.winning_submission_id !== null;
-  const isEnded = new Date(contest.end_date) <= new Date();
+  const hasWinner = campaign.winning_submission_id !== null;
+  const isEnded = new Date(campaign.end_date) <= new Date();
 
   return (
     <div>
@@ -196,7 +196,7 @@ const WinnerSelection = () => {
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-display font-bold">Campaign Winner Selection</h1>
-          <p className="text-muted-foreground">{contest.title}</p>
+          <p className="text-muted-foreground">{campaign.title}</p>
         </div>
         {hasWinner && (
           <Badge className="bg-success text-lg px-4 py-1">
@@ -206,14 +206,14 @@ const WinnerSelection = () => {
         )}
       </div>
 
-      {/* Contest Info */}
+      {/* Campaign Info */}
       <Card className="glass-card mb-6">
         <CardContent className="p-6">
           <div className="flex flex-wrap items-center gap-6">
             <div>
               <p className="text-sm text-muted-foreground">Prize</p>
               <p className="text-2xl font-bold text-primary">
-                ${contest.prize_amount}
+                ${campaign.prize_amount}
               </p>
             </div>
             <div>
@@ -226,10 +226,10 @@ const WinnerSelection = () => {
               <p className="text-sm text-muted-foreground">Approved Submissions</p>
               <p className="text-xl font-semibold">{submissions.length}</p>
             </div>
-            {contest.theme && (
+            {campaign.theme && (
               <div>
                 <p className="text-sm text-muted-foreground">Theme</p>
-                <p className="font-medium">{contest.theme}</p>
+                <p className="font-medium">{campaign.theme}</p>
               </div>
             )}
           </div>
@@ -379,13 +379,13 @@ const WinnerSelection = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Winner Selection</AlertDialogTitle>
             <AlertDialogDescription>
-              You are about to select <strong>{selectedSubmission?.profile?.full_name || 'Anonymous'}</strong> as the winner of "{contest.title}".
+              You are about to select <strong>{selectedSubmission?.profile?.full_name || 'Anonymous'}</strong> as the winner of "{campaign.title}".
               <br /><br />
               This will:
               <ul className="list-disc ml-6 mt-2">
                 <li>Mark this submission as the winner</li>
                 <li>Update the campaign status to "Completed"</li>
-                <li>Add <strong>${contest.prize_amount}</strong> to winner's wallet (pending payout)</li>
+                <li>Add <strong>${campaign.prize_amount}</strong> to winner's wallet (pending payout)</li>
                 <li>Notify the winner</li>
                 <li>Update the leaderboard</li>
               </ul>

@@ -9,7 +9,7 @@ export interface DashboardStats {
   walletBalance: number;
 }
 
-export interface ActiveContest {
+export interface ActiveCampaign {
   id: string;
   slug: string | null;
   title: string;
@@ -17,6 +17,9 @@ export interface ActiveContest {
   end_date: string;
   hasSubmitted: boolean;
 }
+
+// Legacy alias
+export type ActiveContest = ActiveCampaign;
 
 export const useDashboardStatsQuery = (userId: string | undefined) => {
   return useQuery({
@@ -67,41 +70,41 @@ export const useDashboardStatsQuery = (userId: string | undefined) => {
   });
 };
 
-export const useDashboardContestsQuery = (userId: string | undefined) => {
+export const useDashboardCampaignsQuery = (userId: string | undefined) => {
   return useQuery({
-    queryKey: ["dashboard", "contests", userId],
-    queryFn: async (): Promise<ActiveContest[]> => {
+    queryKey: ["dashboard", "campaigns", userId],
+    queryFn: async (): Promise<ActiveCampaign[]> => {
       if (!userId) throw new Error("User not authenticated");
 
       try {
-        // Fetch active contests
-        const { data: contests, error: contestsError } = await supabase
+        // Fetch active campaigns
+        const { data: campaigns, error: campaignsError } = await supabase
           .from("contests")
           .select("id, slug, title, prize_amount, end_date")
           .eq("status", "active")
           .order("end_date", { ascending: true })
           .limit(5);
 
-        if (contestsError) {
-          console.error('Error fetching contests:', contestsError);
+        if (campaignsError) {
+          console.error('Error fetching campaigns:', campaignsError);
           return [];
         }
-        if (!contests) return [];
+        if (!campaigns) return [];
 
-        // Check which contests user has already submitted to
+        // Check which campaigns user has already submitted to
         const { data: userSubmissions } = await supabase
           .from("submissions")
           .select("contest_id")
           .eq("user_id", userId);
 
-        const submittedContestIds = new Set(userSubmissions?.map((s: any) => s.contest_id) || []);
+        const submittedCampaignIds = new Set(userSubmissions?.map((s: any) => s.contest_id) || []);
 
-        return contests.map((c: any) => ({
+        return campaigns.map((c: any) => ({
           ...c,
-          hasSubmitted: submittedContestIds.has(c.id),
+          hasSubmitted: submittedCampaignIds.has(c.id),
         }));
       } catch (err) {
-        console.error('Error in dashboard contests query:', err);
+        console.error('Error in dashboard campaigns query:', err);
         return [];
       }
     },
@@ -109,3 +112,6 @@ export const useDashboardContestsQuery = (userId: string | undefined) => {
     retry: 1,
   });
 };
+
+// Legacy alias
+export const useDashboardContestsQuery = useDashboardCampaignsQuery;

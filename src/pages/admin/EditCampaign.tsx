@@ -18,9 +18,9 @@ import { format, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import ImageCropper from '@/components/ImageCropper';
 
-type ContestStatus = 'draft' | 'active' | 'voting' | 'completed' | 'cancelled';
+type CampaignStatus = 'draft' | 'active' | 'voting' | 'completed' | 'cancelled';
 
-const EditContest = () => {
+const EditCampaign = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ const EditContest = () => {
   const [endDate, setEndDate] = useState<Date>();
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('23:59');
-  const [status, setStatus] = useState<ContestStatus>('draft');
+  const [status, setStatus] = useState<CampaignStatus>('draft');
   const [featuredInHero, setFeaturedInHero] = useState(false);
   const [rules, setRules] = useState<string[]>(['']);
   const [judgingCriteria, setJudgingCriteria] = useState<string[]>(['']);
@@ -1006,10 +1006,10 @@ const EditContest = () => {
         <Card className="glass-card mb-6">
           <CardHeader>
             <CardTitle>Status & Visibility</CardTitle>
-            <CardDescription>Change contest status</CardDescription>
+            <CardDescription>Change campaign status</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Select value={status} onValueChange={(v) => setStatus(v as ContestStatus)}>
+            <Select value={status} onValueChange={(v) => setStatus(v as CampaignStatus)}>
               <SelectTrigger className="w-full md:w-64">
                 <SelectValue />
               </SelectTrigger>
@@ -1029,7 +1029,7 @@ const EditContest = () => {
                 onCheckedChange={(checked) => setFeaturedInHero(checked === true)}
               />
               <Label htmlFor="featuredInHero" className="text-sm font-normal cursor-pointer">
-                Feature this contest in the homepage hero section
+                Feature this campaign in the homepage hero section
               </Label>
             </div>
           </CardContent>
@@ -1039,7 +1039,7 @@ const EditContest = () => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate('/admin/contests')}
+            onClick={() => navigate('/admin/campaigns')}
           >
             Cancel
           </Button>
@@ -1059,4 +1059,4 @@ const EditContest = () => {
   );
 };
 
-export default EditContest;
+export default EditCampaign;

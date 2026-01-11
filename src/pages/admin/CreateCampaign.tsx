@@ -18,7 +18,7 @@ import { format, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import ImageCropper from '@/components/ImageCropper';
 
-const CreateContest = () => {
+const CreateCampaign = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -982,4 +982,4 @@ const CreateContest = () => {
   );
 };
 
-export default CreateContest;
+export default CreateCampaign;

@@ -34,15 +34,15 @@ interface WinnerSelectionData {
   submissions: WinnerSubmission[];
 }
 
-async function fetchWinnerSelectionData(contestId: string): Promise<WinnerSelectionData> {
-  // Fetch contest
-  const { data: contestData, error: contestError } = await supabase
+async function fetchWinnerSelectionData(campaignId: string): Promise<WinnerSelectionData> {
+  // Fetch campaign
+  const { data: campaignData, error: campaignError } = await supabase
     .from('contests')
     .select('*')
-    .eq('id', contestId)
+    .eq('id', campaignId)
     .single();
 
-  if (contestError) throw contestError;
+  if (campaignError) throw campaignError;
 
   // Fetch approved submissions ranked by combined_score
   const { data: submissionsData, error: submissionsError } = await supabase
@@ -58,23 +58,23 @@ async function fetchWinnerSelectionData(contestId: string): Promise<WinnerSelect
       created_at,
       profile:profiles!submissions_user_id_profiles_fkey(id, full_name, avatar_url)
     `)
-    .eq('contest_id', contestId)
+    .eq('contest_id', campaignId)
     .in('status', ['approved', 'winner'])
     .order('combined_score', { ascending: false, nullsFirst: false });
 
   if (submissionsError) throw submissionsError;
 
   return {
-    campaign: contestData as WinnerCampaign,
+    campaign: campaignData as WinnerCampaign,
     submissions: (submissionsData as unknown as WinnerSubmission[]) ?? [],
   };
 }
 
-export function useWinnerSelectionQuery(contestId: string | undefined) {
+export function useWinnerSelectionQuery(campaignId: string | undefined) {
   return useQuery({
-    queryKey: ['winner-selection', contestId],
-    queryFn: () => fetchWinnerSelectionData(contestId!),
-    enabled: !!contestId,
+    queryKey: ['winner-selection', campaignId],
+    queryFn: () => fetchWinnerSelectionData(campaignId!),
+    enabled: !!campaignId,
     staleTime: 30 * 1000,
     refetchOnWindowFocus: true,
   });
