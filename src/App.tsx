@@ -104,7 +104,7 @@ const AppContent = () => {
         <Route path="campaigns" element={<AdminCampaigns />} />
         <Route path="campaigns/new" element={<CreateCampaign />} />
         <Route path="campaigns/:id/edit" element={<EditCampaign />} />
-        <Route path="campaigns/:contestId/winner" element={<WinnerSelection />} />
+        <Route path="campaigns/:campaignId/winner" element={<WinnerSelection />} />
         <Route path="submissions" element={<AdminSubmissions />} />
         <Route path="payments" element={<AdminPayments />} />
         <Route path="users" element={<AdminUsers />} />

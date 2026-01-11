@@ -3,7 +3,7 @@ import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, CheckCircle, XCircle, Sparkles } from 'lucide-react';
 
-const ContestRules = () => {
+const CampaignRules = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
@@ -187,4 +187,4 @@ const ContestRules = () => {
   );
 };
 
-export default ContestRules;
+export default CampaignRules;
