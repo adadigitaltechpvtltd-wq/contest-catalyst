@@ -25,7 +25,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { getContestCanonicalUrl, getContestSchema } from "@/lib/seoUtils";
+import { getCampaignCanonicalUrl, getCampaignSchema } from "@/lib/seoUtils";
 
 const CampaignDetail = () => {
   const { category, slug } = useParams<{ category?: string; slug: string }>();
@@ -414,8 +414,8 @@ const CampaignDetail = () => {
   const seoDescription = campaign.meta_description 
     || campaign.description 
     || `Join the ${campaign.title} photography campaign. Prize: ${prizeFormatted}. ${campaign.theme ? `Theme: ${campaign.theme}` : ''}`;
-  const canonicalUrl = getContestCanonicalUrl(campaignCategory, campaign.slug || campaign.id);
-  const campaignSchema = getContestSchema(campaign, campaignCategory, campaign.slug || campaign.id);
+  const canonicalUrl = getCampaignCanonicalUrl(campaignCategory, campaign.slug || campaign.id);
+  const campaignSchema = getCampaignSchema(campaign, campaignCategory, campaign.slug || campaign.id);
 
   return (
     <div className="min-h-screen bg-background">

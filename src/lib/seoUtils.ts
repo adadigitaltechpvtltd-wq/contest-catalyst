@@ -7,38 +7,44 @@ const BASE_URL = 'https://gaal.app';
 /**
  * Generate canonical URL for a gallery photo (with category)
  */
-export const getGalleryCanonicalUrl = (category: string, contestSlug: string, photoSlug: string): string => {
-  return `${BASE_URL}/gallery/${category}/${contestSlug}/${photoSlug}`;
+export const getGalleryCanonicalUrl = (category: string, campaignSlug: string, photoSlug: string): string => {
+  return `${BASE_URL}/gallery/${category}/${campaignSlug}/${photoSlug}`;
 };
 
 /**
  * Generate canonical URL for a campaign (with category)
  */
-export const getContestCanonicalUrl = (category: string, contestSlug: string): string => {
-  return `${BASE_URL}/campaign/${category}/${contestSlug}`;
+export const getCampaignCanonicalUrl = (category: string, campaignSlug: string): string => {
+  return `${BASE_URL}/campaign/${category}/${campaignSlug}`;
 };
+
+// Legacy alias
+export const getContestCanonicalUrl = getCampaignCanonicalUrl;
 
 /**
  * Legacy URL for redirects - photo
  */
-export const getLegacyPhotoUrl = (contestSlug: string, photoSlug: string): string => {
-  return `${BASE_URL}/photo/${contestSlug}/${photoSlug}`;
+export const getLegacyPhotoUrl = (campaignSlug: string, photoSlug: string): string => {
+  return `${BASE_URL}/photo/${campaignSlug}/${photoSlug}`;
 };
 
 /**
  * Legacy URL for redirects - campaign (without category)
  */
-export const getLegacyContestUrl = (contestSlug: string): string => {
-  return `${BASE_URL}/campaign/${contestSlug}`;
+export const getLegacyCampaignUrl = (campaignSlug: string): string => {
+  return `${BASE_URL}/campaign/${campaignSlug}`;
 };
+
+// Legacy alias
+export const getLegacyContestUrl = getLegacyCampaignUrl;
 
 /**
  * Generate breadcrumb structured data for photo pages
  */
 export const getPhotoBreadcrumbSchema = (
   category: string,
-  contestSlug: string,
-  contestTitle: string,
+  campaignSlug: string,
+  campaignTitle: string,
   photoSlug: string,
   photoTitle: string
 ) => {
@@ -69,24 +75,24 @@ export const getPhotoBreadcrumbSchema = (
       {
         "@type": "ListItem",
         "position": 4,
-        "name": contestTitle,
-        "item": `${BASE_URL}/campaign/${category}/${contestSlug}`
+        "name": campaignTitle,
+        "item": `${BASE_URL}/campaign/${category}/${campaignSlug}`
       },
       {
         "@type": "ListItem",
         "position": 5,
         "name": photoTitle,
-        "item": `${BASE_URL}/gallery/${category}/${contestSlug}/${photoSlug}`
+        "item": `${BASE_URL}/gallery/${category}/${campaignSlug}/${photoSlug}`
       }
     ]
   };
 };
 
 /**
- * Generate contest structured data
+ * Generate campaign structured data
  */
-export const getContestSchema = (
-  contest: {
+export const getCampaignSchema = (
+  campaign: {
     title: string;
     description: string | null;
     theme: string | null;
@@ -98,33 +104,36 @@ export const getContestSchema = (
     brand_name: string | null;
   },
   category: string,
-  contestSlug: string
+  campaignSlug: string
 ) => {
   return {
     "@context": "https://schema.org",
     "@type": "Event",
-    "name": contest.title,
-    "description": contest.description || `${contest.title} photography campaign on GAAL`,
-    "startDate": contest.start_date,
-    "endDate": contest.end_date,
+    "name": campaign.title,
+    "description": campaign.description || `${campaign.title} photography campaign on GAAL`,
+    "startDate": campaign.start_date,
+    "endDate": campaign.end_date,
     "eventStatus": "https://schema.org/EventScheduled",
     "eventAttendanceMode": "https://schema.org/OnlineEventAttendanceMode",
     "location": {
       "@type": "VirtualLocation",
-      "url": getContestCanonicalUrl(category, contestSlug)
+      "url": getCampaignCanonicalUrl(category, campaignSlug)
     },
-    "image": contest.cover_image_url || `${BASE_URL}/og-image.png`,
+    "image": campaign.cover_image_url || `${BASE_URL}/og-image.png`,
     "organizer": {
       "@type": "Organization",
-      "name": contest.brand_name || "GAAL",
+      "name": campaign.brand_name || "GAAL",
       "url": BASE_URL
     },
     "offers": {
       "@type": "Offer",
       "price": "0",
-      "priceCurrency": contest.prize_currency,
+      "priceCurrency": campaign.prize_currency,
       "availability": "https://schema.org/InStock",
-      "validFrom": contest.start_date
+      "validFrom": campaign.start_date
     }
   };
 };
+
+// Legacy alias
+export const getContestSchema = getCampaignSchema;
