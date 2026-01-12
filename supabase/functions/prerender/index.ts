@@ -23,18 +23,18 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Gallery page: /gallery/{category}/{contestSlug}/{photoSlug}
+    // Gallery page: /gallery/{category}/{campaignSlug}/{photoSlug}
     const galleryMatch = path.match(/^\/gallery\/([^/]+)\/([^/]+)\/([^/]+)$/);
     if (galleryMatch) {
-      const [, category, contestSlug, photoSlug] = galleryMatch;
+      const [, category, campaignSlug, photoSlug] = galleryMatch;
       
-      const { data: contest } = await supabase
+      const { data: campaign } = await supabase
         .from('contests')
         .select('id, title, slug, category, theme, description, seo_title, meta_description, keywords')
-        .eq('slug', contestSlug)
+        .eq('slug', campaignSlug)
         .maybeSingle();
 
-      if (!contest) {
+      if (!campaign) {
         return new Response(generate404HTML(), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'text/html' },
@@ -42,19 +42,19 @@ serve(async (req) => {
       }
 
       // Validate category matches
-      const contestCategory = contest.category || 'general';
-      if (category !== contestCategory) {
+      const campaignCategory = campaign.category || 'general';
+      if (category !== campaignCategory) {
         // Redirect to correct URL
         return new Response('', {
           status: 301,
-          headers: { ...corsHeaders, 'Location': `${BASE_URL}/gallery/${contestCategory}/${contestSlug}/${photoSlug}` },
+          headers: { ...corsHeaders, 'Location': `${BASE_URL}/gallery/${campaignCategory}/${campaignSlug}/${photoSlug}` },
         });
       }
 
       const { data: submission } = await supabase
         .from('submissions')
         .select('id, title, description, image_url, slug, status, created_at, user_id, view_count, like_count, seo_page_generated, seo_approved')
-        .eq('contest_id', contest.id)
+        .eq('contest_id', campaign.id)
         .eq('slug', photoSlug)
         .maybeSingle();
 
@@ -66,7 +66,7 @@ serve(async (req) => {
       }
 
       if (submission.status === 'disqualified') {
-        return new Response(generate410HTML(contestCategory, contest.slug), {
+        return new Response(generate410HTML(campaignCategory, campaign.slug), {
           status: 410,
           headers: { ...corsHeaders, 'Content-Type': 'text/html' },
         });
@@ -81,7 +81,7 @@ serve(async (req) => {
 
       // If SEO page is generated in storage, fetch and serve it
       if (submission.seo_page_generated && submission.seo_approved) {
-        const storagePath = `seo-pages/${contestCategory}/${contestSlug}/${photoSlug}.html`;
+        const storagePath = `seo-pages/${campaignCategory}/${campaignSlug}/${photoSlug}.html`;
         console.log('Fetching pre-generated SEO page from storage:', storagePath);
         
         const { data: fileData, error: storageError } = await supabase.storage
@@ -115,18 +115,18 @@ serve(async (req) => {
       
       const html = generateGalleryItemHTML({
         title: submission.title,
-        description: submission.description || `${submission.title} - Photography submission for ${contest.title}.`,
+        description: submission.description || `${submission.title} - Photography submission for ${campaign.title}.`,
         imageUrl: submission.image_url,
-        contestTitle: contest.seo_title || contest.title,
-        contestSlug: contest.slug,
-        category: contestCategory,
+        contestTitle: campaign.seo_title || campaign.title,
+        contestSlug: campaign.slug,
+        category: campaignCategory,
         photoSlug: submission.slug,
         photographerName,
         createdAt: submission.created_at,
         viewCount: submission.view_count,
         likeCount: submission.like_count,
         noIndex: !isApproved,
-        keywords: contest.keywords || [],
+        keywords: campaign.keywords || [],
       });
 
       return new Response(html, {
@@ -134,21 +134,21 @@ serve(async (req) => {
       });
     }
 
-    // Legacy photo URL redirect: /photo/{contestSlug}/{photoSlug}
+    // Legacy photo URL redirect: /photo/{campaignSlug}/{photoSlug}
     const legacyPhotoMatch = path.match(/^\/photo\/([^/]+)\/([^/]+)$/);
     if (legacyPhotoMatch) {
-      const [, contestSlug, photoSlug] = legacyPhotoMatch;
+      const [, campaignSlug, photoSlug] = legacyPhotoMatch;
       
-      const { data: contest } = await supabase
+      const { data: campaign } = await supabase
         .from('contests')
         .select('category')
-        .eq('slug', contestSlug)
+        .eq('slug', campaignSlug)
         .maybeSingle();
 
-      const category = contest?.category || 'general';
+      const category = campaign?.category || 'general';
       return new Response('', {
         status: 301,
-        headers: { ...corsHeaders, 'Location': `${BASE_URL}/gallery/${category}/${contestSlug}/${photoSlug}` },
+        headers: { ...corsHeaders, 'Location': `${BASE_URL}/gallery/${category}/${campaignSlug}/${photoSlug}` },
       });
     }
 
@@ -161,17 +161,17 @@ serve(async (req) => {
     }
 
     // Campaign detail page: /campaign/{category}/{campaignSlug}
-    const contestMatch = path.match(/^\/campaign\/([^/]+)\/([^/]+)$/);
-    if (contestMatch) {
-      const [, category, contestSlug] = contestMatch;
+    const campaignMatch = path.match(/^\/campaign\/([^/]+)\/([^/]+)$/);
+    if (campaignMatch) {
+      const [, category, campaignSlug] = campaignMatch;
       
-      const { data: contest } = await supabase
+      const { data: campaign } = await supabase
         .from('contests')
         .select('id, title, description, theme, category, prize_amount, prize_currency, start_date, end_date, cover_image_url, status, seo_title, meta_description, keywords')
-        .eq('slug', contestSlug)
+        .eq('slug', campaignSlug)
         .maybeSingle();
 
-      if (!contest) {
+      if (!campaign) {
         return new Response(generate404HTML(), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'text/html' },
@@ -179,26 +179,26 @@ serve(async (req) => {
       }
 
       // Validate category matches
-      const contestCategory = contest.category || 'general';
-      if (category !== contestCategory) {
+      const campaignCategory = campaign.category || 'general';
+      if (category !== campaignCategory) {
         return new Response('', {
           status: 301,
-          headers: { ...corsHeaders, 'Location': `${BASE_URL}/campaign/${contestCategory}/${contestSlug}` },
+          headers: { ...corsHeaders, 'Location': `${BASE_URL}/campaign/${campaignCategory}/${campaignSlug}` },
         });
       }
 
       const html = generateContestHTML({
-        title: contest.seo_title || contest.title,
-        description: contest.meta_description || contest.description || `Photography contest on GAAL`,
-        theme: contest.theme,
-        category: contestCategory,
-        prizeAmount: contest.prize_amount,
-        prizeCurrency: contest.prize_currency,
-        startDate: contest.start_date,
-        endDate: contest.end_date,
-        coverImage: contest.cover_image_url,
-        slug: contestSlug,
-        keywords: contest.keywords || [],
+        title: campaign.seo_title || campaign.title,
+        description: campaign.meta_description || campaign.description || `Photography campaign on GAAL`,
+        theme: campaign.theme,
+        category: campaignCategory,
+        prizeAmount: campaign.prize_amount,
+        prizeCurrency: campaign.prize_currency,
+        startDate: campaign.start_date,
+        endDate: campaign.end_date,
+        coverImage: campaign.cover_image_url,
+        slug: campaignSlug,
+        keywords: campaign.keywords || [],
       });
 
       return new Response(html, {
@@ -206,33 +206,33 @@ serve(async (req) => {
       });
     }
 
-    // Legacy contest URL redirect: /contest/{contestSlug} (without category)
-    const legacyContestMatch = path.match(/^\/contest\/([^/]+)$/);
-    if (legacyContestMatch) {
-      const [, contestSlug] = legacyContestMatch;
+    // Legacy campaign URL redirect: /contest/{campaignSlug} (without category)
+    const legacyCampaignMatch = path.match(/^\/contest\/([^/]+)$/);
+    if (legacyCampaignMatch) {
+      const [, campaignSlug] = legacyCampaignMatch;
       
-      const { data: contest } = await supabase
+      const { data: campaign } = await supabase
         .from('contests')
         .select('category')
-        .eq('slug', contestSlug)
+        .eq('slug', campaignSlug)
         .maybeSingle();
 
-      if (contest) {
-        const category = contest.category || 'general';
+      if (campaign) {
+        const category = campaign.category || 'general';
         return new Response('', {
           status: 301,
-          headers: { ...corsHeaders, 'Location': `${BASE_URL}/campaign/${category}/${contestSlug}` },
+          headers: { ...corsHeaders, 'Location': `${BASE_URL}/campaign/${category}/${campaignSlug}` },
         });
       }
     }
 
     // Legacy /contest/{category}/{slug} redirect to /campaign/
-    const legacyContestWithCategoryMatch = path.match(/^\/contest\/([^/]+)\/([^/]+)$/);
-    if (legacyContestWithCategoryMatch) {
-      const [, category, contestSlug] = legacyContestWithCategoryMatch;
+    const legacyCampaignWithCategoryMatch = path.match(/^\/contest\/([^/]+)\/([^/]+)$/);
+    if (legacyCampaignWithCategoryMatch) {
+      const [, category, campaignSlug] = legacyCampaignWithCategoryMatch;
       return new Response('', {
         status: 301,
-        headers: { ...corsHeaders, 'Location': `${BASE_URL}/campaign/${category}/${contestSlug}` },
+        headers: { ...corsHeaders, 'Location': `${BASE_URL}/campaign/${category}/${campaignSlug}` },
       });
     }
 

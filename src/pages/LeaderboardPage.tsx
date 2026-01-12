@@ -25,7 +25,7 @@ const LeaderboardPage = () => {
               Top <span className="text-gradient">Photographers</span>
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Meet the creative geniuses who consistently capture stunning moments and dominate our contests
+              Meet the creative geniuses who consistently capture stunning moments and dominate our campaigns
             </p>
           </div>
 
