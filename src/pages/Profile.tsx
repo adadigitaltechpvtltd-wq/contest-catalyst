@@ -543,8 +543,8 @@ const Profile = () => {
                     <div>
                       <h4 className="font-medium text-foreground">Delete Account</h4>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Permanently delete your account and anonymize your data. Your submissions 
-                        and contest history will remain for platform integrity.
+                      Permanently delete your account and anonymize your data. Your submissions 
+                        and campaign history will remain for platform integrity.
                       </p>
                     </div>
                     <DeleteAccountDialog />

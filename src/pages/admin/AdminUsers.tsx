@@ -497,7 +497,7 @@ const AdminUsers = () => {
               <p className="font-medium">Role Permissions:</p>
               {selectedRole === "user" && (
                 <ul className="list-disc pl-4 text-muted-foreground space-y-1">
-                  <li>Participate in contests</li>
+                  <li>Participate in campaigns</li>
                   <li>Submit photos</li>
                   <li>View leaderboard</li>
                 </ul>
@@ -513,7 +513,7 @@ const AdminUsers = () => {
                 <ul className="list-disc pl-4 text-muted-foreground space-y-1">
                   <li>All moderator permissions</li>
                   <li>Manage users and roles</li>
-                  <li>Create and manage contests</li>
+                  <li>Create and manage campaigns</li>
                   <li>Process payments</li>
                   <li>Access analytics</li>
                 </ul>

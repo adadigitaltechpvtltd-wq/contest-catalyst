@@ -118,7 +118,7 @@ const DeleteAccountDialog = () => {
                 <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
                   <li>Remove your personal information permanently</li>
                   <li>Anonymize your profile to "Deleted User"</li>
-                  <li>Keep your submissions visible (for contest integrity)</li>
+                  <li>Keep your submissions visible (for campaign integrity)</li>
                   <li>Preserve leaderboard rankings</li>
                 </ul>
               </div>

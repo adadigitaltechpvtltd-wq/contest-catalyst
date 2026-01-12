@@ -202,10 +202,10 @@ const AdminSEO = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ImageIcon className="h-5 w-5" />
-            Contest SEO Status
+            Campaign SEO Status
           </CardTitle>
           <CardDescription>
-            SEO field completion status for each contest
+            SEO field completion status for each campaign
           </CardDescription>
         </CardHeader>
         <CardContent>

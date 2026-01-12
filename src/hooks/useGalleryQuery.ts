@@ -26,11 +26,14 @@ export interface GalleryPhoto {
   } | null;
 }
 
-export interface ContestOption {
+export interface CampaignOption {
   id: string;
   title: string;
   slug: string;
 }
+
+/** @deprecated Use CampaignOption instead */
+export type ContestOption = CampaignOption;
 
 export interface PhotographerOption {
   id: string;
@@ -41,7 +44,7 @@ export type SortOption = 'newest' | 'oldest' | 'most_liked' | 'most_viewed';
 
 export interface GalleryFilters {
   searchQuery: string;
-  selectedContest: string;
+  selectedCampaign: string;
   selectedPhotographer: string;
   sortBy: SortOption;
   dateFrom: string | null;
@@ -50,10 +53,10 @@ export interface GalleryFilters {
 
 const ITEMS_PER_PAGE = 24;
 
-// Fetch filter options (contests and photographers)
+// Fetch filter options (campaigns and photographers)
 export const useGalleryFilterOptions = () => {
-  const contestsQuery = useQuery({
-    queryKey: ['gallery-contests'],
+  const campaignsQuery = useQuery({
+    queryKey: ['gallery-campaigns'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contests')
@@ -62,7 +65,7 @@ export const useGalleryFilterOptions = () => {
         .order('title');
       
       if (error) throw error;
-      return (data || []) as ContestOption[];
+      return (data || []) as CampaignOption[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -96,9 +99,11 @@ export const useGalleryFilterOptions = () => {
   });
 
   return {
-    contests: contestsQuery.data || [],
+    campaigns: campaignsQuery.data || [],
+    /** @deprecated Use campaigns instead */
+    contests: campaignsQuery.data || [],
     photographers: photographersQuery.data || [],
-    isLoading: contestsQuery.isLoading || photographersQuery.isLoading,
+    isLoading: campaignsQuery.isLoading || photographersQuery.isLoading,
   };
 };
 
@@ -154,9 +159,9 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
         query = query.ilike('title', `%${filters.searchQuery}%`);
       }
 
-      // Apply contest filter
-      if (filters.selectedContest && filters.selectedContest !== 'all') {
-        query = query.eq('contest_id', filters.selectedContest);
+      // Apply campaign filter
+      if (filters.selectedCampaign && filters.selectedCampaign !== 'all') {
+        query = query.eq('contest_id', filters.selectedCampaign);
       }
 
       // Apply photographer filter

@@ -78,7 +78,7 @@ const Gallery = () => {
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-  const [selectedContest, setSelectedContest] = useState(searchParams.get('contest') || 'all');
+  const [selectedCampaign, setSelectedCampaign] = useState(searchParams.get('campaign') || 'all');
   const [selectedPhotographer, setSelectedPhotographer] = useState(searchParams.get('photographer') || 'all');
   const [sortBy, setSortBy] = useState<SortOption>((searchParams.get('sort') as SortOption) || 'newest');
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
@@ -96,17 +96,17 @@ const Gallery = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   // Fetch filter options using React Query
-  const { contests, photographers } = useGalleryFilterOptions();
+  const { campaigns, photographers } = useGalleryFilterOptions();
 
   // Build stable filters object for query key
   const filters = useMemo(() => ({
     searchQuery,
-    selectedContest,
+    selectedCampaign,
     selectedPhotographer,
     sortBy,
     dateFrom: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : null,
     dateTo: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : null,
-  }), [searchQuery, selectedContest, selectedPhotographer, sortBy, dateRange]);
+  }), [searchQuery, selectedCampaign, selectedPhotographer, sortBy, dateRange]);
 
   // Fetch photos using React Query infinite query
   const {
@@ -128,24 +128,24 @@ const Gallery = () => {
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (searchQuery) count++;
-    if (selectedContest !== 'all') count++;
+    if (selectedCampaign !== 'all') count++;
     if (selectedPhotographer !== 'all') count++;
     if (dateRange?.from || dateRange?.to) count++;
     return count;
-  }, [searchQuery, selectedContest, selectedPhotographer, dateRange]);
+  }, [searchQuery, selectedCampaign, selectedPhotographer, dateRange]);
 
   // Update URL params when filters change
   useEffect(() => {
     const params = new URLSearchParams();
     if (searchQuery) params.set('q', searchQuery);
-    if (selectedContest !== 'all') params.set('contest', selectedContest);
+    if (selectedCampaign !== 'all') params.set('campaign', selectedCampaign);
     if (selectedPhotographer !== 'all') params.set('photographer', selectedPhotographer);
     if (sortBy !== 'newest') params.set('sort', sortBy);
     if (dateRange?.from) params.set('from', format(dateRange.from, 'yyyy-MM-dd'));
     if (dateRange?.to) params.set('to', format(dateRange.to, 'yyyy-MM-dd'));
     
     setSearchParams(params, { replace: true });
-  }, [searchQuery, selectedContest, selectedPhotographer, dateRange, sortBy, setSearchParams]);
+  }, [searchQuery, selectedCampaign, selectedPhotographer, dateRange, sortBy, setSearchParams]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -167,7 +167,7 @@ const Gallery = () => {
 
   const clearFilters = () => {
     setSearchQuery('');
-    setSelectedContest('all');
+    setSelectedCampaign('all');
     setSelectedPhotographer('all');
     setSortBy('newest');
     setDateRange(undefined);
@@ -181,7 +181,7 @@ const Gallery = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <SEOHead
         title="Gallery - Photography Showcase"
-        description="Explore authentic user-submitted photography from GAAL contests. Discover inspiring images from talented photographers worldwide."
+        description="Explore authentic user-submitted photography from GAAL campaigns. Discover inspiring images from talented photographers worldwide."
         canonicalUrl="https://gaal.app/gallery"
         ogType="website"
       />
@@ -276,20 +276,20 @@ const Gallery = () => {
             </div>
 
             {/* Expandable Filters */}
-            {showFilters && (
+              {showFilters && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 rounded-lg border border-border bg-card">
-                {/* Contest Filter */}
+                {/* Campaign Filter */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Contest</label>
-                  <Select value={selectedContest} onValueChange={setSelectedContest}>
+                  <label className="text-sm font-medium">Campaign</label>
+                  <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
                     <SelectTrigger>
-                      <SelectValue placeholder="All contests" />
+                      <SelectValue placeholder="All campaigns" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All campaigns</SelectItem>
-                      {contests.map(contest => (
-                        <SelectItem key={contest.id} value={contest.id}>
-                          {contest.title}
+                      {campaigns.map(campaign => (
+                        <SelectItem key={campaign.id} value={campaign.id}>
+                          {campaign.title}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -401,7 +401,7 @@ const Gallery = () => {
               <p className="text-muted-foreground mb-6">
                 {activeFiltersCount > 0 
                   ? 'Try adjusting your search or filters.'
-                  : 'Be the first to submit a photo to one of our contests.'
+                  : 'Be the first to submit a photo to one of our campaigns.'
                 }
               </p>
               {activeFiltersCount > 0 ? (
