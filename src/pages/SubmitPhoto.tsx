@@ -322,7 +322,7 @@ const SubmitPhoto = () => {
       const { data: submissionData, error: submissionError } = await supabase
         .from('submissions')
         .insert({
-          contest_id: contest.id,
+          campaign_id: campaign.id,
           user_id: user.id,
           title,
           description,

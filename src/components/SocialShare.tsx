@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 interface SocialShareProps {
-  contestName: string;
+  campaignName: string;
   shares: number;
   likes: number;
   comments: number;
 }
 
-const SocialShare = ({ contestName, shares, likes, comments }: SocialShareProps) => {
+const SocialShare = ({ campaignName, shares, likes, comments }: SocialShareProps) => {
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
 

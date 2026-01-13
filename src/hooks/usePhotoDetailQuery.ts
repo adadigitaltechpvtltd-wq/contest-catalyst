@@ -16,7 +16,7 @@ export interface PhotoData {
   created_at: string;
   status: string;
   user_id: string;
-  contest: {
+  campaign: {
     id: string;
     title: string;
     slug: string;
@@ -47,19 +47,19 @@ interface PhotoDetailData {
   relatedPhotos: RelatedPhoto[];
 }
 
-async function fetchPhotoDetail(contestSlug: string, photoSlug: string): Promise<PhotoDetailData | null> {
-  // First find the contest by slug with SEO fields and category
-  const { data: contest, error: contestError } = await supabase
-    .from('contests')
+async function fetchPhotoDetail(campaignSlug: string, photoSlug: string): Promise<PhotoDetailData | null> {
+  // First find the campaign by slug with SEO fields and category
+  const { data: campaign, error: campaignError } = await (supabase as any)
+    .from('campaigns')
     .select('id, title, slug, category, theme, prize_amount, prize_currency, seo_title, meta_description, keywords')
-    .eq('slug', contestSlug)
+    .eq('slug', campaignSlug)
     .maybeSingle();
 
-  if (contestError || !contest) {
+  if (campaignError || !campaign) {
     return null;
   }
 
-  // Then find the submission by slug within that contest
+  // Then find the submission by slug within that campaign
   const { data: submission, error: subError } = await supabase
     .from('submissions')
     .select(`
@@ -78,7 +78,7 @@ async function fetchPhotoDetail(contestSlug: string, photoSlug: string): Promise
       status,
       user_id
     `)
-    .eq('contest_id', contest.id)
+    .eq('campaign_id', campaign.id)
     .eq('slug', photoSlug)
     .maybeSingle();
 
@@ -93,11 +93,11 @@ async function fetchPhotoDetail(contestSlug: string, photoSlug: string): Promise
     .eq('id', submission.user_id)
     .maybeSingle();
 
-  // Fetch related photos from same contest
+  // Fetch related photos from same campaign
   const { data: related } = await supabase
     .from('submissions')
     .select('id, title, image_url, slug')
-    .eq('contest_id', contest.id)
+    .eq('campaign_id', campaign.id)
     .neq('id', submission.id)
     .in('status', ['approved', 'winner'])
     .limit(4);
@@ -105,18 +105,18 @@ async function fetchPhotoDetail(contestSlug: string, photoSlug: string): Promise
   return {
     photo: {
       ...submission,
-      contest,
+      campaign,
       profile: profile || null,
-    },
-    relatedPhotos: related || [],
+    } as unknown as PhotoData,
+    relatedPhotos: (related || []) as unknown as RelatedPhoto[],
   };
 }
 
-export function usePhotoDetailQuery(contestSlug: string | undefined, photoSlug: string | undefined) {
+export function usePhotoDetailQuery(campaignSlug: string | undefined, photoSlug: string | undefined) {
   return useQuery({
-    queryKey: ['photo-detail', contestSlug, photoSlug],
-    queryFn: () => fetchPhotoDetail(contestSlug!, photoSlug!),
-    enabled: !!contestSlug && !!photoSlug,
+    queryKey: ['photo-detail', campaignSlug, photoSlug],
+    queryFn: () => fetchPhotoDetail(campaignSlug!, photoSlug!),
+    enabled: !!campaignSlug && !!photoSlug,
     staleTime: 60 * 1000,
     refetchOnWindowFocus: true,
   });

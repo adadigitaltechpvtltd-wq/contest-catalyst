@@ -234,7 +234,7 @@ const MySubmissions = () => {
                   <CardContent className="p-4">
                     <h3 className="font-semibold mb-1 line-clamp-1">{submission.title}</h3>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Campaign: {submission.contest?.title ?? 'Unknown campaign'}
+                      Campaign: {submission.campaign?.title ?? 'Unknown campaign'}
                     </p>
                     
                     {submission.admin_score !== null && (

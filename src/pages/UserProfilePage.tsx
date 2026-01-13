@@ -34,7 +34,7 @@ interface UserStats {
   bio: string | null;
   wins: number;
   total_submissions: number;
-  contests_entered: number;
+  campaigns_entered: number;
   total_points: number;
 }
 
@@ -52,7 +52,7 @@ interface SubmissionWithScore {
   risk_score: number | null;
   view_count: number;
   like_count: number;
-  contest: {
+  campaign: {
     id: string;
     title: string;
     slug: string | null;
@@ -155,7 +155,7 @@ const UserProfilePage = () => {
           risk_score,
           view_count,
           like_count,
-          contest:contests(id, title, slug)
+          campaign:campaigns(id, title, slug)
         `
         )
         .eq("user_id", resolvedUserId)

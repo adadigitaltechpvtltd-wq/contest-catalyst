@@ -78,8 +78,8 @@ export const useDashboardCampaignsQuery = (userId: string | undefined) => {
 
       try {
         // Fetch active campaigns
-        const { data: campaigns, error: campaignsError } = await supabase
-          .from("contests")
+        const { data: campaigns, error: campaignsError } = await (supabase as any)
+          .from("campaigns")
           .select("id, slug, title, prize_amount, end_date")
           .eq("status", "active")
           .order("end_date", { ascending: true })
@@ -94,10 +94,10 @@ export const useDashboardCampaignsQuery = (userId: string | undefined) => {
         // Check which campaigns user has already submitted to
         const { data: userSubmissions } = await supabase
           .from("submissions")
-          .select("contest_id")
+          .select("campaign_id")
           .eq("user_id", userId);
 
-        const submittedCampaignIds = new Set(userSubmissions?.map((s: any) => s.contest_id) || []);
+        const submittedCampaignIds = new Set(userSubmissions?.map((s: any) => s.campaign_id) || []);
 
         return campaigns.map((c: any) => ({
           ...c,

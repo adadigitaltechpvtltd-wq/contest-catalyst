@@ -37,7 +37,7 @@ const AdminDashboard = () => {
 
   const fetchStats = useCallback(async () => {
     // Fetch campaigns
-    const { data: campaigns } = await supabase.from('contests').select('status');
+    const { data: campaigns } = await (supabase as any).from('campaigns').select('status');
     if (campaigns) {
       setStats((prev) => ({
         ...prev,
@@ -76,7 +76,7 @@ const AdminDashboard = () => {
         status,
         risk_score,
         created_at,
-        contest:contests!submissions_contest_id_fkey(title),
+        campaign:campaigns!submissions_campaign_id_fkey(title),
         profile:profiles!submissions_user_id_profiles_fkey(full_name)
       `
       )
@@ -220,7 +220,7 @@ const AdminDashboard = () => {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{sub.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {sub.profile?.full_name} • {sub.contest?.title}
+                        {sub.profile?.full_name} • {sub.campaign?.title}
                       </p>
                     </div>
                     <div className="text-right">

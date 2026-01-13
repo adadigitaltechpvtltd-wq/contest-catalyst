@@ -31,7 +31,7 @@ export interface AdminSubmission {
   analysis_completed_at: string | null;
   created_at: string;
   seo_approved: boolean | null;
-  contest: {
+  campaign: {
     id: string;
     title: string;
     status: string;
@@ -78,7 +78,7 @@ async function fetchSubmissions(statusFilter: string): Promise<AdminSubmission[]
       analysis_completed_at,
       created_at,
       seo_approved,
-      contest:contests!submissions_contest_id_fkey(id, title, status, prize_amount, prize_currency, category, slug),
+      campaign:campaigns!submissions_campaign_id_fkey(id, title, status, prize_amount, prize_currency, category, slug),
       profile:profiles!submissions_user_id_profiles_fkey(id, full_name, email)
     `)
     .order('risk_score', { ascending: false });

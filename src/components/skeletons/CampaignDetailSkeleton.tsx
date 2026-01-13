@@ -6,7 +6,7 @@ const CampaignDetailSkeleton = () => {
       {/* Back link skeleton */}
       <Skeleton className="h-5 w-32 mb-8" />
 
-      {/* Contest Info Card Skeleton */}
+      {/* Campaign Info Card Skeleton */}
       <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mt-40 md:mt-52">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
           <div className="flex-1">
