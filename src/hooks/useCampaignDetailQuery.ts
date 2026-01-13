@@ -67,8 +67,8 @@ export const useCampaignDetailQuery = (slug: string | undefined) => {
       // Support both slug and UUID for backward compatibility
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
       
-      const { data, error } = await supabase
-        .from('contests')
+      const { data, error } = await (supabase as any)
+        .from('campaigns')
         .select('*')
         .eq(isUUID ? 'id' : 'slug', slug)
         .maybeSingle();
@@ -94,7 +94,7 @@ export const useCampaignParticipantCount = (campaignId: string | undefined) => {
       const { count, error } = await supabase
         .from('submissions')
         .select('*', { count: 'exact', head: true })
-        .eq('contest_id', campaignId);
+        .eq('campaign_id', campaignId);
 
       if (error) throw error;
       return count || 0;
@@ -116,7 +116,7 @@ export const useUserCampaignSubmission = (campaignId: string | undefined, userId
       const { data, error } = await supabase
         .from('submissions')
         .select('id, title')
-        .eq('contest_id', campaignId)
+        .eq('campaign_id', campaignId)
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -140,7 +140,7 @@ export const useCampaignApprovedCount = (campaignId: string | undefined) => {
       const { count, error } = await supabase
         .from('submissions')
         .select('*', { count: 'exact', head: true })
-        .eq('contest_id', campaignId)
+        .eq('campaign_id', campaignId)
         .in('status', ['approved', 'winner']);
 
       if (error) throw error;
@@ -177,7 +177,7 @@ export const useCampaignSubmissionsInfinite = (campaignId: string | undefined) =
             avatar_url
           )
         `)
-        .eq('contest_id', campaignId)
+        .eq('campaign_id', campaignId)
         .in('status', ['approved', 'winner'])
         .order('created_at', { ascending: false })
         .range(pageParam * SUBMISSIONS_PER_PAGE, (pageParam + 1) * SUBMISSIONS_PER_PAGE - 1);

@@ -86,7 +86,7 @@ export type Database = {
         }
         Relationships: []
       }
-      contests: {
+      campaigns: {
         Row: {
           brand_cta_label: string | null
           brand_cta_url: string | null
@@ -405,21 +405,21 @@ export type Database = {
           },
         ]
       }
-      saved_contests: {
+      saved_campaigns: {
         Row: {
-          contest_id: string
+          campaign_id: string
           created_at: string
           id: string
           user_id: string
         }
         Insert: {
-          contest_id: string
+          campaign_id: string
           created_at?: string
           id?: string
           user_id: string
         }
         Update: {
-          contest_id?: string
+          campaign_id?: string
           created_at?: string
           id?: string
           user_id?: string
@@ -427,9 +427,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "saved_contests_contest_id_fkey"
-            columns: ["contest_id"]
+            columns: ["campaign_id"]
             isOneToOne: false
-            referencedRelation: "contests"
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -520,8 +520,8 @@ export type Database = {
           analysis_completed_at: string | null
           analysis_method: string | null
           blur_score: number | null
+          campaign_id: string
           combined_score: number | null
-          contest_id: string
           contrast_score: number | null
           created_at: string
           description: string | null
@@ -572,8 +572,8 @@ export type Database = {
           analysis_completed_at?: string | null
           analysis_method?: string | null
           blur_score?: number | null
+          campaign_id: string
           combined_score?: number | null
-          contest_id: string
           contrast_score?: number | null
           created_at?: string
           description?: string | null
@@ -624,8 +624,8 @@ export type Database = {
           analysis_completed_at?: string | null
           analysis_method?: string | null
           blur_score?: number | null
+          campaign_id?: string
           combined_score?: number | null
-          contest_id?: string
           contrast_score?: number | null
           created_at?: string
           description?: string | null
@@ -673,9 +673,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "submissions_contest_id_fkey"
-            columns: ["contest_id"]
+            columns: ["campaign_id"]
             isOneToOne: false
-            referencedRelation: "contests"
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
           {
@@ -748,7 +748,7 @@ export type Database = {
       wallet_transactions: {
         Row: {
           amount: number
-          contest_id: string | null
+          campaign_id: string | null
           created_at: string
           currency: string
           id: string
@@ -765,7 +765,7 @@ export type Database = {
         }
         Insert: {
           amount: number
-          contest_id?: string | null
+          campaign_id?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -782,7 +782,7 @@ export type Database = {
         }
         Update: {
           amount?: number
-          contest_id?: string | null
+          campaign_id?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -800,9 +800,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "wallet_transactions_contest_id_fkey"
-            columns: ["contest_id"]
+            columns: ["campaign_id"]
             isOneToOne: false
-            referencedRelation: "contests"
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
           {
@@ -841,35 +841,13 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
-          contests_entered: number | null
+          campaigns_entered: number | null
           full_name: string | null
           total_points: number | null
           total_submissions: number | null
           user_id: string | null
           username: string | null
           wins: number | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          contests_entered?: never
-          full_name?: string | null
-          total_points?: never
-          total_submissions?: never
-          user_id?: string | null
-          username?: string | null
-          wins?: never
-        }
-        Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          contests_entered?: never
-          full_name?: string | null
-          total_points?: never
-          total_submissions?: never
-          user_id?: string | null
-          username?: string | null
-          wins?: never
         }
         Relationships: []
       }
@@ -908,7 +886,7 @@ export type Database = {
       }
     }
     Functions: {
-      auto_complete_expired_contests: { Args: never; Returns: Json }
+      auto_complete_expired_campaigns: { Args: never; Returns: Json }
       cancel_account_deletion: { Args: { _user_id: string }; Returns: Json }
       generate_slug: { Args: { title: string }; Returns: string }
       get_pending_balance: { Args: { _user_id: string }; Returns: number }

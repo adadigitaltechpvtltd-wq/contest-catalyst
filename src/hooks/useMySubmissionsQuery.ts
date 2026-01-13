@@ -12,8 +12,8 @@ export interface Submission {
   admin_score: number | null;
   rejection_reason: string | null;
   created_at: string;
-  contest_id: string;
-  contest: {
+  campaign_id: string;
+  campaign: {
     id: string;
     title: string;
     prize_amount: number;
@@ -29,36 +29,36 @@ export const useMySubmissionsQuery = (userId: string | undefined) => {
 
       const { data: subs, error } = await supabase
         .from('submissions')
-        .select('id, title, description, image_url, status, admin_score, rejection_reason, created_at, contest_id')
+        .select('id, title, description, image_url, status, admin_score, rejection_reason, created_at, campaign_id')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const submissionRows = (subs ?? []) as unknown as Array<Omit<Submission, 'contest'>>;
+      const submissionRows = (subs ?? []) as unknown as Array<Omit<Submission, 'campaign'>>;
 
-      const contestIds = Array.from(
-        new Set(submissionRows.map((s) => s.contest_id).filter(Boolean))
+      const campaignIds = Array.from(
+        new Set(submissionRows.map((s) => s.campaign_id).filter(Boolean))
       );
 
-      let contestsById = new Map<string, Submission['contest']>();
+      let campaignsById = new Map<string, Submission['campaign']>();
 
-      if (contestIds.length > 0) {
-        const { data: contests, error: contestError } = await supabase
-          .from('contests')
+      if (campaignIds.length > 0) {
+        const { data: campaigns, error: campaignError } = await (supabase as any)
+          .from('campaigns')
           .select('id, title, prize_amount, status')
-          .in('id', contestIds);
+          .in('id', campaignIds);
 
-        if (!contestError && contests) {
-          contests.forEach((c) => {
-            contestsById.set(c.id, c as Submission['contest']);
+        if (!campaignError && campaigns) {
+          campaigns.forEach((c: any) => {
+            campaignsById.set(c.id, c as Submission['campaign']);
           });
         }
       }
 
       const merged: Submission[] = submissionRows.map((s) => ({
         ...s,
-        contest: contestsById.get(s.contest_id) ?? null,
+        campaign: campaignsById.get(s.campaign_id) ?? null,
       }));
 
       return merged;

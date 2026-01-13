@@ -197,7 +197,7 @@ const CampaignDetail = () => {
         if (error) throw error;
       }
       
-      queryClient.invalidateQueries({ queryKey: ['contest-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ['campaign-submissions'] });
     } catch (error) {
       // Revert on error
       setLikedImages(prev => {
@@ -928,7 +928,7 @@ const CampaignDetail = () => {
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-border">
-                  <Link to="/contests" className="text-sm text-primary hover:underline" onClick={() => setSelectedImage(null)}>
+                  <Link to="/campaigns" className="text-sm text-primary hover:underline" onClick={() => setSelectedImage(null)}>
                     Explore more campaigns →
                   </Link>
                 </div>

@@ -36,8 +36,8 @@ interface WinnerSelectionData {
 
 async function fetchWinnerSelectionData(campaignId: string): Promise<WinnerSelectionData> {
   // Fetch campaign
-  const { data: campaignData, error: campaignError } = await supabase
-    .from('contests')
+  const { data: campaignData, error: campaignError } = await (supabase as any)
+    .from('campaigns')
     .select('*')
     .eq('id', campaignId)
     .single();
@@ -58,7 +58,7 @@ async function fetchWinnerSelectionData(campaignId: string): Promise<WinnerSelec
       created_at,
       profile:profiles!submissions_user_id_profiles_fkey(id, full_name, avatar_url)
     `)
-    .eq('contest_id', campaignId)
+    .eq('campaign_id', campaignId)
     .in('status', ['approved', 'winner'])
     .order('combined_score', { ascending: false, nullsFirst: false });
 

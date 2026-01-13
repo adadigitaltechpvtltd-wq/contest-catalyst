@@ -13,7 +13,7 @@ export interface GalleryPhoto {
   user_id: string;
   seo_approved: boolean;
   seo_page_url: string | null;
-  contest: {
+  campaign: {
     id: string;
     title: string;
     slug: string;
@@ -58,8 +58,8 @@ export const useGalleryFilterOptions = () => {
   const campaignsQuery = useQuery({
     queryKey: ['gallery-campaigns'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('contests')
+      const { data, error } = await (supabase as any)
+        .from('campaigns')
         .select('id, title, slug')
         .in('status', ['active', 'voting', 'completed'])
         .order('title');
@@ -146,7 +146,7 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
           like_count,
           status,
           created_at,
-          contest_id,
+          campaign_id,
           user_id,
           seo_approved,
           seo_page_url
@@ -161,7 +161,7 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
 
       // Apply campaign filter
       if (filters.selectedCampaign && filters.selectedCampaign !== 'all') {
-        query = query.eq('contest_id', filters.selectedCampaign);
+        query = query.eq('campaign_id', filters.selectedCampaign);
       }
 
       // Apply photographer filter
@@ -190,14 +190,14 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
         return { photos: [], nextPage: undefined };
       }
 
-      // Fetch contest info (include category for SEO URLs)
-      const contestIds = [...new Set(submissions.map(s => s.contest_id))];
-      const { data: contestsData } = await supabase
-        .from('contests')
+      // Fetch campaign info (include category for SEO URLs)
+      const campaignIds = [...new Set(submissions.map(s => s.campaign_id))];
+      const { data: campaignsData } = await (supabase as any)
+        .from('campaigns')
         .select('id, title, slug, category')
-        .in('id', contestIds);
+        .in('id', campaignIds);
 
-      const contestMap = new Map(contestsData?.map(c => [c.id, c]) || []);
+      const campaignMap = new Map(campaignsData?.map((c: any) => [c.id, c]) || []);
 
       // Fetch profile info
       const userIds = [...new Set(submissions.map(s => s.user_id))];
@@ -209,7 +209,7 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
       const photos: GalleryPhoto[] = submissions
-        .filter(s => contestMap.has(s.contest_id))
+        .filter(s => campaignMap.has(s.campaign_id))
         .map(s => ({
           id: s.id,
           title: s.title,
@@ -222,7 +222,7 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
           user_id: s.user_id,
           seo_approved: s.seo_approved || false,
           seo_page_url: s.seo_page_url || null,
-          contest: contestMap.get(s.contest_id)!,
+          campaign: campaignMap.get(s.campaign_id)!,
           profile: profileMap.get(s.user_id) || null,
         }));
 

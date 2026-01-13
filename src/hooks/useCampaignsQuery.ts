@@ -36,8 +36,8 @@ export const useCampaignsQuery = () => {
   return useQuery({
     queryKey: ["campaigns", "list"],
     queryFn: async (): Promise<CampaignWithCount[]> => {
-      const { data, error } = await supabase
-        .from("contests")
+      const { data, error } = await (supabase as any)
+        .from("campaigns")
         .select("*")
         .in("status", ["active", "voting", "completed"])
         .order("start_date", { ascending: false });
@@ -51,7 +51,7 @@ export const useCampaignsQuery = () => {
           const { count } = await supabase
             .from("submissions")
             .select("*", { count: "exact" })
-            .eq("contest_id", campaign.id).limit(0);
+            .eq("campaign_id", campaign.id).limit(0);
           return {
             ...campaign,
             participantCount: count ?? 0,
@@ -72,8 +72,8 @@ export const useFeaturedCampaignQuery = () => {
   return useQuery({
     queryKey: ["campaigns", "featured"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contests")
+      const { data, error } = await (supabase as any)
+        .from("campaigns")
         .select("id, slug, title, description, prize_amount, prize_currency, end_date, theme")
         .eq("featured_in_hero", true)
         .eq("status", "active")
@@ -88,7 +88,7 @@ export const useFeaturedCampaignQuery = () => {
       const { count } = await supabase
         .from("submissions")
         .select("*", { count: "exact" })
-        .eq("contest_id", data.id).limit(0);
+        .eq("campaign_id", data.id).limit(0);
 
       return {
         ...data,
@@ -106,8 +106,8 @@ export const useActiveCampaignsQuery = (limit = 4) => {
   return useQuery({
     queryKey: ["campaigns", "active", limit],
     queryFn: async (): Promise<CampaignWithCount[]> => {
-      const { data, error } = await supabase
-        .from("contests")
+      const { data, error } = await (supabase as any)
+        .from("campaigns")
         .select("id, slug, title, description, prize_amount, prize_currency, start_date, end_date, status, theme, cover_image_url")
         .eq("status", "active")
         .eq("featured_in_hero", false)
@@ -123,7 +123,7 @@ export const useActiveCampaignsQuery = (limit = 4) => {
           const { count } = await supabase
             .from("submissions")
             .select("*", { count: "exact" })
-            .eq("contest_id", campaign.id).limit(0);
+            .eq("campaign_id", campaign.id).limit(0);
           return {
             ...campaign,
             participantCount: count ?? 0,

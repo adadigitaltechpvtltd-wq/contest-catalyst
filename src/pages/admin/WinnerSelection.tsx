@@ -71,8 +71,8 @@ const WinnerSelection = () => {
       if (submissionError) throw submissionError;
 
       // Update campaign with winner info
-      const { error: campaignError } = await supabase
-        .from('contests')
+      const { error: campaignError } = await (supabase as any)
+        .from('campaigns')
         .update({
           winner_id: selectedSubmission.profile?.id,
           winning_submission_id: selectedSubmission.id,
@@ -87,7 +87,7 @@ const WinnerSelection = () => {
         .from('wallet_transactions')
         .insert({
           user_id: selectedSubmission.profile?.id,
-          contest_id: campaign.id,
+          campaign_id: campaign.id,
           submission_id: selectedSubmission.id,
           type: 'prize',
           amount: campaign.prize_amount,

@@ -57,8 +57,8 @@ const MASONRY_HEIGHTS = ['aspect-[3/4]', 'aspect-square', 'aspect-[4/5]', 'aspec
 
 // Helper to get the correct photo URL - use SEO page for crawlers, React route for interactive experience
 const getPhotoUrl = (photo: GalleryPhoto): string => {
-  const category = photo.contest.category || 'general';
-  return `/gallery/${category}/${photo.contest.slug}/${photo.slug}`;
+  const category = photo.campaign.category || 'general';
+  return `/gallery/${category}/${photo.campaign.slug}/${photo.slug}`;
 };
 
 // Get the SEO page URL for external crawlers (only if SEO approved and page generated)
@@ -444,7 +444,7 @@ const Gallery = () => {
                               {photo.title}
                             </p>
                             <p className="text-xs text-muted-foreground truncate mb-2">
-                              {photo.contest.title}
+                              {photo.campaign.title}
                             </p>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
@@ -505,7 +505,7 @@ const Gallery = () => {
                               {photo.title}
                             </p>
                             <p className="text-xs text-muted-foreground truncate mb-2">
-                              {photo.contest.title}
+                              {photo.campaign.title}
                             </p>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
