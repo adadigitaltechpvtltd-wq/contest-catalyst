@@ -54,7 +54,7 @@ const LeaderboardTable = ({
       <div className="grid grid-cols-12 gap-2 px-6 py-3 bg-muted/30 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
         <div className="col-span-1">#</div>
         <div className="col-span-3 md:col-span-2">Name</div>
-        <div className="col-span-2 text-center hidden md:block">Contests</div>
+        <div className="col-span-2 text-center hidden md:block">Campaigns</div>
         <div className="col-span-2 text-center hidden md:block">Submissions</div>
         <div className="col-span-2 text-center hidden md:block">Wins</div>
         <div className="col-span-3 md:col-span-2 text-right">Points</div>
@@ -155,9 +155,9 @@ const LeaderboardTable = ({
                   </div>
                 </div>
 
-                {/* Contests */}
+                {/* Campaigns */}
                 <div className="col-span-2 text-center hidden md:block">
-                  <span className="text-foreground">{leader.contests_entered}</span>
+                  <span className="text-foreground">{leader.campaigns_entered}</span>
                 </div>
 
                 {/* Submissions */}

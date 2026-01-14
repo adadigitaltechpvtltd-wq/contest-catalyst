@@ -51,7 +51,7 @@ const LeaderboardPage = () => {
                   },
                   {
                     label: "Campaigns Participated",
-                    value: leaders?.reduce((acc, l) => acc + l.contests_entered, 0) || 0,
+                    value: leaders?.reduce((acc, l) => acc + l.campaigns_entered, 0) || 0,
                     icon: Award,
                   },
                 ].map((stat, i) => (

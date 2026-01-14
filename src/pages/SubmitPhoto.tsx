@@ -97,10 +97,10 @@ const SubmitPhoto = () => {
 
   // Use React Query hooks
   const { 
-    data: contestData, 
-    isLoading: isLoadingContest, 
-    isError: isContestError,
-    refetch: refetchContest 
+    data: campaignData, 
+    isLoading: isLoadingCampaign, 
+    isError: isCampaignError,
+    refetch: refetchCampaign 
   } = useSubmitPhotoQuery(slug, user?.id);
   
   const { 
@@ -108,8 +108,8 @@ const SubmitPhoto = () => {
     isLoading: isLoadingGallery 
   } = usePreviousSubmissionsQuery(user?.id);
 
-  const contest = contestData?.contest ?? null;
-  const hasSubmitted = contestData?.hasSubmitted ?? false;
+  const campaign = campaignData?.campaign ?? null;
+  const hasSubmitted = campaignData?.hasSubmitted ?? false;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -154,16 +154,16 @@ const SubmitPhoto = () => {
     return { days, hours, minutes, seconds, isExpired: false };
   }, []);
 
-  // Update time remaining when contest loads
+  // Update time remaining when campaign loads
   useEffect(() => {
-    if (contest?.end_date) {
-      setTimeRemaining(calculateTimeRemaining(contest.end_date));
+    if (campaign?.end_date) {
+      setTimeRemaining(calculateTimeRemaining(campaign.end_date));
     }
-  }, [contest?.end_date, calculateTimeRemaining]);
+  }, [campaign?.end_date, calculateTimeRemaining]);
 
-  // Redirect if no contest found
+  // Redirect if no campaign found
   useEffect(() => {
-    if (!isLoadingContest && !contest && slug) {
+    if (!isLoadingCampaign && !campaign && slug) {
       toast({
         title: 'Campaign not found',
         description: 'This campaign may have ended or does not exist.',
@@ -171,18 +171,18 @@ const SubmitPhoto = () => {
       });
       navigate('/campaigns');
     }
-  }, [isLoadingContest, contest, slug, navigate, toast]);
+  }, [isLoadingCampaign, campaign, slug, navigate, toast]);
 
   // Update countdown every second
   useEffect(() => {
-    if (!contest?.end_date) return;
+    if (!campaign?.end_date) return;
 
     const interval = setInterval(() => {
-      setTimeRemaining(calculateTimeRemaining(contest.end_date));
+      setTimeRemaining(calculateTimeRemaining(campaign.end_date));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [contest?.end_date, calculateTimeRemaining]);
+  }, [campaign?.end_date, calculateTimeRemaining]);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -278,7 +278,7 @@ const SubmitPhoto = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user || !contest || !photoFile) return;
+    if (!user || !campaign || !photoFile) return;
 
     // Title validation with quality requirements
     const titleValidation = validateTitle(title);
@@ -305,7 +305,7 @@ const SubmitPhoto = () => {
     try {
       // Upload image to storage
       const fileExt = photoFile.name.split('.').pop();
-      const fileName = `${user.id}/${contest.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${campaign.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('submissions')
@@ -365,7 +365,7 @@ const SubmitPhoto = () => {
     setIsSubmitting(false);
   };
 
-  const isLoading = isLoadingContest || authLoading;
+  const isLoading = isLoadingCampaign || authLoading;
 
   if (isLoading) {
     return (
@@ -375,15 +375,15 @@ const SubmitPhoto = () => {
     );
   }
 
-  if (isContestError) {
+  if (isCampaignError) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
         <main className="flex-1 container mx-auto px-4 py-8 pt-24 flex items-center justify-center">
           <ErrorState 
-            title="Failed to load contest" 
-            message="Could not load contest data." 
-            onRetry={refetchContest} 
+            title="Failed to load campaign" 
+            message="Could not load campaign data." 
+            onRetry={refetchCampaign} 
           />
         </main>
         <Footer />
@@ -448,7 +448,7 @@ const SubmitPhoto = () => {
               Submit Your Photo
             </h1>
             <p className="text-muted-foreground">
-              Contest: <span className="text-foreground font-medium">{contest?.title}</span>
+              Campaign: <span className="text-foreground font-medium">{campaign?.title}</span>
             </p>
             
             {/* Countdown Timer */}
@@ -641,15 +641,15 @@ const SubmitPhoto = () => {
               </CardContent>
             </Card>
 
-            {/* Contest Rules */}
-            {contest?.rules && contest.rules.length > 0 && (
+            {/* Campaign Rules */}
+            {campaign?.rules && campaign.rules.length > 0 && (
               <Card className="glass-card mb-6">
                 <CardHeader>
-                  <CardTitle>Contest Rules</CardTitle>
+                  <CardTitle>Campaign Rules</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {contest.rules.map((rule, index) => (
+                    {campaign.rules.map((rule, index) => (
                       <li key={index} className="flex items-start gap-2 text-sm">
                         <span className="text-primary">•</span>
                         {rule}
@@ -697,7 +697,7 @@ const SubmitPhoto = () => {
                                 {submission.title}
                               </p>
                               <p className="text-white/70 text-[10px] truncate">
-                                {submission.contest?.title}
+                                {submission.campaign?.title}
                               </p>
                             </div>
                             <div className="absolute top-2 right-2">
