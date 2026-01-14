@@ -39,16 +39,16 @@ const AdminAnalytics = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("submissions")
-        .select("id, created_at, status, contest_id");
+        .select("id, created_at, status, campaign_id");
       if (error) throw error;
       return data;
     },
   });
 
-  const { data: contests } = useQuery({
-    queryKey: ["analytics-contests"],
+  const { data: campaigns } = useQuery({
+    queryKey: ["analytics-campaigns"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("contests").select("id, status, created_at, prize_amount");
+      const { data, error } = await (supabase as any).from("campaigns").select("id, status, created_at, prize_amount");
       if (error) throw error;
       return data;
     },
@@ -90,28 +90,28 @@ const AdminAnalytics = () => {
     { name: "Winner", value: submissions?.filter((s) => s.status === "winner").length || 0 },
   ].filter((s) => s.value > 0);
 
-  // Contest status distribution
-  const contestStatusData = [
-    { name: "Draft", value: contests?.filter((c) => c.status === "draft").length || 0 },
-    { name: "Active", value: contests?.filter((c) => c.status === "active").length || 0 },
-    { name: "Voting", value: contests?.filter((c) => c.status === "voting").length || 0 },
-    { name: "Completed", value: contests?.filter((c) => c.status === "completed").length || 0 },
+  // Campaign status distribution
+  const campaignStatusData = [
+    { name: "Draft", value: campaigns?.filter((c: any) => c.status === "draft").length || 0 },
+    { name: "Active", value: campaigns?.filter((c: any) => c.status === "active").length || 0 },
+    { name: "Voting", value: campaigns?.filter((c: any) => c.status === "voting").length || 0 },
+    { name: "Completed", value: campaigns?.filter((c: any) => c.status === "completed").length || 0 },
   ].filter((s) => s.value > 0);
 
-  // Contest participation (submissions per contest)
-  const contestParticipation = contests
-    ?.map((contest) => ({
-      id: contest.id.slice(0, 8),
-      submissions: submissions?.filter((s) => s.contest_id === contest.id).length || 0,
-      prize: contest.prize_amount,
+  // Campaign participation (submissions per campaign)
+  const campaignParticipation = campaigns
+    ?.map((campaign: any) => ({
+      id: campaign.id.slice(0, 8),
+      submissions: submissions?.filter((s) => s.campaign_id === campaign.id).length || 0,
+      prize: campaign.prize_amount,
     }))
     .slice(0, 10);
 
   // Summary stats
   const totalUsers = profiles?.length || 0;
   const totalSubmissions = submissions?.length || 0;
-  const totalContests = contests?.length || 0;
-  const totalPrizes = contests?.reduce((acc, c) => acc + (c.prize_amount || 0), 0) || 0;
+  const totalCampaigns = campaigns?.length || 0;
+  const totalPrizes = campaigns?.reduce((acc: number, c: any) => acc + (c.prize_amount || 0), 0) || 0;
 
   const newUsersThisWeek =
     profiles?.filter((p) => new Date(p.created_at) >= subDays(new Date(), 7)).length || 0;
@@ -151,13 +151,13 @@ const AdminAnalytics = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Contests</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Campaigns</CardTitle>
             <Trophy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalContests}</div>
+            <div className="text-2xl font-bold">{totalCampaigns}</div>
             <p className="text-xs text-muted-foreground">
-              {contests?.filter((c) => c.status === "active").length || 0} active
+              {campaigns?.filter((c: any) => c.status === "active").length || 0} active
             </p>
           </CardContent>
         </Card>
@@ -169,7 +169,7 @@ const AdminAnalytics = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${totalPrizes.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Across all contests</p>
+            <p className="text-xs text-muted-foreground">Across all campaigns</p>
           </CardContent>
         </Card>
       </div>
@@ -278,15 +278,15 @@ const AdminAnalytics = () => {
         {/* Contest Status */}
         <Card>
           <CardHeader>
-            <CardTitle>Contest Status</CardTitle>
-            <CardDescription>Distribution by contest phase</CardDescription>
+            <CardTitle>Campaign Status</CardTitle>
+            <CardDescription>Distribution by campaign phase</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={contestStatusData}
+                    data={campaignStatusData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -294,7 +294,7 @@ const AdminAnalytics = () => {
                     paddingAngle={2}
                     dataKey="value"
                   >
-                    {contestStatusData.map((_, index) => (
+                    {campaignStatusData.map((_: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -312,16 +312,16 @@ const AdminAnalytics = () => {
           </CardContent>
         </Card>
 
-        {/* Contest Participation */}
+        {/* Campaign Participation */}
         <Card>
           <CardHeader>
-            <CardTitle>Contest Participation</CardTitle>
-            <CardDescription>Submissions per contest</CardDescription>
+            <CardTitle>Campaign Participation</CardTitle>
+            <CardDescription>Submissions per campaign</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={contestParticipation} layout="vertical">
+                <BarChart data={campaignParticipation} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis type="number" tick={{ fontSize: 12 }} />
                   <YAxis dataKey="id" type="category" tick={{ fontSize: 10 }} width={60} />

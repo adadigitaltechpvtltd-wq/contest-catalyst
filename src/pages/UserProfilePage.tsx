@@ -56,7 +56,7 @@ interface SubmissionWithScore {
     id: string;
     title: string;
     slug: string | null;
-  } | null;
+  };
 }
 
 const UserProfilePage = () => {
@@ -155,7 +155,7 @@ const UserProfilePage = () => {
           risk_score,
           view_count,
           like_count,
-          campaign:campaigns(id, title, slug)
+          campaign:campaign_id(id, title, slug)
         `
         )
         .eq("user_id", resolvedUserId)
@@ -325,7 +325,7 @@ const UserProfilePage = () => {
                     </span>
                     <span className="flex items-center gap-1">
                       <Target className="w-4 h-4" />
-                      {userStats.contests_entered} contests
+                      {userStats.campaigns_entered} campaigns
                     </span>
                   </div>
 
@@ -391,8 +391,8 @@ const UserProfilePage = () => {
                   </div>
                   <div className="bg-muted/50 rounded-xl p-4 text-center">
                     <Target className="w-6 h-6 text-accent mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-foreground">{userStats.contests_entered}</p>
-                    <p className="text-xs text-muted-foreground">Contests Joined</p>
+                    <p className="text-2xl font-bold text-foreground">{userStats.campaigns_entered}</p>
+                    <p className="text-xs text-muted-foreground">Campaigns Joined</p>
                   </div>
                   <div className="bg-muted/50 rounded-xl p-4 text-center">
                     <Award className="w-6 h-6 text-green-500 mx-auto mb-2" />
@@ -452,9 +452,9 @@ const UserProfilePage = () => {
                               <h3 className="font-medium text-foreground truncate">
                                 {submission.title}
                               </h3>
-                              {submission.contest && (
+                              {submission.campaign && (
                                 <p className="text-xs text-muted-foreground">
-                                  in {submission.contest.title}
+                                  in {submission.campaign.title}
                                 </p>
                               )}
                             </div>

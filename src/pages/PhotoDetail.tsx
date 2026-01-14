@@ -33,13 +33,13 @@ import { format } from 'date-fns';
 import { getGalleryCanonicalUrl, getPhotoBreadcrumbSchema } from '@/lib/seoUtils';
 
 const PhotoDetail = () => {
-  // Support both new format (/gallery/:category/:contestSlug/:photoSlug) and legacy format (/photo/:contestSlug/:photoSlug)
-  const { category, contestSlug, photoSlug } = useParams<{ category?: string; contestSlug: string; photoSlug: string }>();
+  // Support both new format (/gallery/:category/:campaignSlug/:photoSlug) and legacy format (/photo/:campaignSlug/:photoSlug)
+  const { category, campaignSlug, photoSlug } = useParams<{ category?: string; campaignSlug: string; photoSlug: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const { data, isLoading, isError, refetch } = usePhotoDetailQuery(contestSlug, photoSlug);
+  const { data, isLoading, isError, refetch } = usePhotoDetailQuery(campaignSlug, photoSlug);
   const photo = data?.photo ?? null;
   const relatedPhotos = data?.relatedPhotos ?? [];
 
@@ -53,20 +53,20 @@ const PhotoDetail = () => {
   useEffect(() => {
     if (!photo) return;
 
-    const contestCategory = photo.contest.category || 'general';
+    const campaignCategory = photo.campaign.category || 'general';
     const currentPath = window.location.pathname;
 
     // Handle legacy /photo/ URLs - redirect to /gallery/ with category
     if (currentPath.startsWith('/photo/')) {
-      navigate(`/gallery/${contestCategory}/${contestSlug}/${photoSlug}`, { replace: true });
+      navigate(`/gallery/${campaignCategory}/${campaignSlug}/${photoSlug}`, { replace: true });
       return;
     }
 
     // Validate category matches - redirect to correct URL if mismatch
-    if (category && category !== contestCategory) {
-      navigate(`/gallery/${contestCategory}/${contestSlug}/${photoSlug}`, { replace: true });
+    if (category && category !== campaignCategory) {
+      navigate(`/gallery/${campaignCategory}/${campaignSlug}/${photoSlug}`, { replace: true });
     }
-  }, [photo, category, contestSlug, photoSlug, navigate]);
+  }, [photo, category, campaignSlug, photoSlug, navigate]);
 
   // Update local like count when photo loads
   useEffect(() => {
@@ -102,10 +102,10 @@ const PhotoDetail = () => {
 
   // Redirect if no photo found
   useEffect(() => {
-    if (!isLoading && !photo && contestSlug && photoSlug) {
+    if (!isLoading && !photo && campaignSlug && photoSlug) {
       navigate('/gallery');
     }
-  }, [isLoading, photo, contestSlug, photoSlug, navigate]);
+  }, [isLoading, photo, campaignSlug, photoSlug, navigate]);
 
   const handleLike = async () => {
     if (!user) {
@@ -233,23 +233,23 @@ const PhotoDetail = () => {
   const hasTitleQualityIssue = photo.title_quality_flag === 'low';
   
   // Use stored SEO fields if available, otherwise auto-generate
-  const contestCategory = photo.contest.category || 'general';
-  const contestSeoTitle = photo.contest.seo_title || photo.contest.title;
+  const campaignCategory = photo.campaign.category || 'general';
+  const campaignSeoTitle = photo.campaign.seo_title || photo.campaign.title;
   const seoTitle = photo.seo_title 
     ? photo.seo_title 
-    : `${photo.title} - ${contestSeoTitle}`;
+    : `${photo.title} - ${campaignSeoTitle}`;
   const seoDescription = photo.meta_description
     ? photo.meta_description
     : photo.description 
-      ? `${photo.description.slice(0, 100)}... Photo from ${photo.contest.title} contest on GAAL.`
-      : `${photo.title} - Photography submission for ${contestSeoTitle}. ${photo.contest.meta_description || ''}`.slice(0, 160);
-  const canonicalUrl = getGalleryCanonicalUrl(contestCategory, photo.contest.slug, photo.slug);
+      ? `${photo.description.slice(0, 100)}... Photo from ${photo.campaign.title} campaign on GAAL.`
+      : `${photo.title} - Photography submission for ${campaignSeoTitle}. ${photo.campaign.meta_description || ''}`.slice(0, 160);
+  const canonicalUrl = getGalleryCanonicalUrl(campaignCategory, photo.campaign.slug, photo.slug);
   
   // Generate breadcrumb schema
   const breadcrumbSchema = getPhotoBreadcrumbSchema(
-    contestCategory,
-    photo.contest.slug,
-    photo.contest.title,
+    campaignCategory,
+    photo.campaign.slug,
+    photo.campaign.title,
     photo.slug,
     photo.title
   );
@@ -288,12 +288,12 @@ const PhotoDetail = () => {
             </li>
             <li className="shrink-0 hidden sm:block">/</li>
             <li className="hidden sm:block shrink-0">
-              <span className="capitalize">{contestCategory.replace(/-/g, ' ')}</span>
+              <span className="capitalize">{campaignCategory.replace(/-/g, ' ')}</span>
             </li>
             <li className="shrink-0">/</li>
             <li className="shrink-0 max-w-[120px] sm:max-w-[180px] truncate">
-              <Link to={`/campaign/${contestCategory}/${photo.contest.slug}`} className="hover:text-foreground transition-colors">
-                {photo.contest.title}
+              <Link to={`/campaign/${campaignCategory}/${photo.campaign.slug}`} className="hover:text-foreground transition-colors">
+                {photo.campaign.title}
               </Link>
             </li>
             <li className="shrink-0">/</li>
@@ -386,7 +386,7 @@ const PhotoDetail = () => {
 
                 {/* Category Badge */}
                 <Badge variant="secondary" className="mb-4 capitalize">
-                  {contestCategory.replace(/-/g, ' ')}
+                  {campaignCategory.replace(/-/g, ' ')}
                 </Badge>
 
                 <Separator className="my-4" />
@@ -412,20 +412,20 @@ const PhotoDetail = () => {
                 </div>
               </div>
 
-              {/* Contest Info */}
+              {/* Campaign Info */}
               <div className="p-6 rounded-xl bg-card border border-border">
                 <h2 className="text-lg font-semibold mb-3">From Campaign</h2>
                 <Link 
-                  to={`/campaign/${contestCategory}/${photo.contest.slug}`}
+                  to={`/campaign/${campaignCategory}/${photo.campaign.slug}`}
                   className="block p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
                 >
-                  <h3 className="font-medium mb-1">{photo.contest.title}</h3>
-                  {photo.contest.theme && (
-                    <p className="text-sm text-muted-foreground mb-2">{photo.contest.theme}</p>
+                  <h3 className="font-medium mb-1">{photo.campaign.title}</h3>
+                  {photo.campaign.theme && (
+                    <p className="text-sm text-muted-foreground mb-2">{photo.campaign.theme}</p>
                   )}
                   <div className="flex items-center gap-2 text-sm text-primary">
                     <Trophy className="h-4 w-4" />
-                    ${photo.contest.prize_amount} {photo.contest.prize_currency}
+                    ${photo.campaign.prize_amount} {photo.campaign.prize_currency}
                   </div>
                 </Link>
               </div>
@@ -457,12 +457,12 @@ const PhotoDetail = () => {
           {/* Related Photos */}
           {relatedPhotos.length > 0 && (
             <section className="mt-12">
-              <h2 className="text-xl font-bold mb-6">More from this contest</h2>
+              <h2 className="text-xl font-bold mb-6">More from this campaign</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {relatedPhotos.map((related) => (
                   <Link
                     key={related.id}
-                    to={`/gallery/${contestCategory}/${contestSlug}/${related.slug}`}
+                    to={`/gallery/${campaignCategory}/${campaignSlug}/${related.slug}`}
                     className="group relative aspect-square rounded-lg overflow-hidden bg-secondary"
                   >
                     <img
@@ -554,8 +554,8 @@ const PhotoDetail = () => {
           ],
           "isPartOf": {
             "@type": "CreativeWork",
-            "name": photo.contest.title,
-            "url": `https://gaal.app/contest/${contestCategory}/${photo.contest.slug}`
+            "name": photo.campaign.title,
+            "url": `https://gaal.app/campaign/${campaignCategory}/${photo.campaign.slug}`
           }
         })
       }} />

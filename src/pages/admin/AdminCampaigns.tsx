@@ -32,9 +32,9 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
-type ContestStatus = 'draft' | 'active' | 'voting' | 'completed' | 'cancelled';
+type CampaignStatus = 'draft' | 'active' | 'voting' | 'completed' | 'cancelled';
 
-interface Contest {
+interface Campaign {
   id: string;
   slug: string | null;
   title: string;
@@ -43,32 +43,32 @@ interface Contest {
   min_participants: number;
   start_date: string;
   end_date: string;
-  status: ContestStatus;
+  status: CampaignStatus;
   created_at: string;
   submission_count: number;
   winner_id: string | null;
 }
 
-const AdminContests = () => {
+const AdminCampaigns = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [contests, setContests] = useState<Contest[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [forceCompleteContest, setForceCompleteContest] = useState<Contest | null>(null);
+  const [forceCompleteCampaign, setForceCompleteCampaign] = useState<Campaign | null>(null);
   const [isForceCompleting, setIsForceCompleting] = useState(false);
-  const [cancelContest, setCancelContest] = useState<Contest | null>(null);
+  const [cancelCampaign, setCancelCampaign] = useState<Campaign | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const [notifyParticipants, setNotifyParticipants] = useState(true);
-  const [reactivateContest, setReactivateContest] = useState<Contest | null>(null);
+  const [reactivateCampaign, setReactivateCampaign] = useState<Campaign | null>(null);
   const [isReactivating, setIsReactivating] = useState(false);
   const [notifyOnReactivate, setNotifyOnReactivate] = useState(true);
 
-  const fetchContests = async () => {
+  const fetchCampaigns = async () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from('contests')
+      const { data, error } = await (supabase as any)
+        .from('campaigns')
         .select(
           `
           id,
@@ -87,64 +87,64 @@ const AdminContests = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching contests:', error);
+        console.error('Error fetching campaigns:', error);
         toast({
-          title: 'Failed to load contests',
+          title: 'Failed to load campaigns',
           description: error.message,
           variant: 'destructive',
         });
-        setContests([]);
+        setCampaigns([]);
         return;
       }
 
       // Fetch submission counts
-      const contestsWithCounts = await Promise.all(
-        (data || []).map(async (contest) => {
+      const campaignsWithCounts = await Promise.all(
+        (data || []).map(async (campaign: any) => {
           const { count, error: countError } = await supabase
             .from('submissions')
             .select('*', { count: 'exact', head: true })
-            .eq('contest_id', contest.id);
+            .eq('campaign_id', campaign.id);
 
           if (countError) {
             console.error('Error fetching submissions count:', countError);
           }
 
-          return { ...contest, submission_count: count || 0 };
+          return { ...campaign, submission_count: count || 0 };
         })
       );
 
-      setContests(contestsWithCounts as unknown as Contest[]);
+      setCampaigns(campaignsWithCounts as unknown as Campaign[]);
     } catch (err: any) {
-      console.error('Exception fetching contests:', err);
+      console.error('Exception fetching campaigns:', err);
       toast({
-        title: 'Failed to load contests',
+        title: 'Failed to load campaigns',
         description: err?.message ?? 'Unexpected error',
         variant: 'destructive',
       });
-      setContests([]);
+      setCampaigns([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchContests();
+    fetchCampaigns();
   }, [toast]);
 
   const handleForceComplete = async () => {
-    if (!forceCompleteContest || !user) return;
+    if (!forceCompleteCampaign || !user) return;
 
     setIsForceCompleting(true);
 
     try {
-      // Update contest status to completed
-      const { error: updateError } = await supabase
-        .from('contests')
+      // Update campaign status to completed
+      const { error: updateError } = await (supabase as any)
+        .from('campaigns')
         .update({
           status: 'completed',
           updated_at: new Date().toISOString(),
         })
-        .eq('id', forceCompleteContest.id);
+        .eq('id', forceCompleteCampaign.id);
 
       if (updateError) throw updateError;
 
@@ -153,16 +153,16 @@ const AdminContests = () => {
         .from('admin_activity_logs')
         .insert({
           admin_id: user.id,
-          action_type: 'force_complete_contest',
-          entity_type: 'contest',
-          entity_id: forceCompleteContest.id,
+          action_type: 'force_complete_campaign',
+          entity_type: 'campaign',
+          entity_id: forceCompleteCampaign.id,
           details: {
-            contest_title: forceCompleteContest.title,
-            submission_count: forceCompleteContest.submission_count,
-            min_participants: forceCompleteContest.min_participants,
-            original_end_date: forceCompleteContest.end_date,
+            campaign_title: forceCompleteCampaign.title,
+            submission_count: forceCompleteCampaign.submission_count,
+            min_participants: forceCompleteCampaign.min_participants,
+            original_end_date: forceCompleteCampaign.end_date,
             force_completed_at: new Date().toISOString(),
-            met_minimum: forceCompleteContest.submission_count >= forceCompleteContest.min_participants,
+            met_minimum: forceCompleteCampaign.submission_count >= forceCompleteCampaign.min_participants,
           },
         });
 
@@ -171,48 +171,48 @@ const AdminContests = () => {
       }
 
       toast({
-        title: 'Contest Completed',
-        description: `"${forceCompleteContest.title}" has been marked as completed. You can now select a winner.`,
+        title: 'Campaign Completed',
+        description: `"${forceCompleteCampaign.title}" has been marked as completed. You can now select a winner.`,
       });
 
-      fetchContests();
+      fetchCampaigns();
     } catch (error: any) {
-      console.error('Error force completing contest:', error);
+      console.error('Error force completing campaign:', error);
       toast({
-        title: 'Failed to complete contest',
+        title: 'Failed to complete campaign',
         description: error.message,
         variant: 'destructive',
       });
     } finally {
       setIsForceCompleting(false);
-      setForceCompleteContest(null);
+      setForceCompleteCampaign(null);
     }
   };
 
-  const handleCancelContest = async () => {
-    if (!cancelContest || !user) return;
+  const handleCancelCampaign = async () => {
+    if (!cancelCampaign || !user) return;
 
     setIsCancelling(true);
 
     try {
-      // Update contest status to cancelled
-      const { error: updateError } = await supabase
-        .from('contests')
+      // Update campaign status to cancelled
+      const { error: updateError } = await (supabase as any)
+        .from('campaigns')
         .update({
           status: 'cancelled',
           updated_at: new Date().toISOString(),
         })
-        .eq('id', cancelContest.id);
+        .eq('id', cancelCampaign.id);
 
       if (updateError) throw updateError;
 
       // If notify participants is enabled, send notifications
-      if (notifyParticipants && cancelContest.submission_count > 0) {
+      if (notifyParticipants && cancelCampaign.submission_count > 0) {
         // Get unique user IDs from submissions
         const { data: submissions, error: submissionsError } = await supabase
           .from('submissions')
           .select('user_id')
-          .eq('contest_id', cancelContest.id);
+          .eq('campaign_id', cancelCampaign.id);
 
         if (submissionsError) {
           console.error('Error fetching participants:', submissionsError);
@@ -225,7 +225,7 @@ const AdminContests = () => {
             user_id: userId,
             type: 'warning',
             title: 'Campaign Cancelled',
-            message: `The campaign "${cancelContest.title}" has been cancelled. We apologize for any inconvenience.`,
+            message: `The campaign "${cancelCampaign.title}" has been cancelled. We apologize for any inconvenience.`,
             link: `/campaigns`,
           }));
 
@@ -244,12 +244,12 @@ const AdminContests = () => {
         .from('admin_activity_logs')
         .insert({
           admin_id: user.id,
-          action_type: 'cancel_contest',
-          entity_type: 'contest',
-          entity_id: cancelContest.id,
+          action_type: 'cancel_campaign',
+          entity_type: 'campaign',
+          entity_id: cancelCampaign.id,
           details: {
-            contest_title: cancelContest.title,
-            submission_count: cancelContest.submission_count,
+            campaign_title: cancelCampaign.title,
+            submission_count: cancelCampaign.submission_count,
             notified_participants: notifyParticipants,
             cancelled_at: new Date().toISOString(),
           },
@@ -260,27 +260,27 @@ const AdminContests = () => {
       }
 
       toast({
-        title: 'Contest Cancelled',
-        description: `"${cancelContest.title}" has been cancelled.${notifyParticipants && cancelContest.submission_count > 0 ? ' Participants have been notified.' : ''}`,
+        title: 'Campaign Cancelled',
+        description: `"${cancelCampaign.title}" has been cancelled.${notifyParticipants && cancelCampaign.submission_count > 0 ? ' Participants have been notified.' : ''}`,
       });
 
-      fetchContests();
+      fetchCampaigns();
     } catch (error: any) {
-      console.error('Error cancelling contest:', error);
+      console.error('Error cancelling campaign:', error);
       toast({
-        title: 'Failed to cancel contest',
+        title: 'Failed to cancel campaign',
         description: error.message,
         variant: 'destructive',
       });
     } finally {
       setIsCancelling(false);
-      setCancelContest(null);
+      setCancelCampaign(null);
       setNotifyParticipants(true);
     }
   };
 
-  const getStatusBadge = (status: ContestStatus) => {
-    const variants: Record<ContestStatus, { class: string; label: string }> = {
+  const getStatusBadge = (status: CampaignStatus) => {
+    const variants: Record<CampaignStatus, { class: string; label: string }> = {
       draft: { class: 'bg-secondary', label: 'Draft' },
       active: { class: 'bg-success', label: 'Active' },
       voting: { class: 'bg-accent', label: 'Voting' },
@@ -300,43 +300,43 @@ const AdminContests = () => {
   };
 
   // Check if force complete should be visible
-  const canForceComplete = (contest: Contest) => {
-    return contest.status === 'active';
+  const canForceComplete = (campaign: Campaign) => {
+    return campaign.status === 'active';
   };
 
   // Check if cancel should be visible
-  const canCancel = (contest: Contest) => {
-    return contest.status === 'active' || contest.status === 'draft' || contest.status === 'voting';
+  const canCancel = (campaign: Campaign) => {
+    return campaign.status === 'active' || campaign.status === 'draft' || campaign.status === 'voting';
   };
 
   // Check if reactivate should be visible
-  const canReactivate = (contest: Contest) => {
-    return contest.status === 'cancelled';
+  const canReactivate = (campaign: Campaign) => {
+    return campaign.status === 'cancelled';
   };
 
-  const handleReactivateContest = async () => {
-    if (!reactivateContest || !user) return;
+  const handleReactivateCampaign = async () => {
+    if (!reactivateCampaign || !user) return;
 
     setIsReactivating(true);
 
     try {
-      // Update contest status to active
-      const { error: updateError } = await supabase
-        .from('contests')
+      // Update campaign status to active
+      const { error: updateError } = await (supabase as any)
+        .from('campaigns')
         .update({
           status: 'active',
           updated_at: new Date().toISOString(),
         })
-        .eq('id', reactivateContest.id);
+        .eq('id', reactivateCampaign.id);
 
       if (updateError) throw updateError;
 
       // If notify participants is enabled, send notifications
-      if (notifyOnReactivate && reactivateContest.submission_count > 0) {
+      if (notifyOnReactivate && reactivateCampaign.submission_count > 0) {
         const { data: submissions, error: submissionsError } = await supabase
           .from('submissions')
           .select('user_id')
-          .eq('contest_id', reactivateContest.id);
+          .eq('campaign_id', reactivateCampaign.id);
 
         if (submissionsError) {
           console.error('Error fetching participants:', submissionsError);
@@ -347,8 +347,8 @@ const AdminContests = () => {
             user_id: userId,
             type: 'success',
             title: 'Campaign Reactivated!',
-            message: `Great news! The campaign "${reactivateContest.title}" has been reactivated and is now accepting submissions again.`,
-            link: `/campaign/${reactivateContest.slug || reactivateContest.id}`,
+            message: `Great news! The campaign "${reactivateCampaign.title}" has been reactivated and is now accepting submissions again.`,
+            link: `/campaign/${reactivateCampaign.slug || reactivateCampaign.id}`,
           }));
 
           const { error: notifyError } = await supabase
@@ -366,12 +366,12 @@ const AdminContests = () => {
         .from('admin_activity_logs')
         .insert({
           admin_id: user.id,
-          action_type: 'reactivate_contest',
-          entity_type: 'contest',
-          entity_id: reactivateContest.id,
+          action_type: 'reactivate_campaign',
+          entity_type: 'campaign',
+          entity_id: reactivateCampaign.id,
           details: {
-            contest_title: reactivateContest.title,
-            submission_count: reactivateContest.submission_count,
+            campaign_title: reactivateCampaign.title,
+            submission_count: reactivateCampaign.submission_count,
             notified_participants: notifyOnReactivate,
             reactivated_at: new Date().toISOString(),
           },
@@ -382,21 +382,21 @@ const AdminContests = () => {
       }
 
       toast({
-        title: 'Contest Reactivated',
-        description: `"${reactivateContest.title}" is now active again.${notifyOnReactivate && reactivateContest.submission_count > 0 ? ' Participants have been notified.' : ''}`,
+        title: 'Campaign Reactivated',
+        description: `"${reactivateCampaign.title}" is now active again.${notifyOnReactivate && reactivateCampaign.submission_count > 0 ? ' Participants have been notified.' : ''}`,
       });
 
-      fetchContests();
+      fetchCampaigns();
     } catch (error: any) {
-      console.error('Error reactivating contest:', error);
+      console.error('Error reactivating campaign:', error);
       toast({
-        title: 'Failed to reactivate contest',
+        title: 'Failed to reactivate campaign',
         description: error.message,
         variant: 'destructive',
       });
     } finally {
       setIsReactivating(false);
-      setReactivateContest(null);
+      setReactivateCampaign(null);
       setNotifyOnReactivate(true);
     }
   };
