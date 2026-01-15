@@ -669,7 +669,7 @@ const SubmitPhoto = () => {
                     Your Previous Submissions
                   </CardTitle>
                   <CardDescription>
-                    Photos you've submitted to other contests
+                    Photos you've submitted to other campaigns
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

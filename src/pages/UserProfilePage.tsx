@@ -382,7 +382,7 @@ const UserProfilePage = () => {
                   <div className="bg-muted/50 rounded-xl p-4 text-center">
                     <Trophy className="w-6 h-6 text-yellow-500 mx-auto mb-2" />
                     <p className="text-2xl font-bold text-foreground">{userStats.wins}</p>
-                    <p className="text-xs text-muted-foreground">Contest Wins</p>
+                    <p className="text-xs text-muted-foreground">Campaign Wins</p>
                   </div>
                   <div className="bg-muted/50 rounded-xl p-4 text-center">
                     <Camera className="w-6 h-6 text-primary mx-auto mb-2" />

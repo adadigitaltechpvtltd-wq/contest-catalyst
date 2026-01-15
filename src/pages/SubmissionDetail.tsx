@@ -365,7 +365,7 @@ const SubmissionDetail = () => {
     try {
       // Upload new image
       const fileExt = newPhotoFile.name.split('.').pop();
-      const fileName = `${user.id}/${localSubmission.contest.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${localSubmission.campaign.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('submissions')
@@ -718,22 +718,22 @@ const SubmissionDetail = () => {
             {/* Contest Info */}
             <Card className="glass-card">
               <CardHeader>
-                <CardTitle className="text-lg">Contest Details</CardTitle>
+                <CardTitle className="text-lg">Campaign Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Contest</p>
-                  <p className="font-medium">{localSubmission.contest.title}</p>
+                  <p className="text-sm text-muted-foreground">Campaign</p>
+                  <p className="font-medium">{localSubmission.campaign.title}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Prize</p>
                   <p className="font-bold text-primary text-lg">
-                    ${localSubmission.contest.prize_amount.toLocaleString()}
+                    ${localSubmission.campaign.prize_amount.toLocaleString()}
                   </p>
                 </div>
                 <Separator />
                 <Button asChild variant="outline" className="w-full">
-                  <Link to={`/campaign/general/${localSubmission.contest.slug || localSubmission.contest.id}`}>
+                  <Link to={`/campaign/general/${localSubmission.campaign.slug || localSubmission.campaign.id}`}>
                     <Eye className="h-4 w-4 mr-2" />
                     View Campaign
                   </Link>

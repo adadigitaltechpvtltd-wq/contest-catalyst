@@ -47,7 +47,7 @@ const formatPrize = (amount: number, currency: string) => {
   return `$${amount.toLocaleString()}`;
 };
 
-const Contests = () => {
+const Campaigns = () => {
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
   const { data: campaigns = [], isLoading, error, refetch } = useCampaignsQuery();
 
@@ -287,4 +287,4 @@ const Contests = () => {
   );
 };
 
-export default Contests;
+export default Campaigns;

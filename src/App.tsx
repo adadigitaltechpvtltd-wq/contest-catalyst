@@ -78,12 +78,12 @@ const AppContent = () => {
         <Route path="/campaigns" element={<Campaigns />} />
         {/* New URL structure with category */}
         <Route path="/campaign/:category/:slug" element={<CampaignDetail />} />
-        <Route path="/gallery/:category/:contestSlug/:photoSlug" element={<PhotoDetail />} />
+        <Route path="/gallery/:category/:campaignSlug/:photoSlug" element={<PhotoDetail />} />
         {/* Legacy redirects - handled by components */}
         <Route path="/contests" element={<Campaigns />} />
         <Route path="/contest/:category/:slug" element={<CampaignDetail />} />
         <Route path="/contest/:slug" element={<CampaignDetail />} />
-        <Route path="/photo/:contestSlug/:photoSlug" element={<PhotoDetail />} />
+        <Route path="/photo/:campaignSlug/:photoSlug" element={<PhotoDetail />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/user/:username" element={<UserProfilePage />} />

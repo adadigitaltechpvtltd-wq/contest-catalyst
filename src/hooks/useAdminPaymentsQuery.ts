@@ -25,7 +25,7 @@ export interface Transaction {
     bank_account_number: string | null;
     bank_ifsc: string | null;
   } | null;
-  contest: {
+  campaign: {
     title: string;
   } | null;
 }
@@ -45,7 +45,7 @@ async function fetchTransactions(statusFilter: string): Promise<Transaction[]> {
       created_at,
       user_id,
       profile:profiles!wallet_transactions_user_id_profiles_fkey(id, full_name, email),
-      contest:contests(title)
+      campaign:campaigns(title)
     `)
     .order('created_at', { ascending: false });
 

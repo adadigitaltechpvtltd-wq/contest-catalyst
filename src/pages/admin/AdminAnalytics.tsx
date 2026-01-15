@@ -275,7 +275,7 @@ const AdminAnalytics = () => {
           </CardContent>
         </Card>
 
-        {/* Contest Status */}
+        {/* Campaign Status */}
         <Card>
           <CardHeader>
             <CardTitle>Campaign Status</CardTitle>
