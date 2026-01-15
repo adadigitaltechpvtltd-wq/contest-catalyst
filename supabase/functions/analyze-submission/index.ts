@@ -125,7 +125,7 @@ async function analyzeSubmission(supabase: any, submission_id: string) {
   // Fetch the submission
   const { data: submission, error: fetchError } = await supabase
     .from('submissions')
-    .select('id, image_url, contest_id, user_id, title, description')
+    .select('id, image_url, campaign_id, user_id, title, description')
     .eq('id', submission_id)
     .single();
 
@@ -161,7 +161,7 @@ async function analyzeSubmission(supabase: any, submission_id: string) {
 
   // Broadcast: Duplicate Check
   await broadcastProgress(supabase, submission_id, 'duplicate', 60, 'running', 'Checking for duplicates...');
-  const duplicateScore = await checkDuplicateSimilarity(supabase, submission.id, submission.contest_id, imageBytes);
+  const duplicateScore = await checkDuplicateSimilarity(supabase, submission.id, submission.campaign_id, imageBytes);
   console.log('[CPU-Analysis] Duplicate Score:', duplicateScore);
 
   // Broadcast: Calculating Scores
