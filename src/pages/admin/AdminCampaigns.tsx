@@ -420,7 +420,7 @@ const AdminCampaigns = () => {
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : contests.length === 0 ? (
+      ) : campaigns.length === 0 ? (
         <Card className="glass-card">
           <CardContent className="p-12 text-center">
             <Trophy className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
@@ -435,22 +435,22 @@ const AdminCampaigns = () => {
         </Card>
       ) : (
         <div className="space-y-4">
-          {contests.map((contest) => {
-            const isEnded = new Date(contest.end_date) <= new Date();
-            const needsWinner = isEnded && !contest.winner_id && contest.status !== 'cancelled';
-            const showForceComplete = canForceComplete(contest);
-            const showCancel = canCancel(contest);
-            const showReactivate = canReactivate(contest);
+          {campaigns.map((campaign) => {
+            const isEnded = new Date(campaign.end_date) <= new Date();
+            const needsWinner = isEnded && !campaign.winner_id && campaign.status !== 'cancelled';
+            const showForceComplete = canForceComplete(campaign);
+            const showCancel = canCancel(campaign);
+            const showReactivate = canReactivate(campaign);
             
             return (
-              <Card key={contest.id} className={`glass-card ${needsWinner ? 'border-amber-500/50' : ''} ${contest.status === 'cancelled' ? 'opacity-60' : ''}`}>
+              <Card key={campaign.id} className={`glass-card ${needsWinner ? 'border-amber-500/50' : ''} ${campaign.status === 'cancelled' ? 'opacity-60' : ''}`}>
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold">{contest.title}</h3>
-                        {getStatusBadge(contest.status)}
-                        {contest.winner_id && (
+                        <h3 className="text-lg font-semibold">{campaign.title}</h3>
+                        {getStatusBadge(campaign.status)}
+                        {campaign.winner_id && (
                           <Badge className="bg-yellow-500 text-black">
                             <Crown className="h-3 w-3 mr-1" />
                             Winner Selected
@@ -462,36 +462,36 @@ const AdminCampaigns = () => {
                           </Badge>
                         )}
                       </div>
-                      {contest.theme && (
+                      {campaign.theme && (
                         <p className="text-sm text-muted-foreground mb-2">
-                          Theme: {contest.theme}
+                          Theme: {campaign.theme}
                         </p>
                       )}
                       <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Trophy className="h-4 w-4" />
-                          ${contest.prize_amount}
+                          ${campaign.prize_amount}
                         </span>
                         <span className="flex items-center gap-1">
                           <Users className="h-4 w-4" />
-                          {contest.submission_count} / {contest.min_participants} min
+                          {campaign.submission_count} / {campaign.min_participants} min
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          {formatDate(contest.start_date)} - {formatDate(contest.end_date)}
+                          {formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}
                         </span>
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/campaign/${contest.slug || contest.id}`}>
+                        <Link to={`/campaign/${campaign.slug || campaign.id}`}>
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Link>
                       </Button>
-                      {contest.status !== 'cancelled' && (
+                      {campaign.status !== 'cancelled' && (
                         <Button variant="outline" size="sm" asChild>
-                          <Link to={`/admin/campaigns/${contest.id}/edit`}>
+                          <Link to={`/admin/campaigns/${campaign.id}/edit`}>
                             <Edit className="h-4 w-4 mr-1" />
                             Edit
                           </Link>
@@ -502,7 +502,7 @@ const AdminCampaigns = () => {
                           size="sm" 
                           variant="outline"
                           className="border-orange-500 text-orange-500 hover:bg-orange-500/10"
-                          onClick={() => setForceCompleteContest(contest)}
+                          onClick={() => setForceCompleteCampaign(campaign)}
                         >
                           <CheckCircle2 className="h-4 w-4 mr-1" />
                           Force Complete
@@ -513,7 +513,7 @@ const AdminCampaigns = () => {
                           size="sm" 
                           variant="outline"
                           className="border-destructive text-destructive hover:bg-destructive/10"
-                          onClick={() => setCancelContest(contest)}
+                          onClick={() => setCancelCampaign(campaign)}
                         >
                           <XCircle className="h-4 w-4 mr-1" />
                           Cancel
@@ -524,7 +524,7 @@ const AdminCampaigns = () => {
                           size="sm" 
                           variant="outline"
                           className="border-green-500 text-green-500 hover:bg-green-500/10"
-                          onClick={() => setReactivateContest(contest)}
+                          onClick={() => setReactivateCampaign(campaign)}
                         >
                           <RotateCcw className="h-4 w-4 mr-1" />
                           Reactivate
@@ -532,22 +532,22 @@ const AdminCampaigns = () => {
                       )}
                       {needsWinner ? (
                         <Button size="sm" className="bg-amber-500 hover:bg-amber-600" asChild>
-                          <Link to={`/admin/campaigns/${contest.id}/winner`}>
+                          <Link to={`/admin/campaigns/${campaign.id}/winner`}>
                             <Crown className="h-4 w-4 mr-1" />
                             Select Winner
                           </Link>
                         </Button>
-                      ) : contest.status === 'completed' && !contest.winner_id ? (
+                      ) : campaign.status === 'completed' && !campaign.winner_id ? (
                         <Button size="sm" className="bg-amber-500 hover:bg-amber-600" asChild>
-                          <Link to={`/admin/campaigns/${contest.id}/winner`}>
+                          <Link to={`/admin/campaigns/${campaign.id}/winner`}>
                             <Crown className="h-4 w-4 mr-1" />
                             Select Winner
                           </Link>
                         </Button>
-                      ) : contest.status !== 'cancelled' ? (
+                      ) : campaign.status !== 'cancelled' ? (
                         <Button size="sm" asChild>
                           <Link to="/admin/submissions">
-                            Review ({contest.submission_count})
+                            Review ({campaign.submission_count})
                           </Link>
                         </Button>
                       ) : null}
@@ -561,22 +561,22 @@ const AdminCampaigns = () => {
       )}
 
       {/* Force Complete Confirmation Dialog */}
-      <AlertDialog open={!!forceCompleteContest} onOpenChange={(open) => !open && setForceCompleteContest(null)}>
+      <AlertDialog open={!!forceCompleteCampaign} onOpenChange={(open) => !open && setForceCompleteCampaign(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Force Complete Contest?</AlertDialogTitle>
+            <AlertDialogTitle>Force Complete Campaign?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-4">
-                <p>This will immediately end the contest and move it to completion.</p>
+                <p>This will immediately end the campaign and move it to completion.</p>
                 <ul className="list-disc ml-6 space-y-1 text-sm">
                   <li>No new submissions will be allowed</li>
                   <li>Winners can be selected</li>
                   <li>Prizes and payouts can proceed normally</li>
                 </ul>
-                {forceCompleteContest && forceCompleteContest.submission_count < forceCompleteContest.min_participants && (
+                {forceCompleteCampaign && forceCompleteCampaign.submission_count < forceCompleteCampaign.min_participants && (
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-md p-3 text-amber-200 text-sm">
-                    <strong>Note:</strong> This contest has only {forceCompleteContest.submission_count} submissions, 
-                    which is below the minimum requirement of {forceCompleteContest.min_participants}.
+                    <strong>Note:</strong> This campaign has only {forceCompleteCampaign.submission_count} submissions, 
+                    which is below the minimum requirement of {forceCompleteCampaign.min_participants}.
                   </div>
                 )}
                 <p className="font-semibold text-destructive">This action cannot be undone.</p>
@@ -595,30 +595,30 @@ const AdminCampaigns = () => {
               ) : (
                 <CheckCircle2 className="h-4 w-4 mr-2" />
               )}
-              Yes, Complete Contest
+              Yes, Complete Campaign
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Cancel Contest Confirmation Dialog */}
-      <AlertDialog open={!!cancelContest} onOpenChange={(open) => { if (!open) { setCancelContest(null); setNotifyParticipants(true); } }}>
+      {/* Cancel Campaign Confirmation Dialog */}
+      <AlertDialog open={!!cancelCampaign} onOpenChange={(open) => { if (!open) { setCancelCampaign(null); setNotifyParticipants(true); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Contest?</AlertDialogTitle>
+            <AlertDialogTitle>Cancel Campaign?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-4">
-                <p>This will permanently cancel the contest "{cancelContest?.title}".</p>
+                <p>This will permanently cancel the campaign "{cancelCampaign?.title}".</p>
                 <ul className="list-disc ml-6 space-y-1 text-sm">
                   <li>No new submissions will be allowed</li>
                   <li>No winner can be selected</li>
                   <li>No prizes will be awarded</li>
-                  <li>The contest will be marked as cancelled</li>
+                  <li>The campaign will be marked as cancelled</li>
                 </ul>
-                {cancelContest && cancelContest.submission_count > 0 && (
+                {cancelCampaign && cancelCampaign.submission_count > 0 && (
                   <div className="bg-muted/50 border border-border rounded-md p-3 space-y-3">
                     <p className="text-sm text-muted-foreground">
-                      This contest has {cancelContest.submission_count} submission{cancelContest.submission_count !== 1 ? 's' : ''}.
+                      This campaign has {cancelCampaign.submission_count} submission{cancelCampaign.submission_count !== 1 ? 's' : ''}.
                     </p>
                     <div className="flex items-center space-x-2">
                       <Checkbox 
@@ -642,7 +642,7 @@ const AdminCampaigns = () => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isCancelling}>Go Back</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleCancelContest}
+              onClick={handleCancelCampaign}
               disabled={isCancelling}
               className="bg-destructive hover:bg-destructive/90"
             >
@@ -651,35 +651,35 @@ const AdminCampaigns = () => {
               ) : (
                 <XCircle className="h-4 w-4 mr-2" />
               )}
-              Yes, Cancel Contest
+              Yes, Cancel Campaign
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Reactivate Contest Confirmation Dialog */}
-      <AlertDialog open={!!reactivateContest} onOpenChange={(open) => { if (!open) { setReactivateContest(null); setNotifyOnReactivate(true); } }}>
+      {/* Reactivate Campaign Confirmation Dialog */}
+      <AlertDialog open={!!reactivateCampaign} onOpenChange={(open) => { if (!open) { setReactivateCampaign(null); setNotifyOnReactivate(true); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Reactivate Contest?</AlertDialogTitle>
+            <AlertDialogTitle>Reactivate Campaign?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-4">
-                <p>This will restore the contest "{reactivateContest?.title}" to active status.</p>
+                <p>This will restore the campaign "{reactivateCampaign?.title}" to active status.</p>
                 <ul className="list-disc ml-6 space-y-1 text-sm">
                   <li>New submissions will be allowed</li>
-                  <li>The contest will appear as active to users</li>
+                  <li>The campaign will appear as active to users</li>
                   <li>All existing submissions will be preserved</li>
                 </ul>
-                {reactivateContest && new Date(reactivateContest.end_date) <= new Date() && (
+                {reactivateCampaign && new Date(reactivateCampaign.end_date) <= new Date() && (
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-md p-3 text-amber-200 text-sm">
-                    <strong>Warning:</strong> The end date ({formatDate(reactivateContest.end_date)}) has already passed. 
-                    Consider editing the contest to extend the end date after reactivation.
+                    <strong>Warning:</strong> The end date ({formatDate(reactivateCampaign.end_date)}) has already passed. 
+                    Consider editing the campaign to extend the end date after reactivation.
                   </div>
                 )}
-                {reactivateContest && reactivateContest.submission_count > 0 && (
+                {reactivateCampaign && reactivateCampaign.submission_count > 0 && (
                   <div className="bg-muted/50 border border-border rounded-md p-3 space-y-3">
                     <p className="text-sm text-muted-foreground">
-                      This contest has {reactivateContest.submission_count} existing submission{reactivateContest.submission_count !== 1 ? 's' : ''}.
+                      This campaign has {reactivateCampaign.submission_count} existing submission{reactivateCampaign.submission_count !== 1 ? 's' : ''}.
                     </p>
                     <div className="flex items-center space-x-2">
                       <Checkbox 
@@ -702,7 +702,7 @@ const AdminCampaigns = () => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isReactivating}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleReactivateContest}
+              onClick={handleReactivateCampaign}
               disabled={isReactivating}
               className="bg-green-500 hover:bg-green-600"
             >
@@ -711,7 +711,7 @@ const AdminCampaigns = () => {
               ) : (
                 <RotateCcw className="h-4 w-4 mr-2" />
               )}
-              Yes, Reactivate Contest
+              Yes, Reactivate Campaign
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -720,4 +720,4 @@ const AdminCampaigns = () => {
   );
 };
 
-export default AdminContests;
+export default AdminCampaigns;

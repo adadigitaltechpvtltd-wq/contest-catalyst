@@ -272,7 +272,7 @@ const CreateCampaign = () => {
       .replace(/-+/g, '-')
       .trim();
 
-    const { error } = await supabase.from('contests').insert({
+    const { error } = await (supabase as any).from('campaigns').insert({
       title,
       category: categorySlug,
       description,

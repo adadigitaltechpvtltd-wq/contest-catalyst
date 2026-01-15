@@ -18,7 +18,7 @@ export interface GalleryPhoto {
     title: string;
     slug: string;
     category: string | null;
-  };
+  } | null;
   profile: {
     id: string;
     full_name: string | null;
@@ -222,7 +222,7 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
           user_id: s.user_id,
           seo_approved: s.seo_approved || false,
           seo_page_url: s.seo_page_url || null,
-          campaign: campaignMap.get(s.campaign_id)!,
+          campaign: campaignMap.get(s.campaign_id) as GalleryPhoto['campaign'],
           profile: profileMap.get(s.user_id) || null,
         }));
 

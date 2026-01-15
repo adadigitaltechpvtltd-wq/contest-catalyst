@@ -357,42 +357,42 @@ const AdminSubmissions = () => {
           });
       }
 
-      // If marking as winner, also update the contest with winner info, create wallet transaction, and send notification
-      if (newStatus === 'winner' && selectedSubmission.contest?.id) {
-        const { error: contestError } = await supabase
-          .from('contests')
+      // If marking as winner, also update the campaign with winner info, create wallet transaction, and send notification
+      if (newStatus === 'winner' && selectedSubmission.campaign?.id) {
+        const { error: campaignError } = await (supabase as any)
+          .from('campaigns')
           .update({
             winner_id: selectedSubmission.profile?.id,
             winning_submission_id: selectedSubmission.id,
             status: 'completed',
           })
-          .eq('id', selectedSubmission.contest.id);
+          .eq('id', selectedSubmission.campaign.id);
 
-        if (contestError) {
-          console.error('Failed to update contest with winner:', contestError);
+        if (campaignError) {
+          console.error('Failed to update campaign with winner:', campaignError);
           toast({
             title: 'Warning',
-            description: 'Submission marked as winner but contest update failed. Please update contest manually.',
+            description: 'Submission marked as winner but campaign update failed. Please update campaign manually.',
             variant: 'destructive',
           });
         }
 
         // Create wallet transaction for prize (pending status)
-        const prizeAmount = selectedSubmission.contest.prize_amount || 0;
-        const prizeCurrency = selectedSubmission.contest.prize_currency || 'USD';
+        const prizeAmount = selectedSubmission.campaign.prize_amount || 0;
+        const prizeCurrency = selectedSubmission.campaign.prize_currency || 'USD';
         
         if (prizeAmount > 0 && selectedSubmission.profile?.id) {
           const { error: walletError } = await supabase
             .from('wallet_transactions')
             .insert({
               user_id: selectedSubmission.profile.id,
-              contest_id: selectedSubmission.contest.id,
+              campaign_id: selectedSubmission.campaign.id,
               submission_id: selectedSubmission.id,
               type: 'prize',
               amount: prizeAmount,
               currency: prizeCurrency,
               status: 'pending',
-              notes: `Prize for winning "${selectedSubmission.contest.title}"`,
+              notes: `Prize for winning "${selectedSubmission.campaign.title}"`,
             });
 
           if (walletError) {
@@ -411,8 +411,8 @@ const AdminSubmissions = () => {
             user_id: selectedSubmission.profile.id,
             type: 'success',
             title: '🏆 Congratulations! You Won!',
-            message: `You've won the "${selectedSubmission.contest.title}" contest! Prize: $${prizeAmount}. Your earnings will be transferred soon.`,
-            link: `/campaign/${selectedSubmission.contest.category || 'general'}/${selectedSubmission.contest.slug || selectedSubmission.contest.id}`,
+            message: `You've won the "${selectedSubmission.campaign.title}" campaign! Prize: $${prizeAmount}. Your earnings will be transferred soon.`,
+            link: `/campaign/${selectedSubmission.campaign.category || 'general'}/${selectedSubmission.campaign.slug || selectedSubmission.campaign.id}`,
           });
         }
       }
@@ -570,7 +570,7 @@ const AdminSubmissions = () => {
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-1 truncate">{submission.title}</h3>
                 <p className="text-sm text-muted-foreground mb-3">
-                  {submission.profile?.full_name || 'Unknown'} • {submission.contest?.title}
+                  {submission.profile?.full_name || 'Unknown'} • {submission.campaign?.title}
                 </p>
 
                 {/* Risk Indicators */}
@@ -714,7 +714,7 @@ const AdminSubmissions = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Trophy className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedSubmission.contest?.title}</span>
+                      <span>{selectedSubmission.campaign?.title}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -959,10 +959,10 @@ const AdminSubmissions = () => {
                         <div className="p-3 bg-background rounded border border-border/50">
                           <p className="text-xs text-muted-foreground mb-2">Search Preview:</p>
                           <p className="text-sm font-medium text-primary truncate">
-                            {seoTitle || enhancedTitle} | GAAL Photo Contest
+                            {seoTitle || enhancedTitle} | GAAL Photo Campaign
                           </p>
                           <p className="text-xs text-success truncate">
-                            gaal.app/photo/{selectedSubmission.contest?.title?.toLowerCase().replace(/\s+/g, '-')}/{selectedSubmission.slug || 'photo-slug'}
+                            gaal.app/photo/{selectedSubmission.campaign?.title?.toLowerCase().replace(/\s+/g, '-')}/{selectedSubmission.slug || 'photo-slug'}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                             {seoDescription || enhancedDescription || 'No description available'}
