@@ -91,11 +91,11 @@ const EditCampaign = () => {
   const [brandImageType, setBrandImageType] = useState<'logo' | 'image'>('image');
 
   useEffect(() => {
-    const fetchContest = async () => {
+    const fetchCampaign = async () => {
       if (!id) return;
 
-      const { data, error } = await supabase
-        .from('contests')
+      const { data, error } = await (supabase as any)
+        .from('campaigns')
         .select('*')
         .eq('id', id)
         .maybeSingle();
@@ -111,25 +111,25 @@ const EditCampaign = () => {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const contest = data as any;
-      setTitle(contest.title);
-      setDescription(contest.description ?? '');
-      setTheme(contest.theme ?? '');
-      setPrizeAmount(contest.prize_amount?.toString() ?? '500');
-      setMinParticipants(contest.min_participants?.toString() ?? '100');
-      setMaxParticipants(contest.max_participants?.toString() ?? '');
-      const startDateTime = new Date(contest.start_date);
-      const endDateTime = new Date(contest.end_date);
+      const campaign = data as any;
+      setTitle(campaign.title);
+      setDescription(campaign.description ?? '');
+      setTheme(campaign.theme ?? '');
+      setPrizeAmount(campaign.prize_amount?.toString() ?? '500');
+      setMinParticipants(campaign.min_participants?.toString() ?? '100');
+      setMaxParticipants(campaign.max_participants?.toString() ?? '');
+      const startDateTime = new Date(campaign.start_date);
+      const endDateTime = new Date(campaign.end_date);
       setStartDate(startDateTime);
       setEndDate(endDateTime);
       setStartTime(format(startDateTime, 'HH:mm'));
       setEndTime(format(endDateTime, 'HH:mm'));
-      setStatus(contest.status);
-      setFeaturedInHero(contest.featured_in_hero ?? false);
-      setRules(contest.rules?.length ? contest.rules : ['']);
-      setJudgingCriteria(contest.judging_criteria?.length ? contest.judging_criteria : ['']);
+      setStatus(campaign.status);
+      setFeaturedInHero(campaign.featured_in_hero ?? false);
+      setRules(campaign.rules?.length ? campaign.rules : ['']);
+      setJudgingCriteria(campaign.judging_criteria?.length ? campaign.judging_criteria : ['']);
       // Load category
-      const existingCategory = contest.category || '';
+      const existingCategory = campaign.category || '';
       setOriginalCategory(existingCategory);
       // Check if it's a predefined category
       const isPredefined = CATEGORIES.some(c => c.value === existingCategory && c.value !== 'custom');
@@ -140,26 +140,26 @@ const EditCampaign = () => {
         setCustomCategory(existingCategory);
       }
       // Load SEO fields
-      setSeoTitle(contest.seo_title ?? '');
-      setMetaDescription(contest.meta_description ?? '');
-      setKeywords(contest.keywords?.join(', ') ?? '');
+      setSeoTitle(campaign.seo_title ?? '');
+      setMetaDescription(campaign.meta_description ?? '');
+      setKeywords(campaign.keywords?.join(', ') ?? '');
       // Load cover image and brand fields
-      setCoverImageUrl(contest.cover_image_url ?? '');
-      setBrandName(contest.brand_name ?? '');
-      setBrandDescription(contest.brand_description ?? '');
-      setBrandLogoUrl(contest.brand_logo_url ?? '');
-      setBrandImageUrl(contest.brand_image_url ?? '');
-      setBrandWebsiteUrl(contest.brand_website_url ?? '');
-      setBrandInstagramUrl(contest.brand_instagram_url ?? '');
-      setBrandTwitterUrl(contest.brand_twitter_url ?? '');
-      setBrandLinkedinUrl(contest.brand_linkedin_url ?? '');
-      setBrandYoutubeUrl(contest.brand_youtube_url ?? '');
-      setBrandCtaLabel(contest.brand_cta_label ?? '');
-      setBrandCtaUrl(contest.brand_cta_url ?? '');
+      setCoverImageUrl(campaign.cover_image_url ?? '');
+      setBrandName(campaign.brand_name ?? '');
+      setBrandDescription(campaign.brand_description ?? '');
+      setBrandLogoUrl(campaign.brand_logo_url ?? '');
+      setBrandImageUrl(campaign.brand_image_url ?? '');
+      setBrandWebsiteUrl(campaign.brand_website_url ?? '');
+      setBrandInstagramUrl(campaign.brand_instagram_url ?? '');
+      setBrandTwitterUrl(campaign.brand_twitter_url ?? '');
+      setBrandLinkedinUrl(campaign.brand_linkedin_url ?? '');
+      setBrandYoutubeUrl(campaign.brand_youtube_url ?? '');
+      setBrandCtaLabel(campaign.brand_cta_label ?? '');
+      setBrandCtaUrl(campaign.brand_cta_url ?? '');
       setIsLoading(false);
     };
 
-    fetchContest();
+    fetchCampaign();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, navigate, toast]);
 
@@ -336,8 +336,8 @@ const EditCampaign = () => {
           .trim()
       : originalCategory;
 
-    const { error } = await supabase
-      .from('contests')
+    const { error } = await (supabase as any)
+      .from('campaigns')
       .update({
         title,
         category: categorySlug || null,

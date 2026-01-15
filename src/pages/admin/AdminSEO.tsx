@@ -25,14 +25,14 @@ import {
 } from '@/components/ui/table';
 
 interface SEOStats {
-  totalContests: number;
-  contestsWithSEO: number;
+  totalCampaigns: number;
+  campaignsWithSEO: number;
   totalPhotos: number;
   indexablePhotos: number;
   noindexPhotos: number;
 }
 
-interface ContestSEOStatus {
+interface CampaignSEOStatus {
   id: string;
   title: string;
   slug: string | null;
@@ -46,70 +46,70 @@ interface ContestSEOStatus {
 
 const AdminSEO = () => {
   const [stats, setStats] = useState<SEOStats>({
-    totalContests: 0,
-    contestsWithSEO: 0,
+    totalCampaigns: 0,
+    campaignsWithSEO: 0,
     totalPhotos: 0,
     indexablePhotos: 0,
     noindexPhotos: 0,
   });
-  const [contests, setContests] = useState<ContestSEOStatus[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignSEOStatus[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSEOData = async () => {
       setLoading(true);
 
-      // Fetch contests with SEO field status
-      const { data: contestsData } = await supabase
-        .from('contests')
+      // Fetch campaigns with SEO field status
+      const { data: campaignsData } = await (supabase as any)
+        .from('campaigns')
         .select('id, title, slug, status, seo_title, meta_description, keywords')
         .in('status', ['active', 'voting', 'completed']);
 
       // Fetch all submissions with status
       const { data: submissionsData } = await supabase
         .from('submissions')
-        .select('id, status, contest_id');
+        .select('id, status, campaign_id');
 
-      if (contestsData && submissionsData) {
-        // Calculate contest SEO status
-        const contestsWithStatus: ContestSEOStatus[] = contestsData.map(contest => {
-          const contestSubmissions = submissionsData.filter(s => s.contest_id === contest.id);
-          const indexable = contestSubmissions.filter(s => 
+      if (campaignsData && submissionsData) {
+        // Calculate campaign SEO status
+        const campaignsWithStatus: CampaignSEOStatus[] = campaignsData.map((campaign: any) => {
+          const campaignSubmissions = submissionsData.filter((s: any) => s.campaign_id === campaign.id);
+          const indexable = campaignSubmissions.filter((s: any) => 
             s.status === 'approved' || s.status === 'winner'
           );
 
           return {
-            id: contest.id,
-            title: contest.title,
-            slug: contest.slug,
-            status: contest.status,
-            hasSeoTitle: !!contest.seo_title && contest.seo_title.trim() !== '',
-            hasMetaDescription: !!contest.meta_description && contest.meta_description.trim() !== '',
-            hasKeywords: !!contest.keywords && contest.keywords.length > 0,
-            photoCount: contestSubmissions.length,
+            id: campaign.id,
+            title: campaign.title,
+            slug: campaign.slug,
+            status: campaign.status,
+            hasSeoTitle: !!campaign.seo_title && campaign.seo_title.trim() !== '',
+            hasMetaDescription: !!campaign.meta_description && campaign.meta_description.trim() !== '',
+            hasKeywords: !!campaign.keywords && campaign.keywords.length > 0,
+            photoCount: campaignSubmissions.length,
             indexablePhotoCount: indexable.length,
           };
         });
 
         // Calculate overall stats
-        const contestsWithFullSEO = contestsWithStatus.filter(
+        const campaignsWithFullSEO = campaignsWithStatus.filter(
           c => c.hasSeoTitle && c.hasMetaDescription
         ).length;
 
         const totalPhotos = submissionsData.length;
         const indexablePhotos = submissionsData.filter(
-          s => s.status === 'approved' || s.status === 'winner'
+          (s: any) => s.status === 'approved' || s.status === 'winner'
         ).length;
 
         setStats({
-          totalContests: contestsData.length,
-          contestsWithSEO: contestsWithFullSEO,
+          totalCampaigns: campaignsData.length,
+          campaignsWithSEO: campaignsWithFullSEO,
           totalPhotos,
           indexablePhotos,
           noindexPhotos: totalPhotos - indexablePhotos,
         });
 
-        setContests(contestsWithStatus);
+        setCampaigns(campaignsWithStatus);
       }
 
       setLoading(false);
@@ -118,8 +118,8 @@ const AdminSEO = () => {
     fetchSEOData();
   }, []);
 
-  const seoCompletionPercent = stats.totalContests > 0 
-    ? Math.round((stats.contestsWithSEO / stats.totalContests) * 100) 
+  const seoCompletionPercent = stats.totalCampaigns > 0 
+    ? Math.round((stats.campaignsWithSEO / stats.totalCampaigns) * 100) 
     : 0;
 
   const indexablePercent = stats.totalPhotos > 0 
@@ -156,8 +156,8 @@ const AdminSEO = () => {
                 {seoCompletionPercent}%
               </Badge>
             </div>
-            <p className="text-2xl font-bold">{stats.contestsWithSEO} / {stats.totalContests}</p>
-            <p className="text-sm text-muted-foreground">Contests with SEO</p>
+            <p className="text-2xl font-bold">{stats.campaignsWithSEO} / {stats.totalCampaigns}</p>
+            <p className="text-sm text-muted-foreground">Campaigns with SEO</p>
             <Progress value={seoCompletionPercent} className="mt-2" />
           </CardContent>
         </Card>
@@ -190,9 +190,9 @@ const AdminSEO = () => {
             <div className="flex items-center justify-between mb-4">
               <FileText className="h-8 w-8 text-blue-400" />
             </div>
-            <p className="text-2xl font-bold">{stats.totalContests + stats.indexablePhotos}</p>
+            <p className="text-2xl font-bold">{stats.totalCampaigns + stats.indexablePhotos}</p>
             <p className="text-sm text-muted-foreground">Sitemap URLs</p>
-            <p className="text-xs text-muted-foreground mt-2">Contests + approved photos</p>
+            <p className="text-xs text-muted-foreground mt-2">Campaigns + approved photos</p>
           </CardContent>
         </Card>
       </div>
@@ -211,15 +211,15 @@ const AdminSEO = () => {
         <CardContent>
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
-          ) : contests.length === 0 ? (
+          ) : campaigns.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No active contests found
+              No active campaigns found
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Contest</TableHead>
+                  <TableHead>Campaign</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-center">SEO Title</TableHead>
                   <TableHead className="text-center">Meta Desc</TableHead>
@@ -230,64 +230,64 @@ const AdminSEO = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contests.map((contest) => {
-                  const isComplete = contest.hasSeoTitle && contest.hasMetaDescription;
+                {campaigns.map((campaign) => {
+                  const isComplete = campaign.hasSeoTitle && campaign.hasMetaDescription;
                   return (
-                    <TableRow key={contest.id}>
+                    <TableRow key={campaign.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {!isComplete && (
                             <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
                           )}
                           <div>
-                            <p className="font-medium">{contest.title}</p>
-                            {contest.slug && (
-                              <p className="text-xs text-muted-foreground">/campaign/{contest.slug}</p>
+                            <p className="font-medium">{campaign.title}</p>
+                            {campaign.slug && (
+                              <p className="text-xs text-muted-foreground">/campaign/{campaign.slug}</p>
                             )}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant={
-                          contest.status === 'active' ? 'default' : 
-                          contest.status === 'voting' ? 'secondary' : 
+                          campaign.status === 'active' ? 'default' : 
+                          campaign.status === 'voting' ? 'secondary' : 
                           'outline'
                         }>
-                          {contest.status}
+                          {campaign.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        {contest.hasSeoTitle ? (
+                        {campaign.hasSeoTitle ? (
                           <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
                         ) : (
                           <XCircle className="h-5 w-5 text-destructive mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        {contest.hasMetaDescription ? (
+                        {campaign.hasMetaDescription ? (
                           <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
                         ) : (
                           <XCircle className="h-5 w-5 text-destructive mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        {contest.hasKeywords ? (
+                        {campaign.hasKeywords ? (
                           <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        {contest.photoCount}
+                        {campaign.photoCount}
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className={contest.indexablePhotoCount > 0 ? 'text-success font-medium' : 'text-muted-foreground'}>
-                          {contest.indexablePhotoCount}
+                        <span className={campaign.indexablePhotoCount > 0 ? 'text-success font-medium' : 'text-muted-foreground'}>
+                          {campaign.indexablePhotoCount}
                         </span>
                       </TableCell>
                       <TableCell>
                         <Button asChild variant="ghost" size="sm">
-                          <Link to={`/admin/campaigns/${contest.id}/edit`}>
+                          <Link to={`/admin/campaigns/${campaign.id}/edit`}>
                             Edit
                           </Link>
                         </Button>
