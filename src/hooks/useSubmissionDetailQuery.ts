@@ -15,7 +15,7 @@ export interface SubmissionDetail {
   created_at: string;
   updated_at: string;
   reviewed_at: string | null;
-  contest: {
+  campaign: {
     id: string;
     slug: string | null;
     title: string;
@@ -41,7 +41,7 @@ async function fetchSubmissionDetail(id: string, userId: string): Promise<Submis
       created_at,
       updated_at,
       reviewed_at,
-      contest:contests(id, slug, title, prize_amount, prize_currency, status, end_date)
+      campaign:campaigns(id, slug, title, prize_amount, prize_currency, status, end_date)
     `)
     .eq('id', id)
     .eq('user_id', userId)

@@ -271,8 +271,8 @@ const AdminPayments = () => {
                           {getTypeIcon(tx.type)}
                           <span>{getTypeLabel(tx.type)}</span>
                         </div>
-                        {tx.contest && (
-                          <p className="text-xs text-muted-foreground">{tx.contest.title}</p>
+                        {tx.campaign && (
+                          <p className="text-xs text-muted-foreground">{tx.campaign.title}</p>
                         )}
                       </td>
                       <td className="p-4">
@@ -312,7 +312,7 @@ const AdminPayments = () => {
                 </DialogTitle>
                 <DialogDescription>
                   {selectedTransaction.type === 'prize' 
-                    ? 'Mark this contest prize as paid after completing the manual payment'
+                    ? 'Mark this campaign prize as paid after completing the manual payment'
                     : 'Approve or cancel this withdrawal request'
                   }
                 </DialogDescription>
@@ -330,10 +330,10 @@ const AdminPayments = () => {
                       <p className="text-muted-foreground">Amount</p>
                       <p className="font-semibold text-lg">${Number(selectedTransaction.amount).toFixed(2)}</p>
                     </div>
-                    {selectedTransaction.type === 'prize' && selectedTransaction.contest && (
+                    {selectedTransaction.type === 'prize' && selectedTransaction.campaign && (
                       <div className="col-span-2">
-                        <p className="text-muted-foreground">Contest</p>
-                        <p className="font-semibold">{selectedTransaction.contest.title}</p>
+                        <p className="text-muted-foreground">Campaign</p>
+                        <p className="font-semibold">{selectedTransaction.campaign.title}</p>
                       </div>
                     )}
                   </div>

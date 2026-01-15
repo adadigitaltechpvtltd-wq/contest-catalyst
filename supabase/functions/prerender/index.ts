@@ -29,7 +29,7 @@ serve(async (req) => {
       const [, category, campaignSlug, photoSlug] = galleryMatch;
       
       const { data: campaign } = await supabase
-        .from('contests')
+        .from('campaigns')
         .select('id, title, slug, category, theme, description, seo_title, meta_description, keywords')
         .eq('slug', campaignSlug)
         .maybeSingle();
@@ -54,7 +54,7 @@ serve(async (req) => {
       const { data: submission } = await supabase
         .from('submissions')
         .select('id, title, description, image_url, slug, status, created_at, user_id, view_count, like_count, seo_page_generated, seo_approved')
-        .eq('contest_id', campaign.id)
+        .eq('campaign_id', campaign.id)
         .eq('slug', photoSlug)
         .maybeSingle();
 
@@ -117,8 +117,8 @@ serve(async (req) => {
         title: submission.title,
         description: submission.description || `${submission.title} - Photography submission for ${campaign.title}.`,
         imageUrl: submission.image_url,
-        contestTitle: campaign.seo_title || campaign.title,
-        contestSlug: campaign.slug,
+        campaignTitle: campaign.seo_title || campaign.title,
+        campaignSlug: campaign.slug,
         category: campaignCategory,
         photoSlug: submission.slug,
         photographerName,
@@ -140,7 +140,7 @@ serve(async (req) => {
       const [, campaignSlug, photoSlug] = legacyPhotoMatch;
       
       const { data: campaign } = await supabase
-        .from('contests')
+        .from('campaigns')
         .select('category')
         .eq('slug', campaignSlug)
         .maybeSingle();
@@ -166,7 +166,7 @@ serve(async (req) => {
       const [, category, campaignSlug] = campaignMatch;
       
       const { data: campaign } = await supabase
-        .from('contests')
+        .from('campaigns')
         .select('id, title, description, theme, category, prize_amount, prize_currency, start_date, end_date, cover_image_url, status, seo_title, meta_description, keywords')
         .eq('slug', campaignSlug)
         .maybeSingle();
@@ -212,7 +212,7 @@ serve(async (req) => {
       const [, campaignSlug] = legacyCampaignMatch;
       
       const { data: campaign } = await supabase
-        .from('contests')
+        .from('campaigns')
         .select('category')
         .eq('slug', campaignSlug)
         .maybeSingle();
@@ -255,8 +255,8 @@ function generateGalleryItemHTML(data: {
   title: string;
   description: string;
   imageUrl: string;
-  contestTitle: string;
-  contestSlug: string;
+  campaignTitle: string;
+  campaignSlug: string;
   category: string;
   photoSlug: string;
   photographerName: string;
@@ -266,8 +266,8 @@ function generateGalleryItemHTML(data: {
   noIndex: boolean;
   keywords: string[];
 }) {
-  const canonicalUrl = `${BASE_URL}/gallery/${data.category}/${data.contestSlug}/${data.photoSlug}`;
-  const contestUrl = `${BASE_URL}/campaign/${data.category}/${data.contestSlug}`;
+  const canonicalUrl = `${BASE_URL}/gallery/${data.category}/${data.campaignSlug}/${data.photoSlug}`;
+  const campaignUrl = `${BASE_URL}/campaign/${data.category}/${data.campaignSlug}`;
   const keywordsMeta = data.keywords.length > 0 
     ? `<meta name="keywords" content="${escapeHtml(data.keywords.join(', '))}">` 
     : '';
@@ -278,14 +278,14 @@ function generateGalleryItemHTML(data: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(data.title)} - ${escapeHtml(data.contestTitle)} | GAAL</title>
+  <title>${escapeHtml(data.title)} - ${escapeHtml(data.campaignTitle)} | GAAL</title>
   <meta name="description" content="${escapeHtml(data.description)}">
   ${keywordsMeta}
   ${robotsTag}
   <link rel="canonical" href="${canonicalUrl}">
   
   <meta property="og:type" content="article">
-  <meta property="og:title" content="${escapeHtml(data.title)} - ${escapeHtml(data.contestTitle)}">
+  <meta property="og:title" content="${escapeHtml(data.title)} - ${escapeHtml(data.campaignTitle)}">
   <meta property="og:description" content="${escapeHtml(data.description)}">
   <meta property="og:image" content="${data.imageUrl}">
   <meta property="og:url" content="${canonicalUrl}">
@@ -311,8 +311,8 @@ function generateGalleryItemHTML(data: {
     },
     "isPartOf": {
       "@type": "CreativeWork",
-      "name": "${escapeJson(data.contestTitle)}",
-      "url": "${contestUrl}"
+      "name": "${escapeJson(data.campaignTitle)}",
+      "url": "${campaignUrl}"
     }
   }
   </script>
@@ -331,7 +331,7 @@ function generateGalleryItemHTML(data: {
       <p>By ${escapeHtml(data.photographerName)}</p>
       <img src="${data.imageUrl}" alt="${escapeHtml(data.title)}" width="1200" height="800">
       <p>${escapeHtml(data.description)}</p>
-      <p>Part of <a href="${contestUrl}">${escapeHtml(data.contestTitle)}</a> campaign</p>
+      <p>Part of <a href="${campaignUrl}">${escapeHtml(data.campaignTitle)}</a> campaign</p>
       <p>Views: ${data.viewCount} | Likes: ${data.likeCount}</p>
     </article>
   </main>

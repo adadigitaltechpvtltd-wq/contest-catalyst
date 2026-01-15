@@ -131,7 +131,7 @@ const AdminSEO = () => {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-display font-bold">SEO Health Dashboard</h1>
-          <p className="text-muted-foreground">Monitor search engine optimization across contests and photos</p>
+          <p className="text-muted-foreground">Monitor search engine optimization across campaigns and photos</p>
         </div>
         <Button asChild variant="outline">
           <a 

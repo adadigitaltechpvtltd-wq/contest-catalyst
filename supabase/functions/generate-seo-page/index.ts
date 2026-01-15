@@ -27,8 +27,8 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch submission details with contest and profile
-    // IMPORTANT: Disambiguate relationships (there are multiple FK paths between submissions↔contests)
+    // Fetch submission details with campaign and profile
+    // IMPORTANT: Disambiguate relationships (there are multiple FK paths between submissions↔campaigns)
     const { data: submission, error: submissionError } = await supabase
       .from('submissions')
       .select(`
@@ -39,7 +39,7 @@ serve(async (req) => {
         image_url,
         seo_title,
         meta_description,
-        contest:contests!submissions_contest_id_fkey(
+        campaign:campaigns!submissions_contest_id_fkey(
           id,
           title,
           slug,
@@ -65,23 +65,23 @@ serve(async (req) => {
       );
     }
 
-    // Extract contest data (Supabase returns nested relations as objects when using .single())
-    const contest = submission.contest as unknown as { id: string; title: string; slug: string; category: string; description: string; status: string } | null;
+    // Extract campaign data (Supabase returns nested relations as objects when using .single())
+    const campaign = submission.campaign as unknown as { id: string; title: string; slug: string; category: string; description: string; status: string } | null;
     const profile = submission.profile as unknown as { id: string; username: string; full_name: string; avatar_url: string } | null;
 
-    if (!contest) {
+    if (!campaign) {
       return new Response(
-        JSON.stringify({ error: 'Contest not found for submission' }),
+        JSON.stringify({ error: 'Campaign not found for submission' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Generate HTML with SEO tags
-    const html = generateSeoHTML({ ...submission, contest, profile });
+    const html = generateSeoHTML({ ...submission, campaign, profile });
 
     // Generate storage path - use category or 'general' as fallback
-    const category = contest.category || 'general';
-    const storagePath = `seo-pages/${category}/${contest.slug}/${submission.slug}.html`;
+    const category = campaign.category || 'general';
+    const storagePath = `seo-pages/${category}/${campaign.slug}/${submission.slug}.html`;
 
     // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
@@ -147,21 +147,21 @@ function generateSeoHTML(submission: any): string {
     image_url,
     seo_title,
     meta_description,
-    contest,
+    campaign,
     profile,
   } = submission;
 
   const safeTitle = String(title || 'Photo');
   const creatorName = String(profile?.full_name || profile?.username || 'Anonymous');
-  const category = contest?.category || 'general';
-  const campaignTitle = contest?.title || 'Photo Campaign';
-  const campaignSlug = contest?.slug || 'campaign';
+  const category = campaign?.category || 'general';
+  const campaignTitle = campaign?.title || 'Photo Campaign';
+  const campaignSlug = campaign?.slug || 'campaign';
 
   const pageTitle = (typeof seo_title === 'string' && seo_title.trim())
     ? seo_title
     : `${safeTitle} | ${campaignTitle} | GAAL`;
 
-  const pageDescription = String(meta_description || description || contest?.description || `${safeTitle} - Photography submission for ${campaignTitle} on GAAL.`);
+  const pageDescription = String(meta_description || description || campaign?.description || `${safeTitle} - Photography submission for ${campaignTitle} on GAAL.`);
   
   // Use correct gallery URL format
   const canonicalUrl = `https://gaal.app/gallery/${category}/${campaignSlug}/${slug}`;

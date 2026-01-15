@@ -399,9 +399,9 @@ const Wallet = () => {
                             <p className="font-medium">
                               {getTransactionLabel(tx.type, tx.status)}
                             </p>
-                            {tx.contest && (
+                            {tx.campaign && (
                               <p className="text-sm text-muted-foreground">
-                                {tx.contest.title}
+                                {tx.campaign.title}
                               </p>
                             )}
                             <p className="text-xs text-muted-foreground">

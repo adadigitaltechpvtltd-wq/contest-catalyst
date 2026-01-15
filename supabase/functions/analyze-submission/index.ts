@@ -734,7 +734,7 @@ function sampleImagePixels(bytes: Uint8Array): {
 async function checkDuplicateSimilarity(
   supabase: any,
   submissionId: string,
-  contestId: string,
+  campaignId: string,
   imageBytes: Uint8Array
 ): Promise<number> {
   try {
@@ -746,11 +746,11 @@ async function checkDuplicateSimilarity(
       return 0;
     }
 
-    // Get existing submissions with hashes from the same contest
+    // Get existing submissions with hashes from the same campaign
     const { data: otherSubmissions, error } = await supabase
       .from('submissions')
       .select('id, perceptual_hash')
-      .eq('contest_id', contestId)
+      .eq('campaign_id', campaignId)
       .neq('id', submissionId)
       .not('perceptual_hash', 'is', null)
       .limit(100);

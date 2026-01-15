@@ -13,7 +13,7 @@ export interface Transaction {
   notes: string | null;
   payment_reference: string | null;
   created_at: string;
-  contest: {
+  campaign: {
     title: string;
   } | null;
 }
@@ -89,7 +89,7 @@ export const useWalletTransactions = (userId: string | undefined) => {
             notes,
             payment_reference,
             created_at,
-            contest:contests(title)
+            campaign:campaigns(title)
           `)
           .eq('user_id', userId)
           .order('created_at', { ascending: false });
