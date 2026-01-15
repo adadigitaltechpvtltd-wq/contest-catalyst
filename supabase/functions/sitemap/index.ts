@@ -20,22 +20,22 @@ serve(async (req) => {
     
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Fetch active, voting, and completed contests with category
-    const { data: contests, error: contestsError } = await supabase
-      .from('contests')
+    // Fetch active, voting, and completed campaigns with category
+    const { data: campaigns, error: campaignsError } = await supabase
+      .from('campaigns')
       .select('slug, category, updated_at, status')
       .in('status', ['active', 'voting', 'completed'])
       .order('updated_at', { ascending: false });
 
-    if (contestsError) {
-      console.error('Error fetching contests:', contestsError);
-      throw contestsError;
+    if (campaignsError) {
+      console.error('Error fetching campaigns:', campaignsError);
+      throw campaignsError;
     }
 
     // Fetch only SEO-approved submissions for the sitemap (these have static HTML pages)
     const { data: submissions, error: submissionsError } = await supabase
       .from('submissions')
-      .select('slug, updated_at, contest_id, seo_approved, seo_page_url, seo_page_generated')
+      .select('slug, updated_at, campaign_id, seo_approved, seo_page_url, seo_page_generated')
       .in('status', ['approved', 'winner'])
       .eq('seo_approved', true)
       .order('updated_at', { ascending: false })
@@ -46,18 +46,18 @@ serve(async (req) => {
       throw submissionsError;
     }
 
-    // Fetch contest info for submissions (with category)
-    const contestIds = [...new Set((submissions || []).map(s => s.contest_id))];
-    const { data: contestsForSubmissions } = await supabase
-      .from('contests')
+    // Fetch campaign info for submissions (with category)
+    const campaignIds = [...new Set((submissions || []).map(s => s.campaign_id))];
+    const { data: campaignsForSubmissions } = await supabase
+      .from('campaigns')
       .select('id, slug, category, status')
-      .in('id', contestIds)
+      .in('id', campaignIds)
       .in('status', ['active', 'voting', 'completed']);
     
-    const contestMap = new Map<string, { slug: string; category: string; status: string }>();
-    for (const c of contestsForSubmissions || []) {
+    const campaignMap = new Map<string, { slug: string; category: string; status: string }>();
+    for (const c of campaignsForSubmissions || []) {
       if (c.slug) {
-        contestMap.set(c.id, { slug: c.slug, category: c.category || 'general', status: c.status });
+        campaignMap.set(c.id, { slug: c.slug, category: c.category || 'general', status: c.status });
       }
     }
 
@@ -94,16 +94,16 @@ serve(async (req) => {
 `;
 
     // Add campaign pages with category in URL
-    for (const contest of contests || []) {
-      if (!contest.slug) continue;
+    for (const campaign of campaigns || []) {
+      if (!campaign.slug) continue;
       
-      const category = contest.category || 'general';
-      const priority = contest.status === 'active' ? '0.9' : '0.7';
-      const changefreq = contest.status === 'active' ? 'daily' : 'weekly';
+      const category = campaign.category || 'general';
+      const priority = campaign.status === 'active' ? '0.9' : '0.7';
+      const changefreq = campaign.status === 'active' ? 'daily' : 'weekly';
       
       xml += `  <url>
-    <loc>${BASE_URL}/campaign/${category}/${contest.slug}</loc>
-    <lastmod>${new Date(contest.updated_at).toISOString().split('T')[0]}</lastmod>
+    <loc>${BASE_URL}/campaign/${category}/${campaign.slug}</loc>
+    <lastmod>${new Date(campaign.updated_at).toISOString().split('T')[0]}</lastmod>
     <changefreq>${changefreq}</changefreq>
     <priority>${priority}</priority>
   </url>
@@ -114,13 +114,13 @@ serve(async (req) => {
     for (const submission of submissions || []) {
       if (!submission.slug) continue;
       
-      const contestInfo = contestMap.get(submission.contest_id);
-      if (!contestInfo) continue;
+      const campaignInfo = campaignMap.get(submission.campaign_id);
+      if (!campaignInfo) continue;
       
       // Use the static HTML page URL from storage if generated, otherwise the React route
       const locUrl = submission.seo_page_generated && submission.seo_page_url 
         ? submission.seo_page_url
-        : `${BASE_URL}/gallery/${contestInfo.category}/${contestInfo.slug}/${submission.slug}`;
+        : `${BASE_URL}/gallery/${campaignInfo.category}/${campaignInfo.slug}/${submission.slug}`;
       
       xml += `  <url>
     <loc>${locUrl}</loc>
@@ -133,7 +133,7 @@ serve(async (req) => {
 
     xml += `</urlset>`;
 
-    console.log(`Sitemap generated with ${contests?.length || 0} contests and ${submissions?.length || 0} gallery items`);
+    console.log(`Sitemap generated with ${campaigns?.length || 0} campaigns and ${submissions?.length || 0} gallery items`);
 
     return new Response(xml, {
       headers: {
