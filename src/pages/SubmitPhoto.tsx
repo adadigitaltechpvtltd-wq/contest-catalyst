@@ -30,7 +30,9 @@ import {
   Crop,
   Images,
   ExternalLink,
-  Info
+  Info,
+  Video,
+  Play
 } from 'lucide-react';
 import ImageCropper from '@/components/ImageCropper';
 import CameraCapture from '@/components/CameraCapture';
@@ -118,6 +120,11 @@ const SubmitPhoto = () => {
   const [description, setDescription] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [videoDuration, setVideoDuration] = useState<number>(0);
+  const [videoThumbnail, setVideoThumbnail] = useState<File | null>(null);
+  const [videoThumbnailPreview, setVideoThumbnailPreview] = useState<string | null>(null);
   const [rawPhotoFile, setRawPhotoFile] = useState<File | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
@@ -125,6 +132,9 @@ const SubmitPhoto = () => {
   const [originalityConfirmed, setOriginalityConfirmed] = useState(false);
   const [noAiConfirmed, setNoAiConfirmed] = useState(false);
   const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
+
+  // Determine campaign type
+  const isVideoCampaign = campaign?.campaign_type === 'video';
 
   // Camera availability
   const isCameraAvailable = useIsCameraAvailable();
@@ -248,12 +258,129 @@ const SubmitPhoto = () => {
     setIsFromCamera(false);
   };
 
+  const handleRemoveVideo = () => {
+    setVideoFile(null);
+    setVideoPreview(null);
+    setVideoDuration(0);
+    setVideoThumbnail(null);
+    setVideoThumbnailPreview(null);
+  };
+
   const handleRetakePhoto = () => {
     setPhotoFile(null);
     setPhotoPreview(null);
     setIsFromCamera(false);
     setShowCamera(true);
   };
+
+  // Handle video file selection
+  const handleVideoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!['video/mp4', 'video/quicktime', 'video/webm'].includes(file.type)) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload MP4, MOV, or WebM video.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (50MB max for videos)
+    if (file.size > 50 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Please upload a video smaller than 50MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Check video duration
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.src = URL.createObjectURL(file);
+    
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(video.src);
+      
+      if (video.duration > 30) {
+        toast({
+          title: 'Video too long',
+          description: 'Maximum video duration is 30 seconds.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      setVideoDuration(Math.round(video.duration));
+      setVideoFile(file);
+      setVideoPreview(URL.createObjectURL(file));
+      
+      // Auto-generate thumbnail from first frame
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        video.currentTime = 0.5; // Get frame at 0.5 seconds
+        video.onseeked = () => {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const thumbnailFile = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
+              setVideoThumbnail(thumbnailFile);
+              setVideoThumbnailPreview(canvas.toDataURL('image/jpeg'));
+            }
+          }, 'image/jpeg', 0.8);
+        };
+      }
+    };
+
+    video.onerror = () => {
+      toast({
+        title: 'Invalid video',
+        description: 'Could not read video file. Please try another file.',
+        variant: 'destructive',
+      });
+    };
+
+    e.target.value = '';
+  }, [toast]);
+
+  // Handle custom thumbnail upload
+  const handleThumbnailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload a JPEG, PNG, or WebP image for thumbnail.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Thumbnail must be smaller than 5MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setVideoThumbnail(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setVideoThumbnailPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }, [toast]);
 
   // Handle camera capture
   const handleCameraCapture = useCallback((file: File) => {
@@ -278,7 +405,8 @@ const SubmitPhoto = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user || !campaign || !photoFile) return;
+    const hasMedia = isVideoCampaign ? !!videoFile : !!photoFile;
+    if (!user || !campaign || !hasMedia) return;
 
     // Title validation with quality requirements
     const titleValidation = validateTitle(title);
@@ -303,32 +431,86 @@ const SubmitPhoto = () => {
     setIsSubmitting(true);
 
     try {
-      // Upload image to storage
-      const fileExt = photoFile.name.split('.').pop();
-      const fileName = `${user.id}/${campaign.id}/${Date.now()}.${fileExt}`;
+      let imageUrl = '';
+      let videoUrl = '';
+      let videoThumbnailUrl = '';
 
-      const { error: uploadError } = await supabase.storage
-        .from('submissions')
-        .upload(fileName, photoFile);
+      if (isVideoCampaign && videoFile) {
+        // Upload video
+        const videoExt = videoFile.name.split('.').pop();
+        const videoFileName = `${user.id}/${campaign.id}/${Date.now()}.${videoExt}`;
 
-      if (uploadError) throw uploadError;
+        const { error: videoUploadError } = await supabase.storage
+          .from('submissions')
+          .upload(videoFileName, videoFile);
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('submissions')
-        .getPublicUrl(fileName);
+        if (videoUploadError) throw videoUploadError;
+
+        const { data: { publicUrl: videoPublicUrl } } = supabase.storage
+          .from('submissions')
+          .getPublicUrl(videoFileName);
+
+        videoUrl = videoPublicUrl;
+
+        // Upload thumbnail
+        if (videoThumbnail) {
+          const thumbFileName = `${user.id}/${campaign.id}/${Date.now()}-thumb.jpg`;
+          
+          const { error: thumbUploadError } = await supabase.storage
+            .from('submissions')
+            .upload(thumbFileName, videoThumbnail);
+
+          if (thumbUploadError) throw thumbUploadError;
+
+          const { data: { publicUrl: thumbPublicUrl } } = supabase.storage
+            .from('submissions')
+            .getPublicUrl(thumbFileName);
+
+          videoThumbnailUrl = thumbPublicUrl;
+        }
+
+        // For video campaigns, use thumbnail as image_url for display
+        imageUrl = videoThumbnailUrl || videoUrl;
+      } else if (photoFile) {
+        // Upload image
+        const fileExt = photoFile.name.split('.').pop();
+        const fileName = `${user.id}/${campaign.id}/${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('submissions')
+          .upload(fileName, photoFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('submissions')
+          .getPublicUrl(fileName);
+
+        imageUrl = publicUrl;
+      }
 
       // Create submission
-      const { data: submissionData, error: submissionError } = await supabase
+      const submissionData: Record<string, unknown> = {
+        campaign_id: campaign.id,
+        user_id: user.id,
+        title,
+        description,
+        image_url: imageUrl,
+        originality_confirmed: true,
+      };
+
+      // Add video-specific fields
+      if (isVideoCampaign && videoUrl) {
+        submissionData.video_url = videoUrl;
+        submissionData.video_duration_seconds = videoDuration;
+        if (videoThumbnailUrl) {
+          submissionData.video_thumbnail_url = videoThumbnailUrl;
+        }
+      }
+
+      const { data: submission, error: submissionError } = await (supabase as any)
         .from('submissions')
-        .insert({
-          campaign_id: campaign.id,
-          user_id: user.id,
-          title,
-          description,
-          image_url: publicUrl,
-          originality_confirmed: true,
-        })
+        .insert(submissionData)
         .select('id')
         .single();
 
@@ -336,13 +518,13 @@ const SubmitPhoto = () => {
 
       toast({
         title: 'Submission successful!',
-        description: 'Your photo has been submitted for review.',
+        description: isVideoCampaign ? 'Your video has been submitted for review.' : 'Your photo has been submitted for review.',
       });
 
-      // Trigger background analysis (fire and forget)
-      if (submissionData?.id) {
+      // Trigger background analysis (fire and forget) - only for photos
+      if (submission?.id && !isVideoCampaign) {
         supabase.functions.invoke('analyze-submission', {
-          body: { submission_id: submissionData.id }
+          body: { submission_id: submission.id }
         }).catch(err => {
           console.warn('Background analysis trigger failed:', err);
         });
@@ -445,11 +627,17 @@ const SubmitPhoto = () => {
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-display font-bold mb-2">
-              Submit Your Photo
+              {isVideoCampaign ? 'Submit Your Video' : 'Submit Your Photo'}
             </h1>
             <p className="text-muted-foreground">
               Campaign: <span className="text-foreground font-medium">{campaign?.title}</span>
             </p>
+            {isVideoCampaign && (
+              <p className="text-sm text-primary mt-1 flex items-center justify-center gap-1">
+                <Video className="h-4 w-4" />
+                Video Campaign • Max 30 seconds
+              </p>
+            )}
             
             {/* Countdown Timer */}
             {timeRemaining && !timeRemaining.isExpired && (
@@ -472,102 +660,186 @@ const SubmitPhoto = () => {
             <Card className="glass-card mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Camera className="h-5 w-5" />
-                  Photo Upload
+                  {isVideoCampaign ? <Video className="h-5 w-5" /> : <Camera className="h-5 w-5" />}
+                  {isVideoCampaign ? 'Video Upload' : 'Photo Upload'}
                 </CardTitle>
                 <CardDescription>
-                  Upload a high-quality photo that you personally captured
+                  {isVideoCampaign 
+                    ? 'Upload a short video reel (max 30 seconds) that you personally created'
+                    : 'Upload a high-quality photo that you personally captured'
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Photo Upload */}
-                <div>
-                  {photoPreview ? (
-                    <div className="relative">
-                      <img
-                        src={photoPreview}
-                        alt="Preview"
-                        className="w-full rounded-lg max-h-96 object-contain bg-secondary"
-                      />
-                      <div className="absolute top-2 right-2 flex gap-2">
-                        {/* Retake button - only for camera captures */}
-                        {isFromCamera && isCameraAvailable && (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={handleRetakePhoto}
-                            className="gap-1.5"
-                          >
-                            <Camera className="h-4 w-4" />
-                            Retake
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="icon"
-                          title="Crop image"
-                          onClick={() => {
-                            if (photoFile) {
-                              setRawPhotoFile(photoFile);
-                              setShowCropper(true);
-                            }
-                          }}
-                        >
-                          <Crop className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          onClick={handleRemovePhoto}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      {photoFile && (
-                        <div className="absolute bottom-2 left-2 bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs">
-                          {(photoFile.size / 1024 / 1024).toFixed(2)} MB
+                {/* Video Upload for Video Campaigns */}
+                {isVideoCampaign ? (
+                  <div className="space-y-4">
+                    {videoPreview ? (
+                      <div className="space-y-4">
+                        <div className="relative">
+                          <video
+                            src={videoPreview}
+                            controls
+                            className="w-full rounded-lg max-h-96 object-contain bg-secondary"
+                          />
+                          <div className="absolute top-2 right-2">
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              onClick={handleRemoveVideo}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          {videoFile && (
+                            <div className="absolute bottom-12 left-2 bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs flex items-center gap-2">
+                              <span>{(videoFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                              <span>•</span>
+                              <span>{videoDuration}s</span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Upload area */}
+                        
+                        {/* Thumbnail Section */}
+                        <div className="border rounded-lg p-4 bg-secondary/30">
+                          <Label className="text-sm font-medium mb-2 block">Video Thumbnail</Label>
+                          <div className="flex items-start gap-4">
+                            {videoThumbnailPreview && (
+                              <img 
+                                src={videoThumbnailPreview} 
+                                alt="Thumbnail" 
+                                className="w-24 h-16 object-cover rounded"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <p className="text-xs text-muted-foreground mb-2">
+                                Auto-generated from video. Upload a custom thumbnail for better visibility.
+                              </p>
+                              <label className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md border border-input bg-background hover:bg-accent cursor-pointer">
+                                <Upload className="h-3 w-3" />
+                                Upload Custom
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  accept="image/jpeg,image/png,image/webp"
+                                  onChange={handleThumbnailChange}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
                       <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-secondary/30">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Upload className="h-10 w-10 text-muted-foreground mb-3" />
+                          <Video className="h-10 w-10 text-muted-foreground mb-3" />
                           <p className="mb-2 text-sm text-muted-foreground">
-                            <span className="font-semibold">Click to upload</span> or drag and drop
+                            <span className="font-semibold">Click to upload</span> your video reel
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            JPEG, PNG, or WebP (max 8MB)
+                            MP4, MOV, or WebM (max 50MB, 30 seconds)
                           </p>
                         </div>
                         <input
                           type="file"
                           className="hidden"
-                          accept="image/jpeg,image/png,image/webp"
-                          onChange={handleFileChange}
+                          accept="video/mp4,video/quicktime,video/webm"
+                          onChange={handleVideoChange}
                         />
                       </label>
+                    )}
+                  </div>
+                ) : (
+                  /* Photo Upload for Photo Campaigns */
+                  <div>
+                    {photoPreview ? (
+                      <div className="relative">
+                        <img
+                          src={photoPreview}
+                          alt="Preview"
+                          className="w-full rounded-lg max-h-96 object-contain bg-secondary"
+                        />
+                        <div className="absolute top-2 right-2 flex gap-2">
+                          {/* Retake button - only for camera captures */}
+                          {isFromCamera && isCameraAvailable && (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={handleRetakePhoto}
+                              className="gap-1.5"
+                            >
+                              <Camera className="h-4 w-4" />
+                              Retake
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="icon"
+                            title="Crop image"
+                            onClick={() => {
+                              if (photoFile) {
+                                setRawPhotoFile(photoFile);
+                                setShowCropper(true);
+                              }
+                            }}
+                          >
+                            <Crop className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={handleRemovePhoto}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {photoFile && (
+                          <div className="absolute bottom-2 left-2 bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs">
+                            {(photoFile.size / 1024 / 1024).toFixed(2)} MB
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Upload area */}
+                        <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-secondary/30">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <Upload className="h-10 w-10 text-muted-foreground mb-3" />
+                            <p className="mb-2 text-sm text-muted-foreground">
+                              <span className="font-semibold">Click to upload</span> or drag and drop
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              JPEG, PNG, or WebP (max 8MB)
+                            </p>
+                          </div>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={handleFileChange}
+                          />
+                        </label>
 
-                      {/* Camera capture button - only on mobile */}
-                      {isCameraAvailable && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full h-14 gap-3"
-                          onClick={() => setShowCamera(true)}
-                        >
-                          <Camera className="h-5 w-5" />
-                          <span className="font-medium">Take Photo</span>
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                        {/* Camera capture button - only on mobile */}
+                        {isCameraAvailable && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full h-14 gap-3"
+                            onClick={() => setShowCamera(true)}
+                          >
+                            <Camera className="h-5 w-5" />
+                            <span className="font-medium">Take Photo</span>
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Title */}
                 <TitleInputWithValidation 
@@ -609,7 +881,7 @@ const SubmitPhoto = () => {
                     onCheckedChange={(checked) => setOriginalityConfirmed(checked as boolean)}
                   />
                   <Label htmlFor="originality" className="text-sm leading-relaxed">
-                    I confirm that this photo is an <strong>original work</strong> that I personally captured with a camera or smartphone.
+                    I confirm that this {isVideoCampaign ? 'video' : 'photo'} is an <strong>original work</strong> that I personally {isVideoCampaign ? 'created' : 'captured with a camera or smartphone'}.
                   </Label>
                 </div>
 
@@ -620,7 +892,7 @@ const SubmitPhoto = () => {
                     onCheckedChange={(checked) => setNoAiConfirmed(checked as boolean)}
                   />
                   <Label htmlFor="no-ai" className="text-sm leading-relaxed">
-                    I confirm that this photo is <strong>NOT AI-generated</strong>, stock imagery, or copied from the internet.
+                    I confirm that this {isVideoCampaign ? 'video' : 'photo'} is <strong>NOT AI-generated</strong>, stock {isVideoCampaign ? 'footage' : 'imagery'}, or copied from the internet.
                   </Label>
                 </div>
 
@@ -631,7 +903,7 @@ const SubmitPhoto = () => {
                     onCheckedChange={(checked) => setOwnershipConfirmed(checked as boolean)}
                   />
                   <Label htmlFor="ownership" className="text-sm leading-relaxed">
-                    I own all rights to this photo and grant Gaal <strong>display rights only</strong> for contest purposes.
+                    I own all rights to this {isVideoCampaign ? 'video' : 'photo'} and grant Gaal <strong>display rights only</strong> for campaign purposes.
                   </Label>
                 </div>
 
@@ -724,7 +996,7 @@ const SubmitPhoto = () => {
             <Button
               type="submit"
               className="w-full gradient-primary h-12 text-lg"
-              disabled={isSubmitting || !photoFile || !title}
+              disabled={isSubmitting || (isVideoCampaign ? !videoFile : !photoFile) || !title}
             >
               {isSubmitting ? (
                 <>
@@ -733,8 +1005,8 @@ const SubmitPhoto = () => {
                 </>
               ) : (
                 <>
-                  <ImageIcon className="h-5 w-5 mr-2" />
-                  Submit Photo
+                  {isVideoCampaign ? <Video className="h-5 w-5 mr-2" /> : <ImageIcon className="h-5 w-5 mr-2" />}
+                  {isVideoCampaign ? 'Submit Video' : 'Submit Photo'}
                 </>
               )}
             </Button>

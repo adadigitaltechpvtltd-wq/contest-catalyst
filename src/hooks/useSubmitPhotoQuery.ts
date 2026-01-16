@@ -9,6 +9,7 @@ export interface Campaign {
   prize_amount: number;
   rules: string[] | null;
   end_date: string;
+  campaign_type: 'photo' | 'video';
   brand_logo_url?: string | null;
   brand_image_url?: string | null;
 }
@@ -35,7 +36,7 @@ async function fetchCampaignForSubmission(slug: string, userId: string): Promise
 
   const { data, error } = await (supabase as any)
     .from('campaigns')
-    .select('id, title, description, theme, prize_amount, rules, end_date')
+    .select('id, title, description, theme, prize_amount, rules, end_date, campaign_type')
     .eq(isUUID ? 'id' : 'slug', slug)
     .eq('status', 'active')
     .maybeSingle();
