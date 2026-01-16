@@ -52,10 +52,6 @@ export interface CampaignSubmission {
   };
 }
 
-// Legacy type aliases for backwards compatibility
-export type Contest = Campaign;
-export type ContestSubmission = CampaignSubmission;
-
 const SUBMISSIONS_PER_PAGE = 12;
 
 export const useCampaignDetailQuery = (slug: string | undefined) => {
@@ -82,9 +78,6 @@ export const useCampaignDetailQuery = (slug: string | undefined) => {
   });
 };
 
-// Legacy alias
-export const useContestDetailQuery = useCampaignDetailQuery;
-
 export const useCampaignParticipantCount = (campaignId: string | undefined) => {
   return useQuery({
     queryKey: ['campaign-participants', campaignId],
@@ -103,9 +96,6 @@ export const useCampaignParticipantCount = (campaignId: string | undefined) => {
     staleTime: 2 * 60 * 1000,
   });
 };
-
-// Legacy alias
-export const useContestParticipantCount = useCampaignParticipantCount;
 
 export const useUserCampaignSubmission = (campaignId: string | undefined, userId: string | undefined) => {
   return useQuery({
@@ -128,9 +118,6 @@ export const useUserCampaignSubmission = (campaignId: string | undefined, userId
   });
 };
 
-// Legacy alias
-export const useUserContestSubmission = useUserCampaignSubmission;
-
 export const useCampaignApprovedCount = (campaignId: string | undefined) => {
   return useQuery({
     queryKey: ['campaign-approved-count', campaignId],
@@ -150,9 +137,6 @@ export const useCampaignApprovedCount = (campaignId: string | undefined) => {
     staleTime: 2 * 60 * 1000,
   });
 };
-
-// Legacy alias
-export const useContestApprovedCount = useCampaignApprovedCount;
 
 export const useCampaignSubmissionsInfinite = (campaignId: string | undefined) => {
   return useInfiniteQuery({
@@ -198,9 +182,6 @@ export const useCampaignSubmissionsInfinite = (campaignId: string | undefined) =
     staleTime: 2 * 60 * 1000,
   });
 };
-
-// Legacy alias
-export const useContestSubmissionsInfinite = useCampaignSubmissionsInfinite;
 
 export const useUserSubmissionLikes = (userId: string | undefined, submissionIds: string[]) => {
   return useQuery({

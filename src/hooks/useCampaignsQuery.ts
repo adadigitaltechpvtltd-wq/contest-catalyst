@@ -26,11 +26,6 @@ export interface CampaignWithCount extends Campaign {
   participantCount: number;
 }
 
-// Legacy type aliases for backwards compatibility
-export type ContestStatus = CampaignStatus;
-export type Contest = Campaign;
-export type ContestWithCount = CampaignWithCount;
-
 // Fetch all campaigns with participant counts
 export const useCampaignsQuery = () => {
   return useQuery({
@@ -64,9 +59,6 @@ export const useCampaignsQuery = () => {
   });
 };
 
-// Legacy alias
-export const useContestsQuery = useCampaignsQuery;
-
 // Fetch featured hero campaign
 export const useFeaturedCampaignQuery = () => {
   return useQuery({
@@ -97,9 +89,6 @@ export const useFeaturedCampaignQuery = () => {
     },
   });
 };
-
-// Legacy alias
-export const useFeaturedContestQuery = useFeaturedCampaignQuery;
 
 // Fetch active campaigns for home page (non-featured)
 export const useActiveCampaignsQuery = (limit = 4) => {
@@ -135,6 +124,3 @@ export const useActiveCampaignsQuery = (limit = 4) => {
     },
   });
 };
-
-// Legacy alias
-export const useActiveContestsQuery = useActiveCampaignsQuery;

@@ -18,9 +18,6 @@ export interface ActiveCampaign {
   hasSubmitted: boolean;
 }
 
-// Legacy alias
-export type ActiveContest = ActiveCampaign;
-
 export const useDashboardStatsQuery = (userId: string | undefined) => {
   return useQuery({
     queryKey: ["dashboard", "stats", userId],
@@ -112,6 +109,3 @@ export const useDashboardCampaignsQuery = (userId: string | undefined) => {
     retry: 1,
   });
 };
-
-// Legacy alias
-export const useDashboardContestsQuery = useDashboardCampaignsQuery;
