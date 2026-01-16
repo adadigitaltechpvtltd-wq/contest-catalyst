@@ -67,9 +67,6 @@ export function useSubmitPhotoQuery(slug: string | undefined, userId: string | u
   });
 }
 
-// Legacy alias
-export type Contest = Campaign;
-
 async function fetchPreviousSubmissions(userId: string): Promise<PreviousSubmission[]> {
   const { data, error } = await supabase
     .from('submissions')

@@ -32,9 +32,6 @@ export interface CampaignOption {
   slug: string;
 }
 
-/** @deprecated Use CampaignOption instead */
-export type ContestOption = CampaignOption;
-
 export interface PhotographerOption {
   id: string;
   full_name: string | null;
