@@ -31,6 +31,7 @@ const CreateCampaign = () => {
   const [theme, setTheme] = useState('');
   const [category, setCategory] = useState('');
   const [customCategory, setCustomCategory] = useState('');
+  const [campaignType, setCampaignType] = useState<'photo' | 'video'>('photo');
   const [prizeAmount, setPrizeAmount] = useState('500');
   const [minParticipants, setMinParticipants] = useState('100');
   const [maxParticipants, setMaxParticipants] = useState('');
@@ -275,6 +276,7 @@ const CreateCampaign = () => {
     const { error } = await (supabase as any).from('campaigns').insert({
       title,
       category: categorySlug,
+      campaign_type: campaignType,
       description,
       theme: theme || null,
       prize_amount: parseFloat(prizeAmount),
@@ -330,10 +332,55 @@ const CreateCampaign = () => {
       </div>
 
       <form onSubmit={handleSubmit}>
+        {/* Campaign Type Selection */}
+        <Card className="glass-card mb-6">
+          <CardHeader>
+            <CardTitle>Campaign Type</CardTitle>
+            <CardDescription>Choose whether participants submit photos or videos (reels)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setCampaignType('photo')}
+                className={`p-6 rounded-xl border-2 transition-all ${
+                  campaignType === 'photo'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <ImageIcon className={`h-10 w-10 mx-auto mb-3 ${campaignType === 'photo' ? 'text-primary' : 'text-muted-foreground'}`} />
+                <h3 className="font-semibold text-lg mb-1">Photo Campaign</h3>
+                <p className="text-sm text-muted-foreground">
+                  Participants submit high-quality photos
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCampaignType('video')}
+                className={`p-6 rounded-xl border-2 transition-all ${
+                  campaignType === 'video'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <svg className={`h-10 w-10 mx-auto mb-3 ${campaignType === 'video' ? 'text-primary' : 'text-muted-foreground'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="23 7 16 12 23 17 23 7" />
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                </svg>
+                <h3 className="font-semibold text-lg mb-1">Video Campaign</h3>
+                <p className="text-sm text-muted-foreground">
+                  Participants submit short reels (max 30 sec)
+                </p>
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="glass-card mb-6">
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
-            <CardDescription>Contest title, description, and theme</CardDescription>
+            <CardDescription>Campaign title, description, and theme</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">

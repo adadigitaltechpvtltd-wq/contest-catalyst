@@ -99,6 +99,7 @@ export type Database = {
           brand_twitter_url: string | null
           brand_website_url: string | null
           brand_youtube_url: string | null
+          campaign_type: Database["public"]["Enums"]["campaign_type"]
           category: string | null
           cover_image_url: string | null
           created_at: string
@@ -138,6 +139,7 @@ export type Database = {
           brand_twitter_url?: string | null
           brand_website_url?: string | null
           brand_youtube_url?: string | null
+          campaign_type?: Database["public"]["Enums"]["campaign_type"]
           category?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -177,6 +179,7 @@ export type Database = {
           brand_twitter_url?: string | null
           brand_website_url?: string | null
           brand_youtube_url?: string | null
+          campaign_type?: Database["public"]["Enums"]["campaign_type"]
           category?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -562,6 +565,9 @@ export type Database = {
           title_quality_flag: string | null
           updated_at: string
           user_id: string
+          video_duration_seconds: number | null
+          video_thumbnail_url: string | null
+          video_url: string | null
           view_count: number
           visual_anomaly_reasons: string[] | null
           visual_anomaly_score: number | null
@@ -614,6 +620,9 @@ export type Database = {
           title_quality_flag?: string | null
           updated_at?: string
           user_id: string
+          video_duration_seconds?: number | null
+          video_thumbnail_url?: string | null
+          video_url?: string | null
           view_count?: number
           visual_anomaly_reasons?: string[] | null
           visual_anomaly_score?: number | null
@@ -666,6 +675,9 @@ export type Database = {
           title_quality_flag?: string | null
           updated_at?: string
           user_id?: string
+          video_duration_seconds?: number | null
+          video_thumbnail_url?: string | null
+          video_url?: string | null
           view_count?: number
           visual_anomaly_reasons?: string[] | null
           visual_anomaly_score?: number | null
@@ -916,6 +928,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      campaign_type: "photo" | "video"
       contest_status: "draft" | "active" | "voting" | "completed" | "cancelled"
       report_status: "pending" | "reviewed" | "resolved" | "dismissed"
       submission_status:
@@ -1054,6 +1067,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      campaign_type: ["photo", "video"],
       contest_status: ["draft", "active", "voting", "completed", "cancelled"],
       report_status: ["pending", "reviewed", "resolved", "dismissed"],
       submission_status: [
