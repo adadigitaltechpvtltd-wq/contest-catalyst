@@ -20,6 +20,7 @@ export interface Campaign {
   brand_logo_url?: string | null;
   brand_image_url?: string | null;
   category?: string | null;
+  campaign_type: 'photo' | 'video';
 }
 
 export interface CampaignWithCount extends Campaign {

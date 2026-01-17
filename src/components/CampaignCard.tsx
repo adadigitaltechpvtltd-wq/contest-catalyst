@@ -1,5 +1,6 @@
-import { Clock, Users, Trophy, Camera } from "lucide-react";
+import { Clock, Users, Trophy, Camera, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface CampaignCardProps {
   theme: string;
@@ -11,11 +12,13 @@ interface CampaignCardProps {
   image: string;
   coverImage?: string | null;
   featured?: boolean;
+  campaignType?: 'photo' | 'video';
 }
 
-const CampaignCard = ({ theme, brand, prize, prizeAmount, timeLeft, participants, image, coverImage, featured }: CampaignCardProps) => {
+const CampaignCard = ({ theme, brand, prize, prizeAmount, timeLeft, participants, image, coverImage, featured, campaignType = 'photo' }: CampaignCardProps) => {
   const isFreeCampaign = prizeAmount === 0;
   const displayImage = coverImage || image;
+  const isVideoCampaign = campaignType === 'video';
   
   return (
     <div 
@@ -51,6 +54,28 @@ const CampaignCard = ({ theme, brand, prize, prizeAmount, timeLeft, participants
           <Clock className="w-3.5 h-3.5" />
           {timeLeft}
         </div>
+        
+        {/* Campaign Type Badge */}
+        <Badge 
+          variant="secondary" 
+          className={`absolute bottom-4 left-4 flex items-center gap-1.5 ${
+            isVideoCampaign 
+              ? 'bg-purple-500/90 text-white hover:bg-purple-500' 
+              : 'bg-blue-500/90 text-white hover:bg-blue-500'
+          }`}
+        >
+          {isVideoCampaign ? (
+            <>
+              <Video className="w-3 h-3" />
+              Video
+            </>
+          ) : (
+            <>
+              <Camera className="w-3 h-3" />
+              Photo
+            </>
+          )}
+        </Badge>
       </div>
 
       {/* Content */}

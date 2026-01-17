@@ -5,7 +5,8 @@ import Footer from '@/components/Footer';
 import ErrorState from '@/components/ErrorState';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Clock, Users, ArrowRight, Share2, Sparkles } from 'lucide-react';
+import { Trophy, Clock, Users, ArrowRight, Share2, Sparkles, Camera, Video } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow, isPast, isFuture, differenceInDays } from 'date-fns';
 import { useCampaignsQuery, CampaignWithCount } from '@/hooks/useCampaignsQuery';
@@ -98,6 +99,28 @@ const Campaigns = () => {
           }`}>
             {status === "live" ? "🔴 Live" : status === "soon" ? "⏰ Soon" : "✓ Ended"}
           </span>
+          
+          {/* Campaign Type Badge */}
+          <Badge 
+            variant="secondary" 
+            className={`absolute top-3 left-3 flex items-center gap-1 ${
+              campaign.campaign_type === 'video' 
+                ? 'bg-purple-500/90 text-white hover:bg-purple-500' 
+                : 'bg-blue-500/90 text-white hover:bg-blue-500'
+            }`}
+          >
+            {campaign.campaign_type === 'video' ? (
+              <>
+                <Video className="w-3 h-3" />
+                Video
+              </>
+            ) : (
+              <>
+                <Camera className="w-3 h-3" />
+                Photo
+              </>
+            )}
+          </Badge>
 
           {/* Share Button & Days Left - Bottom of image */}
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
