@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Clock, Users, Trophy, CheckCircle, Share2, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check, ChevronLeft, ChevronRight, Download, Heart, Facebook, X, Youtube, ExternalLink, Building2, Camera, Video } from "lucide-react";
+import { Clock, Users, Trophy, CheckCircle, Share2, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check, ChevronLeft, ChevronRight, Download, Heart, Facebook, X, Youtube, ExternalLink, Building2, Camera, Video, Play } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import CampaignDetailSkeleton from "@/components/skeletons/CampaignDetailSkeleton";
 import ErrorState from "@/components/ErrorState";
@@ -696,19 +696,39 @@ const CampaignDetail = () => {
                 onScroll={checkScrollButtons}
                 className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"
               >
-                {submissions.map((submission, index) => (
+                {submissions.map((submission, index) => {
+                  const isVideo = !!submission.video_url;
+                  const thumbnailUrl = isVideo 
+                    ? (submission.video_thumbnail_url || submission.image_url) 
+                    : submission.image_url;
+                  
+                  return (
                   <div
                     key={submission.id}
                     className="group relative shrink-0 w-72 snap-start cursor-pointer"
                     onClick={() => openImageModal(submission, index)}
                   >
-                    <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted">
+                    <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted relative">
                       <img
-                        src={submission.image_url}
+                        src={thumbnailUrl}
                         alt={submission.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
                       />
+                      {/* Video Play Button Overlay */}
+                      {isVideo && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary/90 transition-colors">
+                            <Play className="w-6 h-6 text-white fill-white ml-1" />
+                          </div>
+                          {/* Duration Badge */}
+                          {submission.video_duration_seconds && (
+                            <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/70 text-white text-xs font-medium">
+                              {Math.floor(submission.video_duration_seconds / 60)}:{String(submission.video_duration_seconds % 60).padStart(2, '0')}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -742,7 +762,8 @@ const CampaignDetail = () => {
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               {hasNextPage && (
@@ -850,12 +871,22 @@ const CampaignDetail = () => {
           {selectedImage && (
             <div className="flex flex-col">
               <div className="relative bg-black/90">
-                <img 
-                  src={selectedImage.image_url} 
-                  alt={selectedImage.title}
-                  className="w-full max-h-[70vh] object-contain"
-                />
-                
+                {/* Video or Image Display */}
+                {selectedImage.video_url ? (
+                  <video 
+                    src={selectedImage.video_url}
+                    poster={selectedImage.video_thumbnail_url || selectedImage.image_url}
+                    controls
+                    autoPlay
+                    className="w-full max-h-[70vh] object-contain"
+                  />
+                ) : (
+                  <img 
+                    src={selectedImage.image_url} 
+                    alt={selectedImage.title}
+                    className="w-full max-h-[70vh] object-contain"
+                  />
+                )}
 
                 {selectedImageIndex > 0 && (
                   <button
@@ -879,6 +910,14 @@ const CampaignDetail = () => {
                     <Trophy className="w-4 h-4" />
                     Winner
                   </div>
+                )}
+                
+                {/* Video Badge */}
+                {selectedImage.video_url && (
+                  <Badge className="absolute top-4 right-4 bg-purple-500 text-white">
+                    <Video className="w-3 h-3 mr-1" />
+                    Video
+                  </Badge>
                 )}
               </div>
 

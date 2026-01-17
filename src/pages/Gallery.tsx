@@ -33,8 +33,11 @@ import {
   X,
   CalendarIcon,
   Filter,
-  ArrowUpDown
+  ArrowUpDown,
+  Play,
+  Video
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
@@ -423,6 +426,10 @@ const Gallery = () => {
                 <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
                   {photos.map((photo, index) => {
                     const photoUrl = getPhotoUrl(photo);
+                    const isVideo = !!photo.video_url;
+                    const thumbnailUrl = isVideo 
+                      ? (photo.video_thumbnail_url || photo.image_url) 
+                      : photo.image_url;
                     
                     return (
                       <Link
@@ -431,11 +438,26 @@ const Gallery = () => {
                         className={`group relative break-inside-avoid block rounded-xl overflow-hidden bg-secondary mb-4 ${MASONRY_HEIGHTS[index % MASONRY_HEIGHTS.length]}`}
                       >
                         <img
-                          src={photo.image_url}
+                          src={thumbnailUrl}
                           alt={photo.title}
                           loading="lazy"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
+                        
+                        {/* Video Play Button Overlay */}
+                        {isVideo && (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center group-hover:bg-purple-500/90 transition-colors">
+                              <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                            </div>
+                            {/* Duration Badge */}
+                            {photo.video_duration_seconds && (
+                              <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/70 text-white text-xs font-medium">
+                                {Math.floor(photo.video_duration_seconds / 60)}:{String(photo.video_duration_seconds % 60).padStart(2, '0')}
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {/* Hover Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -444,7 +466,7 @@ const Gallery = () => {
                               {photo.title}
                             </p>
                             <p className="text-xs text-muted-foreground truncate mb-2">
-                              {photo.campaign.title}
+                              {photo.campaign?.title}
                             </p>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
@@ -484,6 +506,10 @@ const Gallery = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {photos.map((photo) => {
                     const photoUrl = getPhotoUrl(photo);
+                    const isVideo = !!photo.video_url;
+                    const thumbnailUrl = isVideo 
+                      ? (photo.video_thumbnail_url || photo.image_url) 
+                      : photo.image_url;
                     
                     return (
                       <Link
@@ -492,11 +518,26 @@ const Gallery = () => {
                         className="group relative aspect-square rounded-xl overflow-hidden bg-secondary"
                       >
                         <img
-                          src={photo.image_url}
+                          src={thumbnailUrl}
                           alt={photo.title}
                           loading="lazy"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
+                        
+                        {/* Video Play Button Overlay */}
+                        {isVideo && (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center group-hover:bg-purple-500/90 transition-colors">
+                              <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                            </div>
+                            {/* Duration Badge */}
+                            {photo.video_duration_seconds && (
+                              <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/70 text-white text-xs font-medium">
+                                {Math.floor(photo.video_duration_seconds / 60)}:{String(photo.video_duration_seconds % 60).padStart(2, '0')}
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {/* Hover Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -505,7 +546,7 @@ const Gallery = () => {
                               {photo.title}
                             </p>
                             <p className="text-xs text-muted-foreground truncate mb-2">
-                              {photo.campaign.title}
+                              {photo.campaign?.title}
                             </p>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">

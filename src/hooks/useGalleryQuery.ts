@@ -5,6 +5,9 @@ export interface GalleryPhoto {
   id: string;
   title: string;
   image_url: string;
+  video_url: string | null;
+  video_duration_seconds: number | null;
+  video_thumbnail_url: string | null;
   slug: string;
   view_count: number;
   like_count: number;
@@ -18,6 +21,7 @@ export interface GalleryPhoto {
     title: string;
     slug: string;
     category: string | null;
+    campaign_type: 'photo' | 'video';
   } | null;
   profile: {
     id: string;
@@ -138,6 +142,9 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
           id,
           title,
           image_url,
+          video_url,
+          video_duration_seconds,
+          video_thumbnail_url,
           slug,
           view_count,
           like_count,
@@ -187,11 +194,11 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
         return { photos: [], nextPage: undefined };
       }
 
-      // Fetch campaign info (include category for SEO URLs)
+      // Fetch campaign info (include category and campaign_type for SEO URLs)
       const campaignIds = [...new Set(submissions.map(s => s.campaign_id))];
       const { data: campaignsData } = await (supabase as any)
         .from('campaigns')
-        .select('id, title, slug, category')
+        .select('id, title, slug, category, campaign_type')
         .in('id', campaignIds);
 
       const campaignMap = new Map(campaignsData?.map((c: any) => [c.id, c]) || []);
@@ -211,6 +218,9 @@ export const useGalleryPhotos = (filters: GalleryFilters) => {
           id: s.id,
           title: s.title,
           image_url: s.image_url,
+          video_url: s.video_url || null,
+          video_duration_seconds: s.video_duration_seconds || null,
+          video_thumbnail_url: s.video_thumbnail_url || null,
           slug: s.slug || '',
           view_count: s.view_count,
           like_count: s.like_count,
