@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Clock, Users, Trophy, CheckCircle, Share2, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check, ChevronLeft, ChevronRight, Download, Heart, Facebook, X, Youtube, ExternalLink, Building2 } from "lucide-react";
+import { Clock, Users, Trophy, CheckCircle, Share2, Calendar, Loader2, Eye, Image as ImageIcon, User, Instagram, Twitter, Linkedin, Copy, Check, ChevronLeft, ChevronRight, Download, Heart, Facebook, X, Youtube, ExternalLink, Building2, Camera, Video } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import CampaignDetailSkeleton from "@/components/skeletons/CampaignDetailSkeleton";
 import ErrorState from "@/components/ErrorState";
 import SEOHead from "@/components/SEOHead";
@@ -444,11 +445,34 @@ const CampaignDetail = () => {
               <div className="bg-card border border-border rounded-2xl p-6 md:p-8 h-full flex flex-col">
                 <div className="flex flex-col gap-6">
                   <div>
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-3 mb-4 flex-wrap">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${statusDisplay.className}`}>
                         {campaign.status === 'active' && <span className="w-2 h-2 rounded-full bg-current animate-pulse" />}
                         {statusDisplay.label}
                       </span>
+                      
+                      {/* Campaign Type Badge */}
+                      <Badge 
+                        variant="secondary" 
+                        className={`flex items-center gap-1.5 ${
+                          campaign.campaign_type === 'video' 
+                            ? 'bg-purple-500 text-white hover:bg-purple-600' 
+                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                        }`}
+                      >
+                        {campaign.campaign_type === 'video' ? (
+                          <>
+                            <Video className="w-3.5 h-3.5" />
+                            Video Campaign
+                          </>
+                        ) : (
+                          <>
+                            <Camera className="w-3.5 h-3.5" />
+                            Photo Campaign
+                          </>
+                        )}
+                      </Badge>
+                      
                       <span className="text-sm text-muted-foreground flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         Ends {format(new Date(campaign.end_date), "MMMM d, yyyy")}

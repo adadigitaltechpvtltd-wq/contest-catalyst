@@ -30,6 +30,7 @@ export interface Campaign {
   brand_youtube_url: string | null;
   brand_cta_label: string | null;
   brand_cta_url: string | null;
+  campaign_type: 'photo' | 'video';
   // SEO fields
   seo_title: string | null;
   meta_description: string | null;
