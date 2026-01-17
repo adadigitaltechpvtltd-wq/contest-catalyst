@@ -41,6 +41,9 @@ export interface CampaignSubmission {
   id: string;
   title: string;
   image_url: string;
+  video_url: string | null;
+  video_duration_seconds: number | null;
+  video_thumbnail_url: string | null;
   user_id: string;
   status: 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
   created_at: string;
@@ -151,6 +154,9 @@ export const useCampaignSubmissionsInfinite = (campaignId: string | undefined) =
           id,
           title,
           image_url,
+          video_url,
+          video_duration_seconds,
+          video_thumbnail_url,
           user_id,
           status,
           created_at,
