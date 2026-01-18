@@ -27,7 +27,7 @@ import {
   Trash2,
   Play,
   Video,
-  X
+  Camera
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -55,6 +55,7 @@ const MySubmissions = () => {
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [mediaFilter, setMediaFilter] = useState<'all' | 'photos' | 'videos'>('all');
   const [videoModalSubmission, setVideoModalSubmission] = useState<Submission | null>(null);
 
   const { data: submissions = [], isLoading, isError, refetch } = useMySubmissionsQuery(user?.id);
@@ -153,12 +154,22 @@ const MySubmissions = () => {
   };
 
   const filteredSubmissions = submissions.filter((s) => {
-    if (activeTab === 'all') return true;
-    if (activeTab === 'pending') return s.status === 'pending';
-    if (activeTab === 'approved') return s.status === 'approved' || s.status === 'winner';
-    if (activeTab === 'rejected') return s.status === 'rejected' || s.status === 'disqualified';
-    return true;
+    // Status filter
+    let statusMatch = true;
+    if (activeTab === 'pending') statusMatch = s.status === 'pending';
+    else if (activeTab === 'approved') statusMatch = s.status === 'approved' || s.status === 'winner';
+    else if (activeTab === 'rejected') statusMatch = s.status === 'rejected' || s.status === 'disqualified';
+    
+    // Media type filter
+    let mediaMatch = true;
+    if (mediaFilter === 'photos') mediaMatch = !s.video_url;
+    else if (mediaFilter === 'videos') mediaMatch = !!s.video_url;
+    
+    return statusMatch && mediaMatch;
   });
+
+  const photoCount = submissions.filter((s) => !s.video_url).length;
+  const videoCount = submissions.filter((s) => !!s.video_url).length;
 
   const pendingCount = submissions.filter((s) => s.status === 'pending').length;
   const approvedCount = submissions.filter((s) => s.status === 'approved' || s.status === 'winner').length;
@@ -199,6 +210,35 @@ const MySubmissions = () => {
             <TabsTrigger value="rejected">Rejected ({rejectedCount})</TabsTrigger>
           </TabsList>
 
+          {/* Media Type Filter */}
+          {(photoCount > 0 && videoCount > 0) && (
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-sm text-muted-foreground mr-2">Media:</span>
+              <Button
+                variant={mediaFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setMediaFilter('all')}
+              >
+                All ({submissions.length})
+              </Button>
+              <Button
+                variant={mediaFilter === 'photos' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setMediaFilter('photos')}
+                className="gap-1"
+              >
+                <Camera className="h-3 w-3" /> Photos ({photoCount})
+              </Button>
+              <Button
+                variant={mediaFilter === 'videos' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setMediaFilter('videos')}
+                className="gap-1"
+              >
+                <Video className="h-3 w-3" /> Videos ({videoCount})
+              </Button>
+            </div>
+          )}
           {showLoading ? (
             <MySubmissionsSkeleton />
           ) : isError ? (

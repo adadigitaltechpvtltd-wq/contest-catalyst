@@ -8,6 +8,9 @@ export interface SubmissionDetail {
   title: string;
   description: string | null;
   image_url: string;
+  video_url: string | null;
+  video_duration_seconds: number | null;
+  video_thumbnail_url: string | null;
   status: SubmissionStatus;
   admin_score: number | null;
   admin_notes: string | null;
@@ -23,6 +26,7 @@ export interface SubmissionDetail {
     prize_currency: string;
     status: string;
     end_date: string;
+    campaign_type: 'photo' | 'video';
   };
 }
 
@@ -34,6 +38,9 @@ async function fetchSubmissionDetail(id: string, userId: string): Promise<Submis
       title,
       description,
       image_url,
+      video_url,
+      video_duration_seconds,
+      video_thumbnail_url,
       status,
       admin_score,
       admin_notes,
@@ -41,7 +48,7 @@ async function fetchSubmissionDetail(id: string, userId: string): Promise<Submis
       created_at,
       updated_at,
       reviewed_at,
-      campaign:campaigns(id, slug, title, prize_amount, prize_currency, status, end_date)
+      campaign:campaigns(id, slug, title, prize_amount, prize_currency, status, end_date, campaign_type)
     `)
     .eq('id', id)
     .eq('user_id', userId)

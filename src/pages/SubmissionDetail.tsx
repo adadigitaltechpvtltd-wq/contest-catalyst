@@ -41,7 +41,10 @@ import {
   Pencil,
   Upload,
   X,
-  RefreshCw
+  RefreshCw,
+  Video,
+  Download,
+  Play
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ImageCropper from '@/components/ImageCropper';
@@ -559,10 +562,30 @@ const SubmissionDetail = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Image Card */}
+            {/* Media Card */}
             <Card className="glass-card overflow-hidden">
               <div className="relative">
-                {isReplacingImage && newPhotoPreview ? (
+                {localSubmission.video_url ? (
+                  // Video submission
+                  <div className="relative">
+                    <video
+                      src={localSubmission.video_url}
+                      controls
+                      className="w-full max-h-[600px] bg-black"
+                      poster={localSubmission.video_thumbnail_url || localSubmission.image_url}
+                    >
+                      Your browser does not support video playback.
+                    </video>
+                    <Badge variant="secondary" className="absolute top-4 left-4 gap-1">
+                      <Video className="h-3 w-3" /> Video
+                    </Badge>
+                    {localSubmission.video_duration_seconds && (
+                      <div className="absolute bottom-16 left-4 px-2 py-0.5 bg-black/70 text-white text-xs rounded">
+                        {Math.floor(localSubmission.video_duration_seconds / 60)}:{String(Math.floor(localSubmission.video_duration_seconds % 60)).padStart(2, '0')}
+                      </div>
+                    )}
+                  </div>
+                ) : isReplacingImage && newPhotoPreview ? (
                   <img
                     src={newPhotoPreview}
                     alt="New photo preview"
@@ -582,8 +605,8 @@ const SubmissionDetail = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-accent/20 to-transparent pointer-events-none" />
                 )}
                 
-                {/* Replace image button for pending submissions */}
-                {localSubmission.status === 'pending' && !isReplacingImage && (
+                {/* Replace image button for pending photo submissions */}
+                {localSubmission.status === 'pending' && !localSubmission.video_url && !isReplacingImage && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -595,6 +618,31 @@ const SubmissionDetail = () => {
                   </Button>
                 )}
               </div>
+              
+              {/* Download button for video */}
+              {localSubmission.video_url && (
+                <div className="p-4 border-t border-border bg-secondary/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Video className="h-4 w-4" />
+                      <span>Video Submission</span>
+                      {localSubmission.video_duration_seconds && (
+                        <span>• {Math.floor(localSubmission.video_duration_seconds / 60)}:{String(Math.floor(localSubmission.video_duration_seconds % 60)).padStart(2, '0')}</span>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                    >
+                      <a href={localSubmission.video_url} download target="_blank" rel="noopener noreferrer">
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Video
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              )}
               
               {/* Image replacement UI */}
               {localSubmission.status === 'pending' && isReplacingImage && (
