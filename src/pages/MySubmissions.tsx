@@ -26,7 +26,8 @@ import {
   Eye,
   Trash2,
   Play,
-  Video
+  Video,
+  X
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -39,6 +40,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
 
@@ -48,6 +55,7 @@ const MySubmissions = () => {
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [videoModalSubmission, setVideoModalSubmission] = useState<Submission | null>(null);
 
   const { data: submissions = [], isLoading, isError, refetch } = useMySubmissionsQuery(user?.id);
   const deleteSubmission = useDeleteSubmission();
@@ -226,7 +234,10 @@ const MySubmissions = () => {
                 
                 return (
                 <Card key={submission.id} className="glass-card overflow-hidden group">
-                  <div className="relative aspect-video overflow-hidden">
+                  <div 
+                    className={`relative aspect-video overflow-hidden ${isVideo ? 'cursor-pointer' : ''}`}
+                    onClick={() => isVideo && setVideoModalSubmission(submission)}
+                  >
                     {isVideo ? (
                       <div className="relative w-full h-full">
                         <img
@@ -235,7 +246,7 @@ const MySubmissions = () => {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
-                          <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                          <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                             <Play className="h-7 w-7 text-primary ml-1" fill="currentColor" />
                           </div>
                         </div>
@@ -334,6 +345,43 @@ const MySubmissions = () => {
             </div>
           )}
         </Tabs>
+
+        {/* Video Player Modal */}
+        <Dialog open={!!videoModalSubmission} onOpenChange={(open) => !open && setVideoModalSubmission(null)}>
+          <DialogContent className="max-w-4xl p-0 overflow-hidden">
+            <DialogHeader className="p-4 pb-0">
+              <DialogTitle className="flex items-center gap-2">
+                <Video className="h-5 w-5" />
+                {videoModalSubmission?.title}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="p-4 pt-2">
+              {videoModalSubmission?.video_url && (
+                <video
+                  src={videoModalSubmission.video_url}
+                  controls
+                  autoPlay
+                  className="w-full rounded-lg max-h-[70vh]"
+                >
+                  Your browser does not support video playback.
+                </video>
+              )}
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Campaign: {videoModalSubmission?.campaign?.title ?? 'Unknown'}
+                  </p>
+                  {videoModalSubmission?.video_duration_seconds && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Duration: {Math.floor(videoModalSubmission.video_duration_seconds / 60)}:{String(Math.floor(videoModalSubmission.video_duration_seconds % 60)).padStart(2, '0')}
+                    </p>
+                  )}
+                </div>
+                {videoModalSubmission && getStatusBadge(videoModalSubmission.status)}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
       <Footer />
     </div>
