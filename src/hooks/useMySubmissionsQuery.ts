@@ -8,6 +8,9 @@ export interface Submission {
   title: string;
   description: string | null;
   image_url: string;
+  video_url: string | null;
+  video_duration_seconds: number | null;
+  video_thumbnail_url: string | null;
   status: SubmissionStatus;
   admin_score: number | null;
   rejection_reason: string | null;
@@ -18,6 +21,7 @@ export interface Submission {
     title: string;
     prize_amount: number;
     status: string;
+    campaign_type: 'photo' | 'video';
   } | null;
 }
 
@@ -29,7 +33,7 @@ export const useMySubmissionsQuery = (userId: string | undefined) => {
 
       const { data: subs, error } = await supabase
         .from('submissions')
-        .select('id, title, description, image_url, status, admin_score, rejection_reason, created_at, campaign_id')
+        .select('id, title, description, image_url, video_url, video_duration_seconds, video_thumbnail_url, status, admin_score, rejection_reason, created_at, campaign_id')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -46,7 +50,7 @@ export const useMySubmissionsQuery = (userId: string | undefined) => {
       if (campaignIds.length > 0) {
         const { data: campaigns, error: campaignError } = await (supabase as any)
           .from('campaigns')
-          .select('id, title, prize_amount, status')
+          .select('id, title, prize_amount, status, campaign_type')
           .in('id', campaignIds);
 
         if (!campaignError && campaigns) {

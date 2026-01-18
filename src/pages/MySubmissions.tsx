@@ -24,7 +24,9 @@ import {
   Loader2,
   AlertCircle,
   Eye,
-  Trash2
+  Trash2,
+  Play,
+  Video
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -216,19 +218,48 @@ const MySubmissions = () => {
             </Card>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredSubmissions.map((submission) => (
+              {filteredSubmissions.map((submission) => {
+                const isVideo = !!submission.video_url;
+                const thumbnailUrl = isVideo 
+                  ? (submission.video_thumbnail_url || submission.image_url) 
+                  : submission.image_url;
+                
+                return (
                 <Card key={submission.id} className="glass-card overflow-hidden group">
                   <div className="relative aspect-video overflow-hidden">
-                    <img
-                      src={submission.image_url}
-                      alt={submission.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {isVideo ? (
+                      <div className="relative w-full h-full">
+                        <img
+                          src={thumbnailUrl}
+                          alt={submission.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+                          <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                            <Play className="h-7 w-7 text-primary ml-1" fill="currentColor" />
+                          </div>
+                        </div>
+                        {submission.video_duration_seconds && (
+                          <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/70 text-white text-xs rounded">
+                            {Math.floor(submission.video_duration_seconds / 60)}:{String(Math.floor(submission.video_duration_seconds % 60)).padStart(2, '0')}
+                          </div>
+                        )}
+                        <Badge variant="secondary" className="absolute top-3 left-3 gap-1">
+                          <Video className="h-3 w-3" /> Video
+                        </Badge>
+                      </div>
+                    ) : (
+                      <img
+                        src={submission.image_url}
+                        alt={submission.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
                     <div className="absolute top-3 right-3">
                       {getStatusBadge(submission.status)}
                     </div>
                     {submission.status === 'winner' && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-accent/30 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-accent/30 to-transparent pointer-events-none" />
                     )}
                   </div>
                   <CardContent className="p-4">
@@ -298,7 +329,8 @@ const MySubmissions = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              );
+              })}
             </div>
           )}
         </Tabs>
