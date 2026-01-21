@@ -34,7 +34,10 @@ import {
   Zap,
   Search,
   FileText,
-  Info
+  Info,
+  Video,
+  Play,
+  Download
 } from 'lucide-react';
 
 type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'winner' | 'disqualified';
@@ -474,7 +477,7 @@ const AdminSubmissions = () => {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-display font-bold">Review Submissions</h1>
-          <p className="text-muted-foreground">Review and moderate photo submissions</p>
+          <p className="text-muted-foreground">Review and moderate photo and video submissions</p>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -550,11 +553,35 @@ const AdminSubmissions = () => {
           {submissions.map((submission) => (
             <Card key={submission.id} className="glass-card overflow-hidden">
               <div className="relative aspect-video">
-                <img
-                  src={submission.image_url}
-                  alt={submission.title}
-                  className="w-full h-full object-cover"
-                />
+                {submission.video_url ? (
+                  <>
+                    <img
+                      src={submission.video_thumbnail_url || submission.image_url}
+                      alt={submission.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
+                        <Play className="h-6 w-6 text-primary-foreground ml-1" />
+                      </div>
+                    </div>
+                    <Badge className="absolute bottom-2 left-2 bg-primary/90 gap-1">
+                      <Video className="h-3 w-3" />
+                      Video
+                    </Badge>
+                    {submission.video_duration_seconds && (
+                      <Badge className="absolute bottom-2 right-2 bg-black/70">
+                        {Math.floor(submission.video_duration_seconds / 60)}:{String(submission.video_duration_seconds % 60).padStart(2, '0')}
+                      </Badge>
+                    )}
+                  </>
+                ) : (
+                  <img
+                    src={submission.image_url}
+                    alt={submission.title}
+                    className="w-full h-full object-cover"
+                  />
+                )}
                 <div className="absolute top-2 left-2">
                   {getStatusBadge(submission.status)}
                 </div>
@@ -686,18 +713,50 @@ const AdminSubmissions = () => {
               <DialogHeader>
                 <DialogTitle>Review Submission</DialogTitle>
                 <DialogDescription>
-                  Review and score this photo submission
+                  Review and score this {selectedSubmission.video_url ? 'video' : 'photo'} submission
                 </DialogDescription>
               </DialogHeader>
 
               <div className="grid md:grid-cols-2 gap-6">
-                {/* Image Preview */}
-                <div>
-                  <img
-                    src={selectedSubmission.image_url}
-                    alt={selectedSubmission.title}
-                    className="w-full rounded-lg"
-                  />
+                {/* Media Preview */}
+                <div className="space-y-3">
+                  {selectedSubmission.video_url ? (
+                    <>
+                      <div className="relative">
+                        <video
+                          src={selectedSubmission.video_url}
+                          poster={selectedSubmission.video_thumbnail_url || selectedSubmission.image_url}
+                          controls
+                          className="w-full rounded-lg"
+                        />
+                        <Badge className="absolute top-2 left-2 bg-primary/90 gap-1">
+                          <Video className="h-3 w-3" />
+                          Video
+                        </Badge>
+                      </div>
+                      {selectedSubmission.video_duration_seconds && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          Duration: {Math.floor(selectedSubmission.video_duration_seconds / 60)}:{String(selectedSubmission.video_duration_seconds % 60).padStart(2, '0')}
+                        </div>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-2"
+                        onClick={() => window.open(selectedSubmission.video_url!, '_blank')}
+                      >
+                        <Download className="h-4 w-4" />
+                        Download Video
+                      </Button>
+                    </>
+                  ) : (
+                    <img
+                      src={selectedSubmission.image_url}
+                      alt={selectedSubmission.title}
+                      className="w-full rounded-lg"
+                    />
+                  )}
                 </div>
 
                 {/* Details & Review Form */}

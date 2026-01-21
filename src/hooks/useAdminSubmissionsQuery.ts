@@ -8,6 +8,9 @@ export interface AdminSubmission {
   title: string;
   description: string | null;
   image_url: string;
+  video_url: string | null;
+  video_duration_seconds: number | null;
+  video_thumbnail_url: string | null;
   slug: string | null;
   seo_title: string | null;
   meta_description: string | null;
@@ -39,6 +42,7 @@ export interface AdminSubmission {
     prize_currency: string;
     category: string | null;
     slug: string | null;
+    campaign_type: 'photo' | 'video';
   };
   profile: {
     id: string;
@@ -55,6 +59,9 @@ async function fetchSubmissions(statusFilter: string): Promise<AdminSubmission[]
       title,
       description,
       image_url,
+      video_url,
+      video_duration_seconds,
+      video_thumbnail_url,
       slug,
       seo_title,
       meta_description,
@@ -78,7 +85,7 @@ async function fetchSubmissions(statusFilter: string): Promise<AdminSubmission[]
       analysis_completed_at,
       created_at,
       seo_approved,
-      campaign:campaigns!submissions_campaign_id_fkey(id, title, status, prize_amount, prize_currency, category, slug),
+      campaign:campaigns!submissions_campaign_id_fkey(id, title, status, prize_amount, prize_currency, category, slug, campaign_type),
       profile:profiles!submissions_user_id_profiles_fkey(id, full_name, email)
     `)
     .order('risk_score', { ascending: false });
