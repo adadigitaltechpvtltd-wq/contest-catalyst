@@ -32,8 +32,10 @@ import {
   ExternalLink,
   Info,
   Video,
-  Play
+  Play,
+  RefreshCw
 } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 import ImageCropper from '@/components/ImageCropper';
 import CameraCapture from '@/components/CameraCapture';
 import { useIsCameraAvailable } from '@/hooks/useCameraCapture';
@@ -125,6 +127,8 @@ const SubmitPhoto = () => {
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [videoThumbnail, setVideoThumbnail] = useState<File | null>(null);
   const [videoThumbnailPreview, setVideoThumbnailPreview] = useState<string | null>(null);
+  const [thumbnailTime, setThumbnailTime] = useState<number>(0.5);
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
   const [rawPhotoFile, setRawPhotoFile] = useState<File | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
@@ -349,6 +353,58 @@ const SubmitPhoto = () => {
 
     e.target.value = '';
   }, [toast]);
+
+  // Generate thumbnail at specific time
+  const generateThumbnailAtTime = useCallback((time: number) => {
+    if (!videoPreview) return;
+    
+    setIsGeneratingThumbnail(true);
+    const video = document.createElement('video');
+    video.src = videoPreview;
+    video.crossOrigin = 'anonymous';
+    
+    video.onloadedmetadata = () => {
+      // Clamp time to video duration
+      const clampedTime = Math.min(time, video.duration - 0.1);
+      video.currentTime = Math.max(0, clampedTime);
+    };
+    
+    video.onseeked = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const thumbnailFile = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
+            setVideoThumbnail(thumbnailFile);
+            setVideoThumbnailPreview(canvas.toDataURL('image/jpeg'));
+          }
+          setIsGeneratingThumbnail(false);
+        }, 'image/jpeg', 0.9);
+      } else {
+        setIsGeneratingThumbnail(false);
+      }
+    };
+    
+    video.onerror = () => {
+      setIsGeneratingThumbnail(false);
+      toast({
+        title: 'Thumbnail generation failed',
+        description: 'Could not generate thumbnail from video.',
+        variant: 'destructive',
+      });
+    };
+  }, [videoPreview, toast]);
+
+  // Handle thumbnail time slider change
+  const handleThumbnailTimeChange = useCallback((value: number[]) => {
+    const time = value[0];
+    setThumbnailTime(time);
+    generateThumbnailAtTime(time);
+  }, [generateThumbnailAtTime]);
 
   // Handle custom thumbnail upload
   const handleThumbnailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -702,19 +758,32 @@ const SubmitPhoto = () => {
                         </div>
                         
                         {/* Thumbnail Section */}
-                        <div className="border rounded-lg p-4 bg-secondary/30">
-                          <Label className="text-sm font-medium mb-2 block">Video Thumbnail</Label>
+                        <div className="border rounded-lg p-4 bg-secondary/30 space-y-4">
+                          <Label className="text-sm font-medium block">Video Thumbnail</Label>
+                          
+                          {/* Thumbnail Preview */}
                           <div className="flex items-start gap-4">
-                            {videoThumbnailPreview && (
-                              <img 
-                                src={videoThumbnailPreview} 
-                                alt="Thumbnail" 
-                                className="w-24 h-16 object-cover rounded"
-                              />
-                            )}
-                            <div className="flex-1">
-                              <p className="text-xs text-muted-foreground mb-2">
-                                Auto-generated from video. Upload a custom thumbnail for better visibility.
+                            <div className="relative">
+                              {videoThumbnailPreview ? (
+                                <img 
+                                  src={videoThumbnailPreview} 
+                                  alt="Thumbnail" 
+                                  className="w-32 h-20 object-cover rounded border"
+                                />
+                              ) : (
+                                <div className="w-32 h-20 bg-muted rounded border flex items-center justify-center">
+                                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                                </div>
+                              )}
+                              {isGeneratingThumbnail && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-background/70 rounded">
+                                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 space-y-2">
+                              <p className="text-xs text-muted-foreground">
+                                Select a frame from your video or upload a custom image.
                               </p>
                               <label className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md border border-input bg-background hover:bg-accent cursor-pointer">
                                 <Upload className="h-3 w-3" />
@@ -728,6 +797,43 @@ const SubmitPhoto = () => {
                               </label>
                             </div>
                           </div>
+                          
+                          {/* Frame Selector Slider */}
+                          {videoDuration > 0 && (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs text-muted-foreground">Select frame from video</Label>
+                                <span className="text-xs text-muted-foreground">
+                                  {thumbnailTime.toFixed(1)}s / {videoDuration}s
+                                </span>
+                              </div>
+                              <Slider
+                                value={[thumbnailTime]}
+                                onValueChange={handleThumbnailTimeChange}
+                                max={Math.max(videoDuration - 0.1, 0.1)}
+                                min={0}
+                                step={0.1}
+                                className="w-full"
+                                disabled={isGeneratingThumbnail}
+                              />
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => generateThumbnailAtTime(thumbnailTime)}
+                                  disabled={isGeneratingThumbnail}
+                                  className="gap-1.5"
+                                >
+                                  <RefreshCw className={`h-3 w-3 ${isGeneratingThumbnail ? 'animate-spin' : ''}`} />
+                                  Regenerate
+                                </Button>
+                                <span className="text-xs text-muted-foreground">
+                                  Drag slider to select different frame
+                                </span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ) : (

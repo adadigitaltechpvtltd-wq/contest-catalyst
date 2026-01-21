@@ -27,8 +27,13 @@ import {
   Trash2,
   Play,
   Video,
-  Camera
+  Camera,
+  Upload,
+  RefreshCw,
+  Edit2
 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +62,14 @@ const MySubmissions = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [mediaFilter, setMediaFilter] = useState<'all' | 'photos' | 'videos'>('all');
   const [videoModalSubmission, setVideoModalSubmission] = useState<Submission | null>(null);
+  
+  // Thumbnail editing state
+  const [thumbnailEditSubmission, setThumbnailEditSubmission] = useState<Submission | null>(null);
+  const [thumbnailTime, setThumbnailTime] = useState<number>(0.5);
+  const [newThumbnailPreview, setNewThumbnailPreview] = useState<string | null>(null);
+  const [newThumbnailFile, setNewThumbnailFile] = useState<File | null>(null);
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
+  const [isSavingThumbnail, setIsSavingThumbnail] = useState(false);
 
   const { data: submissions = [], isLoading, isError, refetch } = useMySubmissionsQuery(user?.id);
   const deleteSubmission = useDeleteSubmission();
@@ -135,6 +148,147 @@ const MySubmissions = () => {
     }
     setDeletingId(null);
   };
+
+  // Open thumbnail edit modal
+  const openThumbnailEditor = (submission: Submission) => {
+    setThumbnailEditSubmission(submission);
+    setNewThumbnailPreview(submission.video_thumbnail_url || submission.image_url);
+    setNewThumbnailFile(null);
+    setThumbnailTime(0.5);
+  };
+
+  // Generate thumbnail at specific time from video
+  const generateThumbnailAtTime = useCallback((time: number) => {
+    if (!thumbnailEditSubmission?.video_url) return;
+    
+    setIsGeneratingThumbnail(true);
+    const video = document.createElement('video');
+    video.src = thumbnailEditSubmission.video_url;
+    video.crossOrigin = 'anonymous';
+    
+    video.onloadedmetadata = () => {
+      const clampedTime = Math.min(time, video.duration - 0.1);
+      video.currentTime = Math.max(0, clampedTime);
+    };
+    
+    video.onseeked = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const thumbnailFile = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
+            setNewThumbnailFile(thumbnailFile);
+            setNewThumbnailPreview(canvas.toDataURL('image/jpeg'));
+          }
+          setIsGeneratingThumbnail(false);
+        }, 'image/jpeg', 0.9);
+      } else {
+        setIsGeneratingThumbnail(false);
+      }
+    };
+    
+    video.onerror = () => {
+      setIsGeneratingThumbnail(false);
+      toast({
+        title: 'Failed to generate thumbnail',
+        description: 'Could not extract frame from video.',
+        variant: 'destructive',
+      });
+    };
+  }, [thumbnailEditSubmission?.video_url, toast]);
+
+  // Handle custom thumbnail upload
+  const handleCustomThumbnailUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload a JPEG, PNG, or WebP image.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Thumbnail must be smaller than 5MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setNewThumbnailFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setNewThumbnailPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }, [toast]);
+
+  // Save new thumbnail
+  const saveThumbnail = async () => {
+    if (!thumbnailEditSubmission || !newThumbnailFile || !user) return;
+    
+    setIsSavingThumbnail(true);
+    try {
+      // Upload new thumbnail to storage
+      const thumbFileName = `${user.id}/${thumbnailEditSubmission.campaign?.id || 'unknown'}/${Date.now()}-thumb.jpg`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('submissions')
+        .upload(thumbFileName, newThumbnailFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('submissions')
+        .getPublicUrl(thumbFileName);
+
+      // Update submission record
+      const { error: updateError } = await supabase
+        .from('submissions')
+        .update({ 
+          video_thumbnail_url: publicUrl,
+          image_url: publicUrl  // Also update image_url for display
+        })
+        .eq('id', thumbnailEditSubmission.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: 'Thumbnail updated',
+        description: 'Your video thumbnail has been saved.',
+      });
+
+      // Refresh submissions
+      queryClient.invalidateQueries({ queryKey: ['my-submissions', user.id] });
+      setThumbnailEditSubmission(null);
+    } catch (error) {
+      console.error('Error saving thumbnail:', error);
+      toast({
+        title: 'Failed to save thumbnail',
+        description: 'Could not update the thumbnail. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingThumbnail(false);
+    }
+  };
+
+  // Handle thumbnail time slider change
+  const handleThumbnailTimeChange = useCallback((value: number[]) => {
+    const time = value[0];
+    setThumbnailTime(time);
+    generateThumbnailAtTime(time);
+  }, [generateThumbnailAtTime]);
 
   const getStatusBadge = (status: SubmissionStatus) => {
     switch (status) {
@@ -336,39 +490,55 @@ const MySubmissions = () => {
                       <span>{new Date(submission.created_at).toLocaleDateString()}</span>
                       <div className="flex items-center gap-1">
                         {submission.status === 'pending' && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="text-destructive hover:text-destructive"
-                                disabled={deletingId === submission.id}
+                          <>
+                            {/* Edit Thumbnail Button (video only) */}
+                            {isVideo && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openThumbnailEditor(submission);
+                                }}
+                                title="Edit thumbnail"
                               >
-                                {deletingId === submission.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="h-4 w-4" />
-                                )}
+                                <Edit2 className="h-4 w-4" />
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will permanently delete your submission "{submission.title}". This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(submission.id, submission.image_url)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            )}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-destructive hover:text-destructive"
+                                  disabled={deletingId === submission.id}
                                 >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                                  {deletingId === submission.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will permanently delete your submission "{submission.title}". This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(submission.id, submission.image_url)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
                         )}
                         <Button variant="ghost" size="sm" asChild>
                           <Link to={`/submission/${submission.id}`}>
@@ -420,6 +590,115 @@ const MySubmissions = () => {
                 {videoModalSubmission && getStatusBadge(videoModalSubmission.status)}
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Thumbnail Edit Modal */}
+        <Dialog open={!!thumbnailEditSubmission} onOpenChange={(open) => !open && setThumbnailEditSubmission(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Edit2 className="h-5 w-5" />
+                Edit Video Thumbnail
+              </DialogTitle>
+            </DialogHeader>
+            {thumbnailEditSubmission && (
+              <div className="space-y-6">
+                {/* Current Thumbnail Preview */}
+                <div className="space-y-2">
+                  <Label>Thumbnail Preview</Label>
+                  <div className="relative flex justify-center bg-secondary/50 rounded-lg p-4">
+                    {newThumbnailPreview ? (
+                      <img 
+                        src={newThumbnailPreview} 
+                        alt="Thumbnail preview" 
+                        className="max-h-48 rounded object-contain"
+                      />
+                    ) : (
+                      <div className="h-32 w-48 flex items-center justify-center bg-muted rounded">
+                        <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                      </div>
+                    )}
+                    {isGeneratingThumbnail && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-background/70 rounded-lg">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Frame Selector */}
+                {thumbnailEditSubmission.video_duration_seconds && thumbnailEditSubmission.video_duration_seconds > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Select frame from video</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {thumbnailTime.toFixed(1)}s / {thumbnailEditSubmission.video_duration_seconds}s
+                      </span>
+                    </div>
+                    <Slider
+                      value={[thumbnailTime]}
+                      onValueChange={handleThumbnailTimeChange}
+                      max={Math.max(thumbnailEditSubmission.video_duration_seconds - 0.1, 0.1)}
+                      min={0}
+                      step={0.1}
+                      className="w-full"
+                      disabled={isGeneratingThumbnail}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => generateThumbnailAtTime(thumbnailTime)}
+                      disabled={isGeneratingThumbnail}
+                      className="gap-2"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${isGeneratingThumbnail ? 'animate-spin' : ''}`} />
+                      Generate from selected frame
+                    </Button>
+                  </div>
+                )}
+
+                {/* Custom Upload */}
+                <div className="space-y-2">
+                  <Label>Or upload a custom thumbnail</Label>
+                  <label className="flex items-center justify-center gap-2 w-full py-3 px-4 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-secondary/30">
+                    <Upload className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Click to upload image (JPEG, PNG, WebP, max 5MB)</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleCustomThumbnailUpload}
+                    />
+                  </label>
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => setThumbnailEditSubmission(null)}
+                    disabled={isSavingThumbnail}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={saveThumbnail}
+                    disabled={!newThumbnailFile || isSavingThumbnail}
+                    className="gap-2"
+                  >
+                    {isSavingThumbnail ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Thumbnail'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </main>
