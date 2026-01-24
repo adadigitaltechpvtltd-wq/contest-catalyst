@@ -40,6 +40,8 @@ import { Slider } from '@/components/ui/slider';
 import ImageCropper from '@/components/ImageCropper';
 import CameraCapture from '@/components/CameraCapture';
 import VideoTrimmer from '@/components/VideoTrimmer';
+import VideoCompressionDialog from '@/components/VideoCompressionDialog';
+import { needsCompression, CompressionResult } from '@/lib/videoCompression';
 import { useIsCameraAvailable } from '@/hooks/useCameraCapture';
 
 // Title input with real-time validation feedback
@@ -143,6 +145,9 @@ const SubmitPhoto = () => {
   const [showVideoTrimmer, setShowVideoTrimmer] = useState(false);
   const [videoTrimStart, setVideoTrimStart] = useState<number>(0);
   const [videoTrimEnd, setVideoTrimEnd] = useState<number>(0);
+  const [showCompressionDialog, setShowCompressionDialog] = useState(false);
+  const [pendingVideoFile, setPendingVideoFile] = useState<File | null>(null);
+  const [isVideoCompressed, setIsVideoCompressed] = useState(false);
 
   // Determine campaign type
   const isVideoCampaign = campaign?.campaign_type === 'video';
@@ -280,6 +285,9 @@ const SubmitPhoto = () => {
     setShowVideoTrimmer(false);
     setVideoTrimStart(0);
     setVideoTrimEnd(0);
+    setIsVideoCompressed(false);
+    setPendingVideoFile(null);
+    setShowCompressionDialog(false);
   };
 
   const handleRetakePhoto = () => {
@@ -304,11 +312,11 @@ const SubmitPhoto = () => {
       return;
     }
 
-    // Validate file size (50MB max for videos)
-    if (file.size > 50 * 1024 * 1024) {
+    // Validate file size (100MB max for videos before compression)
+    if (file.size > 100 * 1024 * 1024) {
       toast({
         title: 'File too large',
-        description: 'Please upload a video smaller than 50MB.',
+        description: 'Please upload a video smaller than 100MB.',
         variant: 'destructive',
       });
       return;
@@ -333,16 +341,17 @@ const SubmitPhoto = () => {
         return;
       }
       
-      // Video is short enough, proceed directly
-      URL.revokeObjectURL(objectUrl);
-      setVideoDuration(Math.round(video.duration));
-      setVideoFile(file);
-      setVideoPreview(URL.createObjectURL(file));
-      setVideoTrimStart(0);
-      setVideoTrimEnd(video.duration);
+      // Check if video needs compression (>20MB)
+      if (needsCompression(file, 20)) {
+        URL.revokeObjectURL(objectUrl);
+        setPendingVideoFile(file);
+        setShowCompressionDialog(true);
+        return;
+      }
       
-      // Auto-generate thumbnail from first frame
-      generateInitialThumbnail(video, file);
+      // Video is short enough and small enough, proceed directly
+      URL.revokeObjectURL(objectUrl);
+      finalizeVideoUpload(file, video.duration);
     };
 
     video.onerror = () => {
@@ -357,7 +366,54 @@ const SubmitPhoto = () => {
     e.target.value = '';
   }, [toast]);
 
-  // Generate initial thumbnail from video
+  // Finalize video upload after optional compression
+  const finalizeVideoUpload = useCallback((file: File, duration: number) => {
+    setVideoDuration(Math.round(duration));
+    setVideoFile(file);
+    setVideoPreview(URL.createObjectURL(file));
+    setVideoTrimStart(0);
+    setVideoTrimEnd(duration);
+    
+    // Auto-generate thumbnail from first frame
+    const video = document.createElement('video');
+    video.src = URL.createObjectURL(file);
+    video.onloadedmetadata = () => {
+      generateInitialThumbnail(video, file);
+    };
+  }, []);
+
+  // Handle compression complete
+  const handleCompressionComplete = useCallback((compressedFile: File, result: CompressionResult) => {
+    setIsVideoCompressed(true);
+    setPendingVideoFile(null);
+    setShowCompressionDialog(false);
+    
+    // Get duration from the compressed file
+    const video = document.createElement('video');
+    video.src = URL.createObjectURL(compressedFile);
+    video.onloadedmetadata = () => {
+      finalizeVideoUpload(compressedFile, video.duration);
+      toast({
+        title: 'Video compressed',
+        description: `Reduced from ${(result.originalSize / 1024 / 1024).toFixed(1)}MB to ${(result.compressedSize / 1024 / 1024).toFixed(1)}MB`,
+      });
+    };
+  }, [finalizeVideoUpload, toast]);
+
+  // Handle compression skip
+  const handleCompressionSkip = useCallback(() => {
+    if (pendingVideoFile) {
+      const video = document.createElement('video');
+      video.src = URL.createObjectURL(pendingVideoFile);
+      video.onloadedmetadata = () => {
+        finalizeVideoUpload(pendingVideoFile, video.duration);
+      };
+    }
+    setPendingVideoFile(null);
+    setShowCompressionDialog(false);
+    setIsVideoCompressed(false);
+  }, [pendingVideoFile, finalizeVideoUpload]);
+
   const generateInitialThumbnail = useCallback((video: HTMLVideoElement, file: File) => {
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
@@ -862,6 +918,15 @@ const SubmitPhoto = () => {
                               <span>{(videoFile.size / 1024 / 1024).toFixed(2)} MB</span>
                               <span>•</span>
                               <span>{videoDuration}s</span>
+                              {isVideoCompressed && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-success flex items-center gap-1">
+                                    <CheckCircle className="h-3 w-3" />
+                                    Compressed
+                                  </span>
+                                </>
+                              )}
                               {(videoTrimStart > 0 || videoTrimEnd < videoDuration) && (
                                 <>
                                   <span>•</span>
@@ -962,7 +1027,7 @@ const SubmitPhoto = () => {
                             <span className="font-semibold">Click to upload</span> your video reel
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            MP4, MOV, or WebM (max 50MB, videos over 30s can be trimmed)
+                            MP4, MOV, or WebM (max 100MB • auto-compression for large files)
                           </p>
                         </div>
                         <input
@@ -1258,6 +1323,17 @@ const SubmitPhoto = () => {
         onClose={() => setShowCamera(false)}
         onCapture={handleCameraCapture}
       />
+
+      {/* Video Compression Dialog */}
+      {pendingVideoFile && (
+        <VideoCompressionDialog
+          isOpen={showCompressionDialog}
+          onClose={() => setShowCompressionDialog(false)}
+          videoFile={pendingVideoFile}
+          onCompressionComplete={handleCompressionComplete}
+          onSkip={handleCompressionSkip}
+        />
+      )}
     </div>
   );
 };
