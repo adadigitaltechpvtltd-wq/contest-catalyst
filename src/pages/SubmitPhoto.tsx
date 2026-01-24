@@ -33,11 +33,13 @@ import {
   Info,
   Video,
   Play,
-  RefreshCw
+  RefreshCw,
+  Scissors
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import ImageCropper from '@/components/ImageCropper';
 import CameraCapture from '@/components/CameraCapture';
+import VideoTrimmer from '@/components/VideoTrimmer';
 import { useIsCameraAvailable } from '@/hooks/useCameraCapture';
 
 // Title input with real-time validation feedback
@@ -136,6 +138,11 @@ const SubmitPhoto = () => {
   const [originalityConfirmed, setOriginalityConfirmed] = useState(false);
   const [noAiConfirmed, setNoAiConfirmed] = useState(false);
   const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
+  const [rawVideoFile, setRawVideoFile] = useState<File | null>(null);
+  const [rawVideoUrl, setRawVideoUrl] = useState<string | null>(null);
+  const [showVideoTrimmer, setShowVideoTrimmer] = useState(false);
+  const [videoTrimStart, setVideoTrimStart] = useState<number>(0);
+  const [videoTrimEnd, setVideoTrimEnd] = useState<number>(0);
 
   // Determine campaign type
   const isVideoCampaign = campaign?.campaign_type === 'video';
@@ -268,6 +275,11 @@ const SubmitPhoto = () => {
     setVideoDuration(0);
     setVideoThumbnail(null);
     setVideoThumbnailPreview(null);
+    setRawVideoFile(null);
+    setRawVideoUrl(null);
+    setShowVideoTrimmer(false);
+    setVideoTrimStart(0);
+    setVideoTrimEnd(0);
   };
 
   const handleRetakePhoto = () => {
@@ -305,45 +317,36 @@ const SubmitPhoto = () => {
     // Check video duration
     const video = document.createElement('video');
     video.preload = 'metadata';
-    video.src = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    video.src = objectUrl;
     
     video.onloadedmetadata = () => {
-      URL.revokeObjectURL(video.src);
-      
+      // If video is longer than 30 seconds, show trimmer
       if (video.duration > 30) {
+        setRawVideoFile(file);
+        setRawVideoUrl(objectUrl);
+        setShowVideoTrimmer(true);
         toast({
-          title: 'Video too long',
-          description: 'Maximum video duration is 30 seconds.',
-          variant: 'destructive',
+          title: 'Video needs trimming',
+          description: 'Your video is longer than 30 seconds. Please trim it to continue.',
         });
         return;
       }
       
+      // Video is short enough, proceed directly
+      URL.revokeObjectURL(objectUrl);
       setVideoDuration(Math.round(video.duration));
       setVideoFile(file);
       setVideoPreview(URL.createObjectURL(file));
+      setVideoTrimStart(0);
+      setVideoTrimEnd(video.duration);
       
       // Auto-generate thumbnail from first frame
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        video.currentTime = 0.5; // Get frame at 0.5 seconds
-        video.onseeked = () => {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const thumbnailFile = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
-              setVideoThumbnail(thumbnailFile);
-              setVideoThumbnailPreview(canvas.toDataURL('image/jpeg'));
-            }
-          }, 'image/jpeg', 0.8);
-        };
-      }
+      generateInitialThumbnail(video, file);
     };
 
     video.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
       toast({
         title: 'Invalid video',
         description: 'Could not read video file. Please try another file.',
@@ -353,6 +356,89 @@ const SubmitPhoto = () => {
 
     e.target.value = '';
   }, [toast]);
+
+  // Generate initial thumbnail from video
+  const generateInitialThumbnail = useCallback((video: HTMLVideoElement, file: File) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      video.currentTime = 0.5; // Get frame at 0.5 seconds
+      video.onseeked = () => {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const thumbnailFile = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
+            setVideoThumbnail(thumbnailFile);
+            setVideoThumbnailPreview(canvas.toDataURL('image/jpeg'));
+          }
+        }, 'image/jpeg', 0.8);
+      };
+    }
+  }, []);
+
+  // Handle trim complete
+  const handleTrimComplete = useCallback((trimmedFile: File, startTime: number, endTime: number) => {
+    const trimmedDuration = endTime - startTime;
+    setVideoDuration(Math.round(trimmedDuration));
+    setVideoFile(trimmedFile);
+    setVideoPreview(rawVideoUrl || URL.createObjectURL(trimmedFile));
+    setVideoTrimStart(startTime);
+    setVideoTrimEnd(endTime);
+    setShowVideoTrimmer(false);
+    
+    // Generate thumbnail from the trimmed video start
+    if (rawVideoUrl) {
+      const video = document.createElement('video');
+      video.src = rawVideoUrl;
+      video.onloadedmetadata = () => {
+        video.currentTime = startTime + 0.5;
+        video.onseeked = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob((blob) => {
+              if (blob) {
+                const thumbnailFile = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
+                setVideoThumbnail(thumbnailFile);
+                setVideoThumbnailPreview(canvas.toDataURL('image/jpeg'));
+              }
+            }, 'image/jpeg', 0.8);
+          }
+        };
+      };
+    }
+    
+    toast({
+      title: 'Video trimmed',
+      description: `Selected ${Math.round(trimmedDuration)} seconds of video.`,
+    });
+  }, [rawVideoUrl, toast]);
+
+  // Handle trim cancel
+  const handleTrimCancel = useCallback(() => {
+    setShowVideoTrimmer(false);
+    if (rawVideoUrl) {
+      URL.revokeObjectURL(rawVideoUrl);
+    }
+    setRawVideoFile(null);
+    setRawVideoUrl(null);
+  }, [rawVideoUrl]);
+
+  // Open trimmer for already loaded video
+  const handleOpenTrimmer = useCallback(() => {
+    if (videoFile && videoPreview) {
+      setRawVideoFile(videoFile);
+      setRawVideoUrl(videoPreview);
+      setShowVideoTrimmer(true);
+    }
+  }, [videoFile, videoPreview]);
+
+
 
   // Generate thumbnail at specific time
   const generateThumbnailAtTime = useCallback((time: number) => {
@@ -730,7 +816,21 @@ const SubmitPhoto = () => {
                 {/* Video Upload for Video Campaigns */}
                 {isVideoCampaign ? (
                   <div className="space-y-4">
-                    {videoPreview ? (
+                    {/* Video Trimmer Modal */}
+                    {showVideoTrimmer && rawVideoFile && rawVideoUrl && (
+                      <div className="border rounded-lg p-4 bg-secondary/30">
+                        <VideoTrimmer
+                          videoFile={rawVideoFile}
+                          videoUrl={rawVideoUrl}
+                          maxDuration={30}
+                          onTrimComplete={handleTrimComplete}
+                          onCancel={handleTrimCancel}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Video Preview - show when not trimming */}
+                    {!showVideoTrimmer && videoPreview ? (
                       <div className="space-y-4">
                         <div className="relative">
                           <video
@@ -738,7 +838,16 @@ const SubmitPhoto = () => {
                             controls
                             className="w-full rounded-lg max-h-96 object-contain bg-secondary"
                           />
-                          <div className="absolute top-2 right-2">
+                          <div className="absolute top-2 right-2 flex gap-2">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="icon"
+                              onClick={handleOpenTrimmer}
+                              title="Trim video"
+                            >
+                              <Scissors className="h-4 w-4" />
+                            </Button>
                             <Button
                               type="button"
                               variant="destructive"
@@ -753,6 +862,15 @@ const SubmitPhoto = () => {
                               <span>{(videoFile.size / 1024 / 1024).toFixed(2)} MB</span>
                               <span>•</span>
                               <span>{videoDuration}s</span>
+                              {(videoTrimStart > 0 || videoTrimEnd < videoDuration) && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-primary flex items-center gap-1">
+                                    <Scissors className="h-3 w-3" />
+                                    Trimmed
+                                  </span>
+                                </>
+                              )}
                             </div>
                           )}
                         </div>
@@ -836,7 +954,7 @@ const SubmitPhoto = () => {
                           )}
                         </div>
                       </div>
-                    ) : (
+                    ) : !showVideoTrimmer ? (
                       <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-secondary/30">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Video className="h-10 w-10 text-muted-foreground mb-3" />
@@ -844,7 +962,7 @@ const SubmitPhoto = () => {
                             <span className="font-semibold">Click to upload</span> your video reel
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            MP4, MOV, or WebM (max 50MB, 30 seconds)
+                            MP4, MOV, or WebM (max 50MB, videos over 30s can be trimmed)
                           </p>
                         </div>
                         <input
@@ -854,7 +972,7 @@ const SubmitPhoto = () => {
                           onChange={handleVideoChange}
                         />
                       </label>
-                    )}
+                    ) : null}
                   </div>
                 ) : (
                   /* Photo Upload for Photo Campaigns */
