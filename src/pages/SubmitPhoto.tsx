@@ -41,7 +41,7 @@ import ImageCropper from '@/components/ImageCropper';
 import CameraCapture from '@/components/CameraCapture';
 import VideoTrimmer from '@/components/VideoTrimmer';
 import VideoCompressionDialog from '@/components/VideoCompressionDialog';
-import { needsCompression, CompressionResult } from '@/lib/videoCompression';
+import { needsCompression, needsFormatConversion, CompressionResult } from '@/lib/videoCompression';
 import { useIsCameraAvailable } from '@/hooks/useCameraCapture';
 
 // Title input with real-time validation feedback
@@ -341,15 +341,15 @@ const SubmitPhoto = () => {
         return;
       }
       
-      // Check if video needs compression (>20MB)
-      if (needsCompression(file, 20)) {
+      // Check if video needs compression (>20MB) or format conversion
+      if (needsCompression(file, 20) || needsFormatConversion(file)) {
         URL.revokeObjectURL(objectUrl);
         setPendingVideoFile(file);
         setShowCompressionDialog(true);
         return;
       }
       
-      // Video is short enough and small enough, proceed directly
+      // Video is short enough, small enough, and web-friendly format - proceed directly
       URL.revokeObjectURL(objectUrl);
       finalizeVideoUpload(file, video.duration);
     };
@@ -393,9 +393,13 @@ const SubmitPhoto = () => {
     video.src = URL.createObjectURL(compressedFile);
     video.onloadedmetadata = () => {
       finalizeVideoUpload(compressedFile, video.duration);
+      
+      const sizeReduction = `${(result.originalSize / 1024 / 1024).toFixed(1)}MB → ${(result.compressedSize / 1024 / 1024).toFixed(1)}MB`;
+      const formatInfo = result.formatConverted ? ` • Converted to ${result.outputFormat}` : '';
+      
       toast({
-        title: 'Video compressed',
-        description: `Reduced from ${(result.originalSize / 1024 / 1024).toFixed(1)}MB to ${(result.compressedSize / 1024 / 1024).toFixed(1)}MB`,
+        title: result.formatConverted ? 'Video converted & optimized' : 'Video compressed',
+        description: sizeReduction + formatInfo,
       });
     };
   }, [finalizeVideoUpload, toast]);

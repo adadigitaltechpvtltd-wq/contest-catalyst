@@ -1,6 +1,7 @@
 /**
- * Video Compression Utility
+ * Video Compression & Format Conversion Utility
  * Uses browser's MediaRecorder API to re-encode videos at lower bitrates
+ * and convert to web-friendly formats (WebM/MP4)
  */
 
 export interface CompressionOptions {
@@ -9,6 +10,7 @@ export interface CompressionOptions {
   maxWidth?: number;
   maxHeight?: number;
   onProgress?: (progress: number) => void;
+  outputFormat?: 'webm' | 'mp4'; // Preferred output format
 }
 
 export interface CompressionResult {
@@ -17,13 +19,44 @@ export interface CompressionResult {
   compressedSize: number;
   compressionRatio: number;
   duration: number;
+  formatConverted: boolean;
+  originalFormat: string;
+  outputFormat: string;
 }
+
+// Web-friendly formats that don't need conversion
+const WEB_FRIENDLY_FORMATS = ['video/mp4', 'video/webm'];
+
+/**
+ * Check if a video file needs format conversion
+ */
+export const needsFormatConversion = (file: File): boolean => {
+  return !WEB_FRIENDLY_FORMATS.includes(file.type);
+};
+
+/**
+ * Get the original format from file type
+ */
+export const getVideoFormat = (file: File): string => {
+  const typeMap: Record<string, string> = {
+    'video/mp4': 'MP4',
+    'video/webm': 'WebM',
+    'video/quicktime': 'MOV',
+    'video/x-msvideo': 'AVI',
+    'video/x-matroska': 'MKV',
+    'video/3gpp': '3GP',
+    'video/x-flv': 'FLV',
+    'video/mpeg': 'MPEG',
+  };
+  return typeMap[file.type] || file.type.split('/')[1]?.toUpperCase() || 'Unknown';
+};
 
 const DEFAULT_OPTIONS: CompressionOptions = {
   maxSizeMB: 20,
   targetBitrate: 2_000_000, // 2 Mbps
   maxWidth: 1920,
   maxHeight: 1080,
+  outputFormat: 'webm', // Default to WebM for best browser support
 };
 
 /**
@@ -171,6 +204,8 @@ export const compressVideo = async (
           
           const compressedSize = compressedFile.size;
           const compressionRatio = originalSize / compressedSize;
+          const originalFormat = getVideoFormat(file);
+          const outputFormatName = extension.toUpperCase();
           
           resolve({
             compressedFile,
@@ -178,6 +213,9 @@ export const compressVideo = async (
             compressedSize,
             compressionRatio,
             duration,
+            formatConverted: file.type !== mimeType,
+            originalFormat,
+            outputFormat: outputFormatName,
           });
         };
         
