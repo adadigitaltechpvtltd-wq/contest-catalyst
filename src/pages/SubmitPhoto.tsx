@@ -40,6 +40,7 @@ import { Slider } from '@/components/ui/slider';
 import ImageCropper from '@/components/ImageCropper';
 import CameraCapture from '@/components/CameraCapture';
 import VideoTrimmer from '@/components/VideoTrimmer';
+import VideoPlayer from '@/components/VideoPlayer';
 import VideoCompressionDialog from '@/components/VideoCompressionDialog';
 import { needsCompression, needsFormatConversion, CompressionResult } from '@/lib/videoCompression';
 import { useIsCameraAvailable } from '@/hooks/useCameraCapture';
@@ -893,12 +894,13 @@ const SubmitPhoto = () => {
                     {!showVideoTrimmer && videoPreview ? (
                       <div className="space-y-4">
                         <div className="relative">
-                          <video
+                          <VideoPlayer
                             src={videoPreview}
-                            controls
-                            className="w-full rounded-lg max-h-96 object-contain bg-secondary"
+                            className="w-full max-h-96"
+                            trimStart={videoTrimStart}
+                            trimEnd={videoTrimEnd > 0 ? videoTrimEnd : undefined}
                           />
-                          <div className="absolute top-2 right-2 flex gap-2">
+                          <div className="absolute top-2 right-2 flex gap-2 z-10">
                             <Button
                               type="button"
                               variant="secondary"
@@ -918,10 +920,10 @@ const SubmitPhoto = () => {
                             </Button>
                           </div>
                           {videoFile && (
-                            <div className="absolute bottom-12 left-2 bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs flex items-center gap-2">
+                            <div className="absolute top-2 left-2 bg-background/80 backdrop-blur-sm rounded px-2 py-1 text-xs flex items-center gap-2 z-10">
                               <span>{(videoFile.size / 1024 / 1024).toFixed(2)} MB</span>
                               <span>•</span>
-                              <span>{videoDuration}s</span>
+                              <span>{videoDuration.toFixed(1)}s</span>
                               {isVideoCompressed && (
                                 <>
                                   <span>•</span>
