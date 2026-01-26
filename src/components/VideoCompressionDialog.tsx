@@ -8,11 +8,13 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, FileVideo, CheckCircle, AlertCircle, Zap } from 'lucide-react';
+import { Loader2, FileVideo, CheckCircle, AlertCircle, Zap, RefreshCw } from 'lucide-react';
 import { 
   compressVideo, 
   formatFileSize, 
   isCompressionSupported,
+  needsFormatConversion,
+  getVideoFormat,
   CompressionResult 
 } from '@/lib/videoCompression';
 
@@ -40,6 +42,8 @@ const VideoCompressionDialog = ({
 
   const originalSizeMB = videoFile.size / (1024 * 1024);
   const isSupported = isCompressionSupported();
+  const requiresConversion = needsFormatConversion(videoFile);
+  const originalFormat = getVideoFormat(videoFile);
 
   useEffect(() => {
     if (isOpen) {
@@ -90,11 +94,18 @@ const VideoCompressionDialog = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            Optimize Video
+            {requiresConversion ? (
+              <RefreshCw className="h-5 w-5 text-primary" />
+            ) : (
+              <Zap className="h-5 w-5 text-primary" />
+            )}
+            {requiresConversion ? 'Convert & Optimize Video' : 'Optimize Video'}
           </DialogTitle>
           <DialogDescription>
-            Compress your video to reduce upload time and file size while maintaining quality.
+            {requiresConversion 
+              ? `Your ${originalFormat} video will be converted to WebM format for better web compatibility and optimized for faster uploads.`
+              : 'Compress your video to reduce upload time and file size while maintaining quality.'
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -104,9 +115,17 @@ const VideoCompressionDialog = ({
             <FileVideo className="h-10 w-10 text-muted-foreground" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{videoFile.name}</p>
-              <p className="text-xs text-muted-foreground">
-                Original size: {formatFileSize(videoFile.size)}
-              </p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Size: {formatFileSize(videoFile.size)}</span>
+                <span>•</span>
+                <span>Format: {originalFormat}</span>
+                {requiresConversion && (
+                  <>
+                    <span>•</span>
+                    <span className="text-amber-500">Needs conversion</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -118,17 +137,24 @@ const VideoCompressionDialog = ({
                   <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-amber-500">
-                      Compression not supported
+                      {requiresConversion ? 'Conversion not supported' : 'Compression not supported'}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Your browser doesn't support video compression. You can still upload the original file.
+                      Your browser doesn't support video {requiresConversion ? 'conversion' : 'compression'}. 
+                      {requiresConversion 
+                        ? ' Please convert your video to MP4 or WebM format before uploading.'
+                        : ' You can still upload the original file.'
+                      }
                     </p>
                   </div>
                 </div>
               ) : (
                 <div className="text-sm text-muted-foreground">
-                  <p>Compressing your video can:</p>
+                  <p>{requiresConversion ? 'Converting and compressing your video will:' : 'Compressing your video can:'}</p>
                   <ul className="list-disc list-inside mt-2 space-y-1">
+                    {requiresConversion && (
+                      <li>Convert {originalFormat} to WebM for better browser support</li>
+                    )}
                     <li>Reduce file size by up to 60%</li>
                     <li>Speed up upload time significantly</li>
                     <li>Maintain good visual quality</li>
@@ -145,7 +171,7 @@ const VideoCompressionDialog = ({
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Compressing video...</span>
+                  <span>{requiresConversion ? 'Converting & compressing...' : 'Compressing video...'}</span>
                   <span>{Math.round(progress)}%</span>
                 </div>
                 <Progress value={progress} className="h-2" />
@@ -164,13 +190,21 @@ const VideoCompressionDialog = ({
                 </div>
               </div>
               
+              {result.formatConverted && (
+                <div className="flex items-center justify-center gap-2 text-sm">
+                  <span className="text-muted-foreground">{result.originalFormat}</span>
+                  <span className="text-muted-foreground">→</span>
+                  <span className="font-medium text-success">{result.outputFormat}</span>
+                </div>
+              )}
+              
               <div className="grid grid-cols-2 gap-4 p-3 rounded-lg bg-secondary/50">
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground">Original</p>
                   <p className="font-medium">{formatFileSize(result.originalSize)}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Compressed</p>
+                  <p className="text-xs text-muted-foreground">Optimized</p>
                   <p className="font-medium text-success">{formatFileSize(result.compressedSize)}</p>
                 </div>
               </div>
@@ -181,6 +215,9 @@ const VideoCompressionDialog = ({
                   <span className="font-medium text-success">
                     {Math.round((1 - result.compressedSize / result.originalSize) * 100)}%
                   </span>
+                  {result.formatConverted && (
+                    <span className="text-muted-foreground"> • Converted to {result.outputFormat}</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -204,12 +241,21 @@ const VideoCompressionDialog = ({
         <div className="flex gap-2 justify-end">
           {state === 'idle' && (
             <>
-              <Button variant="ghost" onClick={handleSkip}>
-                Skip
+              <Button variant="ghost" onClick={handleSkip} disabled={requiresConversion && isSupported}>
+                {requiresConversion ? 'Cancel' : 'Skip'}
               </Button>
               <Button onClick={handleCompress} disabled={!isSupported}>
-                <Zap className="h-4 w-4 mr-2" />
-                Compress Video
+                {requiresConversion ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Convert & Optimize
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-4 w-4 mr-2" />
+                    Compress Video
+                  </>
+                )}
               </Button>
             </>
           )}
